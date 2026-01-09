@@ -10,4 +10,15 @@
     <ProjectReference Include="..\Bike_Link.Domain\Bike_Link.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTO\" />
+    <Folder Include="Features\" />
+    <Folder Include="IService\" />
+    <Folder Include="IUseCase\" />
+    <Folder Include="MapperProfile\" />
+    <Folder Include="Validation\" />
+    <Folder Include="UseCase\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>

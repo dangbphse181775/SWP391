@@ -11,4 +11,8 @@
     <ProjectReference Include="..\Bike_Link.Domain\Bike_Link.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Persitence\Repository\" />
+  </ItemGroup>
+
 </Project>
