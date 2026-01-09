@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BikeLink", "BikeLink\BikeLink.csproj", "{F2AB3A65-494B-4F55-BC67-7E7616782515}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{84BB93F4-EA49-4947-B128-CFC229A92805}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Presentation", "Presentation", "{64393324-1A48-4536-BEF9-B34487AE90AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bike_Link.Application", "Bike_Link.Application\Bike_Link.Application.csproj", "{82FA818E-295B-43F4-8263-41595D303145}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bike_Link.Domain", "Bike_Link.Domain\Bike_Link.Domain.csproj", "{5E446F07-A1D3-4D15-9FC8-57932CB95345}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bike_Link.Infrastructure", "Bike_Link.Infrastructure\Bike_Link.Infrastructure.csproj", "{F8707491-DCB7-41F8-85D5-C577C06BFF19}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F2AB3A65-494B-4F55-BC67-7E7616782515}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2AB3A65-494B-4F55-BC67-7E7616782515}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2AB3A65-494B-4F55-BC67-7E7616782515}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2AB3A65-494B-4F55-BC67-7E7616782515}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82FA818E-295B-43F4-8263-41595D303145}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82FA818E-295B-43F4-8263-41595D303145}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82FA818E-295B-43F4-8263-41595D303145}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82FA818E-295B-43F4-8263-41595D303145}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E446F07-A1D3-4D15-9FC8-57932CB95345}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E446F07-A1D3-4D15-9FC8-57932CB95345}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E446F07-A1D3-4D15-9FC8-57932CB95345}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E446F07-A1D3-4D15-9FC8-57932CB95345}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8707491-DCB7-41F8-85D5-C577C06BFF19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8707491-DCB7-41F8-85D5-C577C06BFF19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8707491-DCB7-41F8-85D5-C577C06BFF19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8707491-DCB7-41F8-85D5-C577C06BFF19}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F2AB3A65-494B-4F55-BC67-7E7616782515} = {64393324-1A48-4536-BEF9-B34487AE90AE}
+		{82FA818E-295B-43F4-8263-41595D303145} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{5E446F07-A1D3-4D15-9FC8-57932CB95345} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{F8707491-DCB7-41F8-85D5-C577C06BFF19} = {84BB93F4-EA49-4947-B128-CFC229A92805}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2A9F715C-A15A-48F3-BDAB-A1CCD81BD086}
+	EndGlobalSection
+EndGlobal
