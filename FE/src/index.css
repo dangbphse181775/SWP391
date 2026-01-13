@@ -1,7 +1,5 @@
 
-@import "tw-animate-css";
-
-@plugin "tailwindcss-animate";
+/* Removed missing tw-animate-css import; plugin registered in tailwind.config.js */
 
 @custom-variant dark (&:is(.dark *));
 
