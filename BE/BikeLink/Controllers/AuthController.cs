@@ -86,5 +86,61 @@ namespace BikeLink.Controllers
                 role = "buyer"
             });
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest req)
+        {
+            if (string.IsNullOrWhiteSpace(req.Phone) ||
+                string.IsNullOrWhiteSpace(req.Password))
+            {
+                return BadRequest(new { message = "Thiếu dữ liệu" });
+            }
+
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            int userId;
+            string fullName;
+            string passwordHash;
+            string roleName;
+
+            // 1. Lấy user theo phone
+            await using (var cmd = new NpgsqlCommand(@"
+        SELECT u.user_id, u.full_name, u.password_hash, r.role_name
+        FROM users u
+        JOIN role r ON u.role_id = r.role_id
+        WHERE u.phone = @phone
+    ", conn))
+            {
+                cmd.Parameters.AddWithValue("phone", req.Phone);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                if (!await reader.ReadAsync())
+                {
+                    return Unauthorized(new { message = "Số điện thoại hoặc mật khẩu không đúng" });
+                }
+
+                userId = reader.GetInt32(0);
+                fullName = reader.GetString(1);
+                passwordHash = reader.GetString(2);
+                roleName = reader.GetString(3);
+            }
+
+            // 2. So sánh mật khẩu
+            bool ok = BCrypt.Net.BCrypt.Verify(req.Password, passwordHash);
+            if (!ok)
+            {
+                return Unauthorized(new { message = "Số điện thoại hoặc mật khẩu không đúng" });
+            }
+
+            // 3. Thành công
+            return Ok(new
+            {
+                message = "Đăng nhập thành công",
+                userId,
+                fullName,
+                phone = req.Phone,
+                role = roleName
+            });
+        }
     }
 }
