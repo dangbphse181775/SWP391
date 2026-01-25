@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<PackageReference Include="CloudinaryDotNet" Version="1.28.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
 			<PrivateAssets>all</PrivateAssets>
@@ -26,10 +27,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Bike_Link.Application\Bike_Link.Application.csproj" />
     <ProjectReference Include="..\Bike_Link.Domain\Bike_Link.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Persitence\Repository\" />
   </ItemGroup>
 
 </Project>
