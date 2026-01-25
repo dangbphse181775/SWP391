@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<PackageReference Include="CloudinaryDotNet" Version="1.28.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
 			<PrivateAssets>all</PrivateAssets>
@@ -21,10 +22,6 @@
 		<PackageReference Include="Npgsql" Version="10.0.1" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
 		
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="IReposiroty\" />
 	</ItemGroup>
 
 </Project>
