@@ -1,6 +1,10 @@
-﻿using Bike_Link.Application.DTO;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Bike_Link.Application.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 
 namespace BikeLink.Controllers
@@ -10,9 +14,10 @@ namespace BikeLink.Controllers
     public class AuthController : ControllerBase
     {
         private readonly NpgsqlDataSource _dataSource;
-
-        public AuthController(NpgsqlDataSource dataSource)
+        private readonly IConfiguration _config;
+        public AuthController(IConfiguration config, NpgsqlDataSource dataSource)
         {
+            _config = config;
             _dataSource = dataSource;
         }
 
@@ -132,14 +137,40 @@ namespace BikeLink.Controllers
                 return Unauthorized(new { message = "Số điện thoại hoặc mật khẩu không đúng" });
             }
 
-            // 3. Thành công
+            // 3. Tạo JWT
+            var claims = new[]
+            {
+        new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+        new Claim(ClaimTypes.Role, roleName),
+        new Claim(ClaimTypes.Name, fullName)
+    };
+
+            var key = _config["Jwt:Key"];
+            var expireDays = int.Parse(_config["Jwt:ExpireDays"] ?? "7");
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.UtcNow.AddDays(expireDays),
+                signingCredentials: new SigningCredentials(
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key!)),
+                    SecurityAlgorithms.HmacSha256
+                )
+            );
+
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+            // 4. Trả về kết quả
             return Ok(new
             {
                 message = "Đăng nhập thành công",
-                userId,
-                fullName,
-                phone = req.Phone,
-                role = roleName
+                token = jwt,
+                user = new
+                {
+                    userId,
+                    fullName,
+                    phone = req.Phone,
+                    role = roleName
+                }
             });
         }
     }
