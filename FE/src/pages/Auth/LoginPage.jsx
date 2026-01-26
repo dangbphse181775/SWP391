@@ -4,22 +4,67 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Eye, EyeOff } from 'lucide-react'
-
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
+import authApi from '@/service/authApi'
 
 const LoginPage = () => {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
   const [loginData, setLoginData] = useState({
-    username: '',
+    phone: '',      
     password: '',
     rememberMe: false
   })
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setLoginData(prev => ({ ...prev, [name]: value }));
+  }
+
+  const handleSubmit = async (e) => { 
     e.preventDefault()
-    console.log('Login data:', loginData)
-    // navigate('/')
+    setLoading(true)
+    setErrorMessage('')
+
+    try {
+        const payload = {
+            phone: loginData.phone,
+            password: loginData.password
+        };
+
+        console.log('Sending payload:', payload);
+        const res = await authApi.login(payload);
+        
+        console.log('Login success:', res);
+        const token = res.token || res.data?.token; 
+        
+        if (token) {
+            localStorage.setItem('access_token', token);
+            if (loginData.rememberMe) {
+                localStorage.setItem('remember_me', 'true');
+            }
+            navigate('/user'); 
+        } else {
+             
+             if (res) localStorage.setItem('access_token', res); 
+             navigate('/user');
+        }
+
+    } catch (error) {
+        console.error('Login Error:', error);
+        if (error.response && error.response.data) {
+            
+            setErrorMessage(error.response.data.message || error.response.data.title || "Đăng nhập thất bại");
+        } else {
+            setErrorMessage("Không thể kết nối đến server");
+        }
+    } finally {
+        setLoading(false);
+    }
   }
 
   return (
@@ -45,18 +90,16 @@ const LoginPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username Field */}
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-gray-900 font-medium">
-                Tài khoản
+              <Label htmlFor="phone" className="text-gray-900 font-medium">
+                Số điện thoại
               </Label>
               <Input
-                id="username"
-                name="username"
+                id="phone"
+                name="phone"  
                 type="text"
-                placeholder="example@email.com"
-                value={loginData.username}
-                onChange={(e) => setLoginData(prev => ({ ...prev, username: e.target.value }))}
+                value={loginData.phone}
+                onChange={handleChange}
                 className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
                 required
               />
@@ -72,9 +115,8 @@ const LoginPage = () => {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
                   value={loginData.password}
-                  onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                  onChange={handleChange}
                   className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300 pr-10"
                   required
                 />
@@ -117,12 +159,23 @@ const LoginPage = () => {
               </button>
             </div>
 
+            
+            {errorMessage && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {errorMessage}
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Submit Button */}
             <Button 
               type="submit" 
-              className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-lg font-medium text-base"
+              disabled={loading} 
+              className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-lg font-medium text-base disabled:opacity-70"
             >
-              Đăng nhập
+              {loading ? 'Đang xử lý...' : 'Đăng nhập'}
             </Button>
           </form>
 
