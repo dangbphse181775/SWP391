@@ -2,8 +2,10 @@ import { Heart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const ProductCard = ({ product }) => {
+  const navigate = useNavigate();
   const {
     image,
     category,
@@ -14,6 +16,22 @@ const ProductCard = ({ product }) => {
     originalPrice,
     discount,
   } = product;
+
+  const handleActionClick = (e, action) => {
+    e.preventDefault();
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert('Vui lòng đăng nhập để tiếp tục!');
+      navigate('/login');
+    } else {
+      if (action === 'wishlist') {
+        // Xử lý thêm vào wishlist
+        console.log('Thêm vào yêu thích');
+      } else if (action === 'detail') {
+        navigate('/user');
+      }
+    }
+  };
 
   return (
     <Card className="group overflow-hidden border transition-shadow hover:shadow-lg">
@@ -32,6 +50,7 @@ const ProductCard = ({ product }) => {
           size="icon"
           variant="ghost"
           className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/80 hover:bg-white"
+          onClick={(e) => handleActionClick(e, 'wishlist')}
         >
           <Heart className="h-5 w-5" />
         </Button>
@@ -56,7 +75,7 @@ const ProductCard = ({ product }) => {
               <p className="text-sm text-gray-400 line-through">{originalPrice}</p>
             )}
           </div>
-          <Button size="sm" variant="outline" className="text-sm">
+          <Button size="sm" variant="outline" className="text-sm" onClick={(e) => handleActionClick(e, 'detail')}>
             Xem Chi Tiết
           </Button>
         </div>

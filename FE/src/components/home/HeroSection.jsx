@@ -1,6 +1,25 @@
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+import { useState } from 'react';
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+  const [showAlert, setShowAlert] = useState(false);
+
+  const handleBuyClick = () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setShowAlert(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    } else {
+      navigate('/products');
+    }
+  };
+
   return (
     <section className="relative h-[500px] w-full">
       {/* Background Image with Overlay */}
@@ -30,8 +49,16 @@ const HeroSection = () => {
               bán minh bạch, an toàn với đa dạng sản phẩm từ xe đạp thể thao, xe đạp địa hình
               đến xe đạp đua chuyên nghiệp. Mỗi giao dịch đều được bảo vệ và hỗ trợ tận tình
             </p>
+            {showAlert && (
+              <Alert variant="destructive" className="bg-red-500 text-white border-red-600">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Vui lòng đăng nhập để tiếp tục!
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="pt-4">
-              <Button size="lg" className="bg-white text-black hover:bg-gray-100">
+              <Button size="lg" className="bg-white text-black hover:bg-gray-100" onClick={handleBuyClick}>
                 Mua Xe Ngay
               </Button>
             </div>

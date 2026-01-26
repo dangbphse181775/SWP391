@@ -4,40 +4,24 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Eye, EyeOff } from 'lucide-react'
-
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
+import authApi from '@/service/authApi' 
 
 const RegisterPage = () => {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
   const [registerData, setRegisterData] = useState({
     fullName: '',
-    username: '',
-    email: '',
     phone: '',
-    address: '',
     password: '',
     confirmPassword: '',
     agreeToTerms: false
   })
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    
-    if (registerData.password !== registerData.confirmPassword) {
-      alert('Mật khẩu không khớp!')
-      return
-    }
-
-    if (!registerData.agreeToTerms) {
-      alert('Vui lòng đồng ý với Điều khoản sử dụng!')
-      return
-    }
-
-    console.log('Register data:', registerData)
-    // navigate('/login')
-  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -45,6 +29,51 @@ const RegisterPage = () => {
       ...prev,
       [name]: value
     }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setErrorMessage('') 
+
+    // Validate Client
+    if (registerData.password !== registerData.confirmPassword) {
+      setErrorMessage('Mật khẩu không khớp!')
+      return
+    }
+
+    if (!registerData.agreeToTerms) {
+      setErrorMessage('Vui lòng đồng ý với Điều khoản sử dụng!')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const payload = {
+        fullName: registerData.fullName,
+        phone: registerData.phone,
+        password: registerData.password
+      }
+
+      console.log('Sending register payload:', payload)
+
+      await authApi.register(payload)
+      
+      // Đăng ký thành công, chuyển hướng ngay
+      navigate('/login')
+
+    } catch (error) {
+      console.error('Register Error:', error)
+      
+
+      if (error.response && error.response.data) {
+        setErrorMessage(error.response.data.message || error.response.data.title || "Đăng ký thất bại");
+      } else {
+        setErrorMessage("Lỗi kết nối đến server");
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -70,7 +99,8 @@ const RegisterPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Full Name Field */}
+            
+            {/* Full Name Field*/}
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-gray-900 font-medium">
                 Họ và tên
@@ -79,7 +109,7 @@ const RegisterPage = () => {
                 id="fullName"
                 name="fullName"
                 type="text"
-                placeholder="Nguyễn Văn A"
+                
                 value={registerData.fullName}
                 onChange={handleChange}
                 className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
@@ -87,41 +117,7 @@ const RegisterPage = () => {
               />
             </div>
 
-            {/* Username Field */}
-            <div className="space-y-2">
-              <Label htmlFor="username" className="text-gray-900 font-medium">
-                Tài khoản
-              </Label>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                placeholder="username123"
-                value={registerData.username}
-                onChange={handleChange}
-                className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
-                required
-              />
-            </div>
-
-            {/* Email Field */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-900 font-medium">
-                Email
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="example@email.com"
-                value={registerData.email}
-                onChange={handleChange}
-                className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
-                required
-              />
-            </div>
-
-            {/* Phone Field */}
+            {/* Phone Field*/}
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-gray-900 font-medium">
                 Số điện thoại
@@ -130,25 +126,8 @@ const RegisterPage = () => {
                 id="phone"
                 name="phone"
                 type="tel"
-                placeholder="0912345678"
+                
                 value={registerData.phone}
-                onChange={handleChange}
-                className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
-                required
-              />
-            </div>
-
-            {/* Address Field */}
-            <div className="space-y-2">
-              <Label htmlFor="address" className="text-gray-900 font-medium">
-                Địa chỉ
-              </Label>
-              <Input
-                id="address"
-                name="address"
-                type="text"
-                placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
-                value={registerData.address}
                 onChange={handleChange}
                 className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
                 required
@@ -165,7 +144,6 @@ const RegisterPage = () => {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
                   value={registerData.password}
                   onChange={handleChange}
                   className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300 pr-10"
@@ -196,7 +174,6 @@ const RegisterPage = () => {
                   id="confirmPassword"
                   name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
                   value={registerData.confirmPassword}
                   onChange={handleChange}
                   className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300 pr-10"
@@ -234,12 +211,23 @@ const RegisterPage = () => {
               </label>
             </div>
 
+            {/* Hiển thị lỗi nếu có */}
+            {errorMessage && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {errorMessage}
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Submit Button */}
             <Button 
-              type="submit" 
-              className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-lg font-medium text-base"
+              type="submit"
+              disabled={loading} // Disable khi đang gửi
+              className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-lg font-medium text-base disabled:opacity-70"
             >
-              Đăng ký
+              {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
             </Button>
           </form>
 

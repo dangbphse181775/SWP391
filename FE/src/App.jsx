@@ -1,9 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
-import HomePage from '@/pages/HomePage';
+import HomePage from '@/pages/common/HomePage';
+import UserHomePage from '@/pages/User/UserHomePage';
+import ProfilePage from '@/pages/common/ProfilePage';
 import LoginPage from '@/pages/Auth/LoginPage';
 import RegisterPage from '@/pages/Auth/RegisterPage';
-import Sell from '@/pages/Sell';
+import Sell from '@/pages/User/Sell';
 function App() {
   return (
     <Router>
@@ -11,6 +13,8 @@ function App() {
         {/* Routes with Header and Footer */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/user" element={<UserHomePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
         <Route element={<MainLayout />}>
            <Route path="/sell" element={<Sell />} />
