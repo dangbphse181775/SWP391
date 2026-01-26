@@ -3,7 +3,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/Auth/LoginPage';
 import RegisterPage from '@/pages/Auth/RegisterPage';
-
+import Sell from '@/pages/Sell';
 function App() {
   return (
     <Router>
@@ -12,6 +12,10 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
         </Route>
+        <Route element={<MainLayout />}>
+           <Route path="/sell" element={<Sell />} />
+        </Route>
+
 
         {/* Auth Routes without Header and Footer */}
         <Route path="/login" element={<LoginPage />} />
