@@ -71,9 +71,9 @@ export default function Sell() {
           <div className="bg-white border border-slate-200 rounded-xl p-6 min-h-[600px] flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-semibold">Media Gallery</h2>
+                <h2 className="text-xl font-semibold">Thư viện hình ảnh/video</h2>
                 <p className="text-sm text-slate-500">
-                  Upload photos or videos of your bike (max 10).
+                  Tải lên ảnh hoặc video về xe của bạn (tối đa 10 mục).
                 </p>
               </div>
               <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-medium">
@@ -103,10 +103,10 @@ export default function Sell() {
                 add_a_photo
               </span>
               <p className="font-medium">
-                Drag & drop media here
+                Kéo và thả ảnh/video vào đây
               </p>
               <p className="text-sm text-slate-500 mb-2">
-                or click to browse
+                hoặc bấm để chọn tệp
               </p>
               <Button
                 variant="outline"
@@ -167,24 +167,24 @@ export default function Sell() {
         <div className="col-span-12 lg:col-span-5 space-y-6">
           <form onSubmit={handleSubmit(onSubmit)}>
             <section className="bg-white border rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Vehicle Identity</h2>
+              <h2 className="text-lg font-semibold mb-4">Thông tin xe</h2>
               <Input
                 className="w-full h-10 border rounded-md px-3 mb-2"
-                placeholder="Title"
-                {...register("title", { required: "Title is required" })}
+                placeholder="Tiêu đề"
+                {...register("title", { required: "Tiêu đề là bắt buộc" })}
               />
               {errors.title && <p className="text-red-500 text-sm mb-2">{errors.title.message}</p>}
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <select className="h-10 border rounded-md px-3" {...register("brand", { required: "Brand is required" })}>
-                  <option value="">Brand</option>
+                <select className="h-10 border rounded-md px-3" {...register("brand", { required: "Hãng xe là bắt buộc" })}>
+                  <option value="">Hãng xe</option>
                   <option value="Giant">Giant</option>
                   <option value="Trek">Trek</option>
                   <option value="Specialized">Specialized</option>
                 </select>
-                <select className="h-10 border rounded-md px-3" {...register("category", { required: "Category is required" })}>
-                  <option value="">Category</option>
-                  <option value="Road">Road</option>
-                  <option value="Mountain">Mountain</option>
+                <select className="h-10 border rounded-md px-3" {...register("category", { required: "Loại xe là bắt buộc" })}>
+                  <option value="">Loại xe</option>
+                  <option value="Road">Đường trường</option>
+                  <option value="Mountain">Địa hình</option>
                 </select>
               </div>
               {errors.brand && <p className="text-red-500 text-sm mb-2">{errors.brand.message}</p>}
@@ -192,48 +192,48 @@ export default function Sell() {
               <Input
                 className="w-full h-10 border rounded-md px-3 mb-2"
                 type="number"
-                placeholder="Model year"
-                {...register("modelYear", { required: "Model year is required" })}
+                placeholder="Năm sản xuất"
+                {...register("modelYear", { required: "Năm sản xuất là bắt buộc" })}
               />
               {errors.modelYear && <p className="text-red-500 text-sm mb-2">{errors.modelYear.message}</p>}
             </section>
             <section className="bg-white border rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Pricing & Condition</h2>
+              <h2 className="text-lg font-semibold mb-4">Giá & Tình trạng</h2>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <Input
                   className="h-10 border rounded-md px-3"
                   type="number"
-                  placeholder="Price ($)"
-                  {...register("price", { required: "Price is required" })}
+                  placeholder="Giá bán (VNĐ)"
+                  {...register("price", { required: "Giá bán là bắt buộc" })}
                 />
-                <select className="h-10 border rounded-md px-3" {...register("condition", { required: "Condition is required" })}>
-                  <option value="">Condition</option>
-                  <option value="New">New</option>
-                  <option value="Excellent">Excellent</option>
-                  <option value="Good">Good</option>
+                <select className="h-10 border rounded-md px-3" {...register("condition", { required: "Tình trạng là bắt buộc" })}>
+                  <option value="">Tình trạng</option>
+                  <option value="New">Mới</option>
+                  <option value="Excellent">Xuất sắc</option>
+                  <option value="Good">Tốt</option>
                 </select>
               </div>
               {errors.price && <p className="text-red-500 text-sm mb-2">{errors.price.message}</p>}
               {errors.condition && <p className="text-red-500 text-sm mb-2">{errors.condition.message}</p>}
               <Input
                 className="w-full h-10 border rounded-md px-3 mb-2"
-                placeholder="Frame size"
-                {...register("frameSize", { required: "Frame size is required" })}
+                placeholder="Kích thước khung"
+                {...register("frameSize", { required: "Kích thước khung là bắt buộc" })}
               />
               {errors.frameSize && <p className="text-red-500 text-sm mb-2">{errors.frameSize.message}</p>}
             </section>
             <section className="bg-white border rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Description</h2>
+              <h2 className="text-lg font-semibold mb-4">Mô tả</h2>
               <textarea
                 className="w-full min-h-[120px] border rounded-md p-3 mb-2"
-                placeholder="Full description..."
-                {...register("description", { required: "Description is required" })}
+                placeholder="Mô tả chi tiết..."
+                {...register("description", { required: "Mô tả là bắt buộc" })}
               />
               {errors.description && <p className="text-red-500 text-sm mb-2">{errors.description.message}</p>}
               <Input
                 className="w-full h-10 border rounded-md px-3 mb-2"
-                placeholder="Usage history"
-                {...register("usageHistory", { required: "Usage history is required" })}
+                placeholder="Lịch sử sử dụng"
+                {...register("usageHistory", { required: "Lịch sử sử dụng là bắt buộc" })}
               />
               {errors.usageHistory && <p className="text-red-500 text-sm mb-2">{errors.usageHistory.message}</p>}
             </section>
@@ -241,7 +241,7 @@ export default function Sell() {
               className="w-full h-12 bg-slate-950 text-white rounded-xl font-bold hover:bg-slate-900"
               type="submit"
             >
-              Publish
+              Đăng tin
             </Button>
           </form>
         </div>
