@@ -11,10 +11,10 @@ namespace Bike_Link.Infrastructure.Persitence.Repository
     public interface IVehicleRepository
     {
         Task<int> InsertVehicleAsync(Vehicle vehicle);
-        Task UpdateVehicleAsync(Vehicle v);
-        Task<List<Vehicle>> GetBySellerAsync(int sellerId);
-        Task<Vehicle?> GetByIdAsync(int id, int sellerId);
-        Task HideAsync(int id, int sellerId);
+        Task UpdateVehicleAsync(Vehicle vehicle);
+        Task<List<Vehicle>> GetBySellerAsync(int userId);
+        Task<Vehicle?> GetByIdAsync(int id, int userId);
+        Task HideAsync(int id, int userId);
         Task InsertMediaAsync(int vehicleId, string type, string url);
     }
 }

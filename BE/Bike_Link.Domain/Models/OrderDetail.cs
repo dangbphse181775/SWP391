@@ -7,15 +7,16 @@ public partial class OrderDetail
 {
     public int OrderDetailId { get; set; }
 
-    public int? OrderId { get; set; }
+    // FK -> Order
+    public int OrderId { get; set; }
 
-    public int? VehicleId { get; set; }
+    // FK -> Vehicle
+    public int VehicleId { get; set; }
 
-    public int? Quantity { get; set; }
+    public int Quantity { get; set; }
+    public decimal Price { get; set; }
 
-    public decimal? Price { get; set; }
-
-    public virtual Order? Order { get; set; }
-
-    public virtual Vehicle? Vehicle { get; set; }
+    // Navigation
+    public virtual Order Order { get; set; } = null!;
+    public virtual Vehicle Vehicle { get; set; } = null!;
 }

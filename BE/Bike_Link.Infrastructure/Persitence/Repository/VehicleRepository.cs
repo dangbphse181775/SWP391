@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bike_Link.Application.DTO;
-using Bike_Link.Domain.Models;
+﻿using Bike_Link.Domain.Models;
 using Npgsql;
 
 namespace Bike_Link.Infrastructure.Persitence.Repository
@@ -23,38 +17,49 @@ namespace Bike_Link.Infrastructure.Persitence.Repository
             await using var conn = await _dataSource.OpenConnectionAsync();
 
             await using var cmd = new NpgsqlCommand(@"
-        INSERT INTO vehicles
-        (seller_id, name, description, price, condition, frame_size, usage_history, model, brand_id, category_id, status)
-        VALUES
-        (@seller, @name, @desc, @price, @cond, @frame, @usage, @model, @brand, @cat, 'pending_approval')
-        RETURNING vehicle_id;
-    ", conn);
+INSERT INTO ""Vehicles"" 
+(
+    ""SellerId"", ""Name"", ""Description"", ""Price"", ""Condition"", 
+    ""FrameSize"", ""UsageHistory"", ""Model"", ""BrandId"", 
+    ""CategoryId"", ""Status"", ""CreatedAt""
+)
+VALUES
+(@seller, @name, @desc, @price, @cond, @frame, @usage, @model, @brand, @cat, @status, NOW())
+RETURNING ""VehicleId"";
+", conn);
 
             cmd.Parameters.AddWithValue("seller", v.SellerId);
             cmd.Parameters.AddWithValue("name", v.Name);
-            cmd.Parameters.AddWithValue("desc", v.Description);
+            cmd.Parameters.AddWithValue("desc", (object?)v.Description ?? DBNull.Value);
             cmd.Parameters.AddWithValue("price", v.Price);
-            cmd.Parameters.AddWithValue("cond", v.Condition);
-            cmd.Parameters.AddWithValue("frame", v.FrameSize);
-            cmd.Parameters.AddWithValue("usage", v.UsageHistory);
-            cmd.Parameters.AddWithValue("model", v.Model);
-            cmd.Parameters.AddWithValue("brand", v.BrandId);
-            cmd.Parameters.AddWithValue("cat", v.CategoryId);
+            cmd.Parameters.AddWithValue("cond", (object?)v.Condition ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("frame", (object?)v.FrameSize ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("usage", (object?)v.UsageHistory ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("model", (object?)v.Model ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("brand", (object?)v.BrandId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("cat", (object?)v.CategoryId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("status", v.Status ?? "pending_approval");
 
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
 
-        public async Task<List<Vehicle>> GetBySellerAsync(int sellerId)
+        public async Task<List<Vehicle>> GetBySellerAsync(int userId)
         {
             await using var conn = await _dataSource.OpenConnectionAsync();
             await using var cmd = new NpgsqlCommand(@"
-        SELECT vehicle_id, name, price, status
-        FROM vehicles
-        WHERE seller_id = @sid
-        ORDER BY created_at DESC
-    ", conn);
+SELECT 
+    ""VehicleId"", 
+    ""Name"", 
+    ""Price"", 
+    ""Status"", 
+    ""CreatedAt"", 
+    ""IsInspected""
+FROM  ""Vehicles""
+WHERE ""SellerId"" = @uid
+ORDER BY ""CreatedAt"" DESC
+", conn);
 
-            cmd.Parameters.AddWithValue("sid", sellerId);
+            cmd.Parameters.AddWithValue("uid", userId);
 
             var list = new List<Vehicle>();
             await using var rd = await cmd.ExecuteReaderAsync();
@@ -65,25 +70,41 @@ namespace Bike_Link.Infrastructure.Persitence.Repository
                     VehicleId = rd.GetInt32(0),
                     Name = rd.GetString(1),
                     Price = rd.GetDecimal(2),
-                    Status = rd.GetString(3)
+                    Status = rd.IsDBNull(3) ? null : rd.GetString(3),
+                    CreatedAt = rd.IsDBNull(4) ? null : rd.GetDateTime(4),
+                    IsInspected = rd.IsDBNull(5) ? null : rd.GetBoolean(5)
                 });
             }
+
             return list;
         }
 
-        public async Task<Vehicle?> GetByIdAsync(int id, int sellerId)
+        public async Task<Vehicle?> GetByIdAsync(int id, int userId)
         {
             await using var conn = await _dataSource.OpenConnectionAsync();
             await using var cmd = new NpgsqlCommand(@"
-        SELECT vehicle_id, seller_id, name, description, price, condition,
-               frame_size, usage_history, model, brand_id, category_id, status,
-               created_at,updated_at
-        FROM vehicles
-        WHERE vehicle_id = @id AND seller_id = @sid
-    ", conn);
+SELECT 
+    ""VehicleId"", 
+    ""SellerId"", 
+    ""Name"", 
+    ""Description"", 
+    ""Price"", 
+    ""Condition"",
+    ""FrameSize"", 
+    ""UsageHistory"", 
+    ""Model"", 
+    ""BrandId"", 
+    ""CategoryId"", 
+    ""Status"",
+    ""CreatedAt"", 
+    ""UpdatedAt"", 
+    ""IsInspected""
+FROM ""Vehicles""
+WHERE ""VehicleId"" = @id AND ""SellerId"" = @uid
+", conn);
 
             cmd.Parameters.AddWithValue("id", id);
-            cmd.Parameters.AddWithValue("sid", sellerId);
+            cmd.Parameters.AddWithValue("uid", userId);
 
             await using var rd = await cmd.ExecuteReaderAsync();
             if (!await rd.ReadAsync()) return null;
@@ -93,18 +114,18 @@ namespace Bike_Link.Infrastructure.Persitence.Repository
                 VehicleId = rd.GetInt32(0),
                 SellerId = rd.GetInt32(1),
                 Name = rd.GetString(2),
-                Description = rd.GetString(3),
+                Description = rd.IsDBNull(3) ? null : rd.GetString(3),
                 Price = rd.GetDecimal(4),
-                Condition = rd.GetString(5),
-                FrameSize = rd.GetString(6),
-                UsageHistory = rd.GetString(7),
-                Model = rd.GetString(8),
-                BrandId = rd.GetInt32(9),
-                CategoryId = rd.GetInt32(10),
-                Status = rd.GetString(11),
+                Condition = rd.IsDBNull(5) ? null : rd.GetString(5),
+                FrameSize = rd.IsDBNull(6) ? null : rd.GetString(6),
+                UsageHistory = rd.IsDBNull(7) ? null : rd.GetString(7),
+                Model = rd.IsDBNull(8) ? null : rd.GetString(8),
+                BrandId = rd.IsDBNull(9) ? null : rd.GetInt32(9),
+                CategoryId = rd.IsDBNull(10) ? null : rd.GetInt32(10),
+                Status = rd.IsDBNull(11) ? null : rd.GetString(11),
                 CreatedAt = rd.IsDBNull(12) ? null : rd.GetDateTime(12),
-                UpdatedAt = rd.IsDBNull(13) ? null : rd.GetDateTime(13)
-
+                UpdatedAt = rd.IsDBNull(13) ? null : rd.GetDateTime(13),
+                IsInspected = rd.IsDBNull(14) ? null : rd.GetBoolean(14)
             };
         }
 
@@ -112,39 +133,47 @@ namespace Bike_Link.Infrastructure.Persitence.Repository
         {
             await using var conn = await _dataSource.OpenConnectionAsync();
             await using var cmd = new NpgsqlCommand(@"
-        UPDATE vehicles SET
-            name=@name, description=@desc, price=@price,
-            condition=@cond, frame_size=@frame,
-            usage_history=@usage, model=@model,
-            brand_id=@brand, category_id=@cat
-        WHERE vehicle_id=@id AND seller_id=@sid
-    ", conn);
+UPDATE ""Vehicles"" SET
+    ""Name"" = @name,
+    ""Description"" = @desc,
+    ""Price"" = @price,
+    ""Condition"" = @cond,
+    ""FrameSize"" = @frame,
+    ""UsageHistory"" = @usage,
+    ""Model"" = @model,
+    ""BrandId"" = @brand,
+    ""CategoryId"" = @cat,
+    ""UpdatedAt"" = NOW()
+WHERE ""VehicleId"" = @id AND ""SellerId"" = @uid
+", conn);
 
             cmd.Parameters.AddWithValue("id", v.VehicleId);
-            cmd.Parameters.AddWithValue("sid", v.SellerId);
+            cmd.Parameters.AddWithValue("uid", v.SellerId);
             cmd.Parameters.AddWithValue("name", v.Name);
-            cmd.Parameters.AddWithValue("desc", v.Description);
+            cmd.Parameters.AddWithValue("desc", (object?)v.Description ?? DBNull.Value);
             cmd.Parameters.AddWithValue("price", v.Price);
-            cmd.Parameters.AddWithValue("cond", v.Condition);
-            cmd.Parameters.AddWithValue("frame", v.FrameSize);
-            cmd.Parameters.AddWithValue("usage", v.UsageHistory);
-            cmd.Parameters.AddWithValue("model", v.Model);
-            cmd.Parameters.AddWithValue("brand", v.BrandId);
-            cmd.Parameters.AddWithValue("cat", v.CategoryId);
+            cmd.Parameters.AddWithValue("cond", (object?)v.Condition ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("frame", (object?)v.FrameSize ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("usage", (object?)v.UsageHistory ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("model", (object?)v.Model ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("brand", (object?)v.BrandId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("cat", (object?)v.CategoryId ?? DBNull.Value);
 
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task HideAsync(int id, int sellerId)
+        public async Task HideAsync(int id, int userId)
         {
             await using var conn = await _dataSource.OpenConnectionAsync();
             await using var cmd = new NpgsqlCommand(@"
-        UPDATE vehicles SET status = 'hidden'
-        WHERE vehicle_id = @id AND seller_id = @sid
-    ", conn);
+UPDATE ""Vehicles"" SET 
+    ""Status"" = 'hidden', 
+    ""UpdatedAt"" = NOW()
+WHERE ""VehicleId"" = @id AND ""SellerId"" = @uid
+", conn);
 
             cmd.Parameters.AddWithValue("id", id);
-            cmd.Parameters.AddWithValue("sid", sellerId);
+            cmd.Parameters.AddWithValue("uid", userId);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -153,9 +182,9 @@ namespace Bike_Link.Infrastructure.Persitence.Repository
             await using var conn = await _dataSource.OpenConnectionAsync();
 
             await using var cmd = new NpgsqlCommand(@"
-            INSERT INTO vehicle_media (vehicle_id, type, url)
-            VALUES (@vid, @type, @url)
-        ", conn);
+INSERT INTO ""VehicleMedia"" (""VehicleId"", ""Type"", ""Url"")
+VALUES (@vid, @type, @url)
+", conn);
 
             cmd.Parameters.AddWithValue("vid", vehicleId);
             cmd.Parameters.AddWithValue("type", type);
