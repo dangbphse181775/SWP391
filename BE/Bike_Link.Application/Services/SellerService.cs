@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bike_Link.Application.DTO;
+﻿using Bike_Link.Application.DTO;
 using Bike_Link.Application.IService;
-using CloudinaryDotNet.Actions;
-using CloudinaryDotNet;
-using Bike_Link.Infrastructure.Persitence.Repository;
 using Bike_Link.Domain.Models;
-
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Bike_Link.Infrastructure.Persitence.Repository;
 
 namespace Bike_Link.Application.Services
 {
@@ -24,11 +18,11 @@ namespace Bike_Link.Application.Services
             _cloudinary = cloudinary;
         }
 
-        public async Task<int> CreateVehicleAsync(CreateVehicleRequest req, int sellerId)
+        public async Task<int> CreateVehicleAsync(CreateVehicleRequest req, int userId)
         {
             var vehicle = new Vehicle
             {
-                SellerId = sellerId,
+                SellerId = userId,
                 Name = req.Name,
                 Description = req.Description,
                 Price = req.Price,
@@ -37,12 +31,14 @@ namespace Bike_Link.Application.Services
                 UsageHistory = req.UsageHistory,
                 Model = req.Model,
                 BrandId = req.BrandId,
-                CategoryId = req.CategoryId
+                CategoryId = req.CategoryId,
+                Status = "pending_approval",
+                CreatedAt = DateTime.UtcNow
             };
 
             int vehicleId = await _repo.InsertVehicleAsync(vehicle);
 
-            // 2. Upload images
+            // Upload images
             if (req.Images != null)
             {
                 foreach (var file in req.Images)
@@ -58,7 +54,7 @@ namespace Bike_Link.Application.Services
                 }
             }
 
-            // 3. Upload videos
+            // Upload videos
             if (req.Videos != null)
             {
                 foreach (var file in req.Videos)
@@ -77,18 +73,57 @@ namespace Bike_Link.Application.Services
             return vehicleId;
         }
 
-        public async Task<List<Vehicle>> GetMyVehiclesAsync(int sellerId)
-    => await _repo.GetBySellerAsync(sellerId);
+        public async Task<List<VehicleListDto>> GetMyVehiclesAsync(int userId)
+        {
+            var vehicles = await _repo.GetBySellerAsync(userId);
 
-        public async Task<Vehicle?> GetDetailAsync(int id, int sellerId)
-            => await _repo.GetByIdAsync(id, sellerId);
+            return vehicles.Select(v => new VehicleListDto
+            {
+                VehicleId = v.VehicleId,
+                Name = v.Name,
+                Price = v.Price,
+                Status = v.Status,
+                IsInspected = v.IsInspected ?? false,
+                CreatedAt = v.CreatedAt ?? DateTime.UtcNow
+            }).ToList();
+        }
 
-        public async Task UpdateAsync(int id, UpdateVehicleRequest req, int sellerId)
+        public async Task<VehicleDetailDto?> GetDetailAsync(int id, int userId)
+        {
+            var v = await _repo.GetByIdAsync(id, userId);
+            if (v == null) return null;
+
+            return new VehicleDetailDto
+            {
+                VehicleId = v.VehicleId,
+                Name = v.Name,
+                Description = v.Description,
+                Price = v.Price,
+                Condition = v.Condition,
+                FrameSize = v.FrameSize,
+                UsageHistory = v.UsageHistory,
+                Model = v.Model,
+                BrandId = v.BrandId,
+                CategoryId = v.CategoryId,
+                Status = v.Status,
+                IsInspected = v.IsInspected ?? false,
+                CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
+                UpdatedAt = v.UpdatedAt,
+                Media = v.VehicleMedia.Select(m => new VehicleMediaDto
+                {
+                    MediaId = m.MediaId,
+                    Type = m.Type ?? "image",
+                    Url = m.Url
+                }).ToList()
+            };
+        }
+
+        public async Task UpdateAsync(int id, UpdateVehicleRequest req, int userId)
         {
             var v = new Vehicle
             {
                 VehicleId = id,
-                SellerId = sellerId,
+                SellerId = userId,
                 Name = req.Name,
                 Description = req.Description,
                 Price = req.Price,
@@ -97,13 +132,16 @@ namespace Bike_Link.Application.Services
                 UsageHistory = req.UsageHistory,
                 Model = req.Model,
                 BrandId = req.BrandId,
-                CategoryId = req.CategoryId
+                CategoryId = req.CategoryId,
+                UpdatedAt = DateTime.UtcNow
             };
 
             await _repo.UpdateVehicleAsync(v);
         }
 
-        public async Task HideAsync(int id, int sellerId)
-            => await _repo.HideAsync(id, sellerId);
+        public async Task HideAsync(int id, int userId)
+        {
+            await _repo.HideAsync(id, userId);
+        }
     }
 }

@@ -10,10 +10,10 @@ namespace Bike_Link.Application.IService
 {
     public interface ISellerService
     {
-        Task<int> CreateVehicleAsync(CreateVehicleRequest req, int sellerId);
-        Task<List<Vehicle>> GetMyVehiclesAsync(int sellerId);
-        Task<Vehicle?> GetDetailAsync(int id, int sellerId);
-        Task UpdateAsync(int id, UpdateVehicleRequest req, int sellerId);
-        Task HideAsync(int id, int sellerId);
+        Task<int> CreateVehicleAsync(CreateVehicleRequest req, int userId);
+        Task<List<VehicleListDto>> GetMyVehiclesAsync(int userId);
+        Task<VehicleDetailDto?> GetDetailAsync(int id, int userId);
+        Task UpdateAsync(int id, UpdateVehicleRequest req, int userId);
+        Task HideAsync(int id, int userId);
     }
 }

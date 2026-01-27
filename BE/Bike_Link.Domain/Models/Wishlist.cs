@@ -7,11 +7,13 @@ public partial class Wishlist
 {
     public int WishlistId { get; set; }
 
-    public int? BuyerId { get; set; }
+
+    public int UserId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual User? Buyer { get; set; }
+    // Navigation
+    public virtual User User { get; set; } = null!;
 
     public virtual ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
 }

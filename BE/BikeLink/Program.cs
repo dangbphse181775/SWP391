@@ -2,11 +2,13 @@
 using Microsoft.IdentityModel.Tokens;
 using Bike_Link.Application.IService;
 using Bike_Link.Application.Services;
-using Bike_Link.Domain.IRepository;
 using Bike_Link.Infrastructure.Persitence.Repository;
 using CloudinaryDotNet;
 using Npgsql;
 using System.Text;
+using Bike_Link.Domain.Models;
+using Microsoft.EntityFrameworkCore;
+using Bike_Link.Domain.IRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +53,11 @@ builder.Services.AddSingleton<NpgsqlDataSource>(_ =>
     return NpgsqlDataSource.Create(connStr);
 });
 
+builder.Services.AddDbContext<BikeLinkContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
 var jwtKey = builder.Configuration["Jwt:Key"];
 
 builder.Services
@@ -74,9 +81,11 @@ builder.Services
 builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ISellerService, SellerService>();
 
-//buyer -> seller
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserService, UserService>();
+//auth
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+
 
 
 // Cloudinary

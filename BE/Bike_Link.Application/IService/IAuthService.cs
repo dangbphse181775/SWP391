@@ -7,8 +7,9 @@ using Bike_Link.Application.DTO;
 
 namespace Bike_Link.Application.IService
 {
-    public interface IUserService
+    public interface IAuthService
     {
-        Task UpgradeToSellerAsync(int userId, UpgradeToSellerRequest req);
+        Task<RegisterResultDto> RegisterAsync(RegisterRequest req);
+        Task<LoginResultDto> LoginAsync(LoginRequest req);
     }
 }
