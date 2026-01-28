@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Bike_Link.Application.DTO;
 using Bike_Link.Application.IService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
@@ -19,7 +20,7 @@ namespace BikeLink.Controllers
         {
             _service = service;
         }
-
+        
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequest req)
         {
