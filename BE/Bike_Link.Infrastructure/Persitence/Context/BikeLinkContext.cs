@@ -87,8 +87,8 @@ public partial class BikeLinkContext : DbContext
         modelBuilder.Entity<Wishlist>(entity =>
         {
             entity.HasOne(w => w.User)
-                .WithMany(u => u.Wishlists)
-                .HasForeignKey(w => w.UserId)
+                .WithOne(u => u.Wishlist)
+                .HasForeignKey<User>(w => w.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

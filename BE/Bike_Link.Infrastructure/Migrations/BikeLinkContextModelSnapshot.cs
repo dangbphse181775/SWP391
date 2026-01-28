@@ -358,10 +358,7 @@ namespace Bike_Link.Infrastructure.Migrations
             modelBuilder.Entity("Bike_Link.Domain.Models.User", b =>
                 {
                     b.Property<int>("UserId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserId"));
 
                     b.Property<string>("AvatarUrl")
                         .HasColumnType("text");
@@ -513,8 +510,6 @@ namespace Bike_Link.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("WishlistId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Wishlists");
                 });
@@ -694,7 +689,15 @@ namespace Bike_Link.Infrastructure.Migrations
                         .WithMany("Users")
                         .HasForeignKey("RoleId");
 
+                    b.HasOne("Bike_Link.Domain.Models.Wishlist", "Wishlist")
+                        .WithOne("User")
+                        .HasForeignKey("Bike_Link.Domain.Models.User", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Role");
+
+                    b.Navigation("Wishlist");
                 });
 
             modelBuilder.Entity("Bike_Link.Domain.Models.Vehicle", b =>
@@ -729,17 +732,6 @@ namespace Bike_Link.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Vehicle");
-                });
-
-            modelBuilder.Entity("Bike_Link.Domain.Models.Wishlist", b =>
-                {
-                    b.HasOne("Bike_Link.Domain.Models.User", "User")
-                        .WithMany("Wishlists")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Bike_Link.Domain.Models.WishlistItem", b =>
@@ -813,8 +805,6 @@ namespace Bike_Link.Infrastructure.Migrations
                     b.Navigation("SellOrders");
 
                     b.Navigation("Vehicles");
-
-                    b.Navigation("Wishlists");
                 });
 
             modelBuilder.Entity("Bike_Link.Domain.Models.Vehicle", b =>
@@ -830,6 +820,9 @@ namespace Bike_Link.Infrastructure.Migrations
 
             modelBuilder.Entity("Bike_Link.Domain.Models.Wishlist", b =>
                 {
+                    b.Navigation("User")
+                        .IsRequired();
+
                     b.Navigation("WishlistItems");
                 });
 #pragma warning restore 612, 618

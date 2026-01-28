@@ -45,5 +45,6 @@ public partial class User
     public virtual ICollection<Review> ReviewTargetUsers { get; set; } = new List<Review>();
 
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
-    public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
+    //public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
+    public virtual Wishlist Wishlist { get; set; }
 }
