@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Bike_Link.Domain.Models;
 
@@ -22,7 +23,7 @@ public partial class Vehicle
     public int? BrandId { get; set; }
     public int? CategoryId { get; set; }
 
-    public string? Status { get; set; }        // pending_approval, active, hidden, sold...
+    public string? Status { get; set; }        // pending_approval, active, hidden, sold
     public bool? IsInspected { get; set; }
 
     public DateTime? CreatedAt { get; set; }
@@ -38,4 +39,13 @@ public partial class Vehicle
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<VehicleMedium> VehicleMedia { get; set; } = new List<VehicleMedium>();
     public virtual ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
+
+    [NotMapped]
+    public string? ThumbnailUrl { get; set; }
+
+    [NotMapped]
+    public string? BrandName { get; set; }
+
+    [NotMapped]
+    public string? CategoryName { get; set; }
 }

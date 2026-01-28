@@ -85,7 +85,9 @@ builder.Services.AddScoped<ISellerService, SellerService>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-
+//show public vehicles
+builder.Services.AddScoped<IPublicVehicleRepository, PublicVehicleRepository>();
+builder.Services.AddScoped<IPublicVehicleService, PublicVehicleService>();
 
 
 // Cloudinary

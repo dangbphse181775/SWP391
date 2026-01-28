@@ -18,6 +18,7 @@ namespace BikeLink.Controllers
             _sellerService = sellerService;
         }
 
+        [Authorize]
         [HttpPost("vehicles")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> CreateVehicle([FromForm] CreateVehicleRequest req)
@@ -33,6 +34,7 @@ namespace BikeLink.Controllers
             });
         }
 
+        [Authorize]
         [HttpGet("vehicles")]
         public async Task<IActionResult> MyVehicles()
         {
@@ -42,6 +44,7 @@ namespace BikeLink.Controllers
             return Ok(list);
         }
 
+        [Authorize]
         [HttpGet("vehicles/{id:int}")]
         public async Task<IActionResult> Detail(int id)
         {
@@ -54,6 +57,7 @@ namespace BikeLink.Controllers
             return Ok(v);
         }
 
+        [Authorize]
         [HttpPut("vehicles/{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateVehicleRequest req)
         {
@@ -63,6 +67,7 @@ namespace BikeLink.Controllers
             return Ok(new { message = "Cập nhật thành công" });
         }
 
+        [Authorize]
         [HttpDelete("vehicles/{id:int}")] // Ẩn tin
         public async Task<IActionResult> Hide(int id)
         {
