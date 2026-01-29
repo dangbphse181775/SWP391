@@ -17,7 +17,7 @@ namespace BikeLink.Controllers
             _service = service;
         }
 
-        [Authorize]
+        
         [HttpGet("vehicles")]
         public async Task<IActionResult> Search([FromQuery] VehicleSearchOptions options)
         {
