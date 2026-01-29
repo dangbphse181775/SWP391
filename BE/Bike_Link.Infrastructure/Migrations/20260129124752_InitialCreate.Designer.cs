@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Bike_Link.Infrastructure.Migrations
 {
     [DbContext(typeof(BikeLinkContext))]
-    [Migration("20260127110425_InitSchema")]
-    partial class InitSchema
+    [Migration("20260129124752_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -517,7 +517,8 @@ namespace Bike_Link.Infrastructure.Migrations
 
                     b.HasKey("WishlistId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Wishlists");
                 });
@@ -737,8 +738,8 @@ namespace Bike_Link.Infrastructure.Migrations
             modelBuilder.Entity("Bike_Link.Domain.Models.Wishlist", b =>
                 {
                     b.HasOne("Bike_Link.Domain.Models.User", "User")
-                        .WithMany("Wishlists")
-                        .HasForeignKey("UserId")
+                        .WithOne("Wishlist")
+                        .HasForeignKey("Bike_Link.Domain.Models.Wishlist", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -817,7 +818,8 @@ namespace Bike_Link.Infrastructure.Migrations
 
                     b.Navigation("Vehicles");
 
-                    b.Navigation("Wishlists");
+                    b.Navigation("Wishlist")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Bike_Link.Domain.Models.Vehicle", b =>

@@ -83,13 +83,13 @@ public partial class BikeLinkContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Wishlist -> User
+        // Wishlist -> User (1 - 1)
         modelBuilder.Entity<Wishlist>(entity =>
         {
             entity.HasOne(w => w.User)
-                .WithOne(u => u.Wishlist)
-                .HasForeignKey<User>(w => w.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                  .WithOne(u => u.Wishlist)
+                  .HasForeignKey<Wishlist>(w => w.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         // WishlistItem composite key

@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Bike_Link.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class ConfirmUserTb : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -540,7 +540,8 @@ namespace Bike_Link.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Wishlists_UserId",
                 table: "Wishlists",
-                column: "UserId");
+                column: "UserId",
+                unique: true);
         }
 
         /// <inheritdoc />
