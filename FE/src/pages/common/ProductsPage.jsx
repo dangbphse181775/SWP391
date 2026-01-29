@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Heart } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -25,7 +26,8 @@ const ProductsPage = () => {
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [wishlist, setWishlist] = useState(JSON.parse(localStorage.getItem("wishlist")) || []
+);
   // Debounce search query
   const [debouncedSearchQuery] = useDebounce(searchQuery, 1000);
 
@@ -144,6 +146,23 @@ const ProductsPage = () => {
     e.stopPropagation();
     console.log('Add to cart:', product);
   };
+
+const toggleWishlist = (product) => {
+  setWishlist(prev => {
+    const exists = prev.find(p => p.vehicleId === product.vehicleId);
+
+    let updated;
+
+    if (exists) {
+      updated = prev.filter(p => p.vehicleId !== product.vehicleId);
+    } else {
+      updated = [...prev, product];
+    }
+
+    localStorage.setItem("wishlist", JSON.stringify(updated));
+    return updated;
+  });
+};
 
   const formatPrice = (value) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -343,6 +362,8 @@ const ProductsPage = () => {
                     key={product.vehicleId}
                     product={product}
                     onAddToCart={handleAddToCart}
+                    wishlist={wishlist}
+                    onToggleWishlist={toggleWishlist}
                   />
                 ))}
               </div>
@@ -395,7 +416,7 @@ const ProductsPage = () => {
 };
 
 
-const ProductCardDetailed = ({ product }) => {
+const ProductCardDetailed = ({ product, wishlist, onToggleWishlist }) => {
   const {
     name,
     price,
@@ -412,6 +433,23 @@ const ProductCardDetailed = ({ product }) => {
   return (
     <div className="group cursor-pointer flex flex-col h-full bg-gray-50 rounded-lg border border-transparent hover:border-black hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
       <div className="relative aspect-square w-full bg-white overflow-hidden">
+         {/* Wishlist button */}
+         <button
+           onClick={(e) => {
+             e.stopPropagation();
+             onToggleWishlist(product);
+            }}
+            className="absolute top-3 right-3 z-20 bg-white rounded-full p-2 shadow hover:scale-110 transition"
+         >
+            <Heart
+              className={`h-5 w-5 ${
+              wishlist.some(p => p.vehicleId === product.vehicleId)
+                ? "fill-red-500 text-red-500"
+                : "text-gray-400"
+              }`}
+            />
+          </button>
+          
         <img
           src={thumbnailUrl || '/placeholder-bike.jpg'}
           alt={name}
