@@ -19,18 +19,24 @@ const ProductSection = ({ title, products }) => {
   return (
     <section className="py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold uppercase text-blue-600">{title}</h2>
+        <h2 className="text-xl font-bold uppercase text-black">{title}</h2>
         <Button variant="ghost" size="sm" className="gap-1" onClick={handleViewAll}>
           Xem tất cả
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {products.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">
+          Chưa có sản phẩm trong danh mục này
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {products.map((product) => (
+            <ProductCard key={product.vehicleId} product={product} />
+          ))}
+        </div>
+      )}
     </section>
   );
 };

@@ -1,86 +1,61 @@
+import { useState } from 'react';
 import { Heart } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
-  const {
-    image,
-    category,
-    name,
-    brand,
-    condition,
-    price,
-    originalPrice,
-    discount,
-  } = product;
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const handleActionClick = (e, action) => {
-    e.preventDefault();
+  const { vehicleId, name, price, thumbnailUrl } = product;
+
+  const formatPrice = (value) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(value);
+  };
+
+  const handleWishlistClick = (e) => {
+    e.stopPropagation();
     const token = localStorage.getItem('access_token');
     if (!token) {
-      alert('Vui lòng đăng nhập để tiếp tục!');
+      alert('Vui lòng đăng nhập để thêm vào yêu thích!');
       navigate('/login');
     } else {
-      if (action === 'wishlist') {
-        // Xử lý thêm vào wishlist
-        console.log('Thêm vào yêu thích');
-      } else if (action === 'detail') {
-        navigate('/user');
-      }
+      setIsWishlisted(!isWishlisted);
+      console.log('Toggle wishlist:', vehicleId);
+      // TODO: Call API to add/remove from wishlist
     }
   };
 
   return (
-    <Card className="group overflow-hidden border transition-shadow hover:shadow-lg">
-      <div className="relative aspect-square overflow-hidden bg-gray-100">
+    <div className="group cursor-pointer flex flex-col h-full bg-gray-50 rounded-lg border border-transparent hover:border-black hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+      <div className="relative aspect-square w-full bg-white overflow-hidden">
         <img
-          src={image}
+          src={thumbnailUrl || '/placeholder-bike.jpg'}
           alt={name}
-          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+          onError={(e) => { e.target.src = '/placeholder-bike.jpg'; }}
         />
-        {discount && (
-          <Badge className="absolute left-3 top-3 bg-red-500 hover:bg-red-600">
-            -{discount}%
-          </Badge>
-        )}
-        <Button
-          size="icon"
-          variant="ghost"
-          className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/80 hover:bg-white"
-          onClick={(e) => handleActionClick(e, 'wishlist')}
+        <button
+          onClick={handleWishlistClick}
+          className={`absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 hover:bg-white shadow-sm z-10 transition-colors flex items-center justify-center ${
+            isWishlisted ? 'text-red-500' : 'text-gray-700'
+          }`}
         >
-          <Heart className="h-5 w-5" />
-        </Button>
+          <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
+        </button>
       </div>
 
-      <CardContent className="space-y-3 p-4">
-        <div className="space-y-1">
-          <p className="text-xs text-gray-600">{category}</p>
-          <h3 className="font-semibold leading-tight">{name}</h3>
-          <p className="text-sm text-gray-600">{brand}</p>
-          <div className="pt-1">
-            <Badge variant="secondary" className="text-xs">
-              {condition}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between pt-2">
-          <div className="space-y-1">
-            <p className="text-lg font-bold">{price}</p>
-            {originalPrice && (
-              <p className="text-sm text-gray-400 line-through">{originalPrice}</p>
-            )}
-          </div>
-          <Button size="sm" variant="outline" className="text-sm" onClick={(e) => handleActionClick(e, 'detail')}>
-            Xem Chi Tiết
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex flex-col flex-1 gap-2 p-5 items-center justify-center text-center bg-gray-50 relative z-10">
+        <h3 className="text-base font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-black transition-colors">
+          {name}
+        </h3>
+        <span className="text-lg font-bold text-red-600">
+          {formatPrice(price)}
+        </span>
+      </div>
+    </div>
   );
 };
 
