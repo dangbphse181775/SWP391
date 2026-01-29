@@ -32,9 +32,9 @@ const Header = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <a href="#" onClick={handleHomeClick} className="flex items-center gap-2">
-            <img 
-              src="/Cycling-race-silhouette-logo-vector-icon-Graphics-5229446-1 (1).jpg" 
-              alt="Đạp House Logo" 
+            <img
+              src="/Cycling-race-silhouette-logo-vector-icon-Graphics-5229446-1 (1).jpg"
+              alt="Đạp House Logo"
               className="w-12 h-10 object-contain"
             />
             <span className="text-lg font-semibold italic">Đạp House</span>
@@ -51,9 +51,20 @@ const Header = () => {
             <Link to="/community" className="text-sm font-semibold text-gray-900 hover:text-blue-600">
               Cộng đồng
             </Link>
-            <Link to="/sell" className="text-sm font-semibold text-gray-900 hover:text-blue-600">
+            <a
+              href="#"
+              className="text-sm font-semibold text-gray-900 hover:text-blue-600"
+              onClick={e => {
+                e.preventDefault();
+                if (isLoggedIn) {
+                  navigate('/sell');
+                } else {
+                  navigate('/login');
+                }
+              }}
+            >
               Bán xe
-            </Link>
+            </a>
             <Link to="/contact" className="text-sm font-semibold text-gray-900 hover:text-blue-600">
               Liên hệ
             </Link>
@@ -71,9 +82,9 @@ const Header = () => {
               <ShoppingCart className="h-5 w-5" />
             </Button>
             {isLoggedIn ? (
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="rounded-full bg-gray-200 hover:bg-gray-300"
                 onClick={handleAvatarClick}
               >

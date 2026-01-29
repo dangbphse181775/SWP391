@@ -3,19 +3,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { createVehicle } from "@/service/SellAPI";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { toast } from "sonner";
+
 
 export default function Sell() {
   const [media, setMedia] = useState([]);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  // react-hook-form setup
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
-  // cleanup object URLs
+  // cleanup preview URL
   useEffect(() => {
     return () => {
-      media.forEach((file) => URL.revokeObjectURL(file.preview));
+      media.forEach((file) => file.preview && URL.revokeObjectURL(file.preview));
     };
   }, [media]);
 
@@ -23,7 +31,7 @@ export default function Sell() {
     const validFiles = files
       .filter(
         (file) =>
-          file.type.startsWith("image") || file.type.startsWith("video")
+          file.type.startsWith("image/") || file.type.startsWith("video/")
       )
       .map((file) =>
         Object.assign(file, {
@@ -44,23 +52,29 @@ export default function Sell() {
   };
 
   const openFilePicker = () => {
-    fileInputRef.current?.click();
+    if (media.length < 10) fileInputRef.current?.click();
   };
 
   const removeMedia = (index) => {
     setMedia((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Xử lý submit form
-  const onSubmit = (data) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
+  const onSubmit = async (data) => {
+    if (media.length === 0) {
+      toast.warning("Vui lòng tải ít nhất 1 ảnh hoặc video");
       return;
     }
-    // Xử lý đăng tin ở đây
-    // xử lí xong nhớ xóa alert 
-    alert("Đã đăng nhập, xử lý publish...");
+    setLoading(true);
+    try {
+      await createVehicle(data, media);
+      toast.success("Đăng xe thành công");
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      toast.error("Đăng xe thất bại");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,7 +85,9 @@ export default function Sell() {
           <div className="bg-white border border-slate-200 rounded-xl p-6 min-h-[600px] flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-semibold">Thư viện hình ảnh/video</h2>
+                <h2 className="text-xl font-semibold">
+                  Thư viện hình ảnh/video
+                </h2>
                 <p className="text-sm text-slate-500">
                   Tải lên ảnh hoặc video về xe của bạn (tối đa 10 mục).
                 </p>
@@ -80,6 +96,7 @@ export default function Sell() {
                 {media.length} / 10
               </span>
             </div>
+
             {/* Upload zone */}
             <div
               className={`flex-1 border-2 border-dashed rounded-xl flex flex-col items-center justify-center
@@ -87,8 +104,8 @@ export default function Sell() {
                   ? "border-slate-200 bg-slate-100 cursor-not-allowed"
                   : "border-slate-300 bg-slate-50 cursor-pointer hover:border-slate-400"
                 }`}
-              onClick={media.length < 10 ? openFilePicker : undefined}
-              onDrop={media.length < 10 ? handleDrop : undefined}
+              onClick={openFilePicker}
+              onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
             >
               <Input
@@ -99,31 +116,33 @@ export default function Sell() {
                 className="hidden"
                 onChange={handleFileChange}
               />
+
               <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">
                 add_a_photo
               </span>
-              <p className="font-medium">
-                Kéo và thả ảnh/video vào đây
-              </p>
+              <p className="font-medium">Kéo và thả ảnh/video vào đây</p>
               <p className="text-sm text-slate-500 mb-2">
                 hoặc bấm để chọn tệp
               </p>
+
               <Button
                 variant="outline"
+                type="button"
+                disabled={media.length === 10}
                 onClick={(e) => {
                   e.stopPropagation();
                   openFilePicker();
                 }}
-                disabled={media.length === 10}
               >
                 Chọn ảnh / video
               </Button>
             </div>
-            {/* Preview grid */}
+
+            {/* Preview */}
             <div className="grid grid-cols-4 gap-4 mt-6">
               {media.map((file, idx) => (
                 <div
-                  key={file.name + file.size}
+                  key={file.preview}
                   className="relative aspect-square border rounded-lg overflow-hidden group"
                 >
                   <button
@@ -135,11 +154,12 @@ export default function Sell() {
                       close
                     </span>
                   </button>
-                  {file.type.startsWith("image") ? (
+
+                  {file.type.startsWith("image/") ? (
                     <img
                       src={file.preview}
-                      className="w-full h-full object-cover"
                       alt=""
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <video
@@ -150,6 +170,7 @@ export default function Sell() {
                   )}
                 </div>
               ))}
+
               {media.length < 10 && (
                 <div
                   onClick={openFilePicker}
@@ -163,85 +184,136 @@ export default function Sell() {
             </div>
           </div>
         </div>
+
         {/* RIGHT – FORM */}
         <div className="col-span-12 lg:col-span-5 space-y-6">
           <form onSubmit={handleSubmit(onSubmit)}>
+            {/* Thông tin xe */}
             <section className="bg-white border rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4">Thông tin xe</h2>
+
               <Input
-                className="w-full h-10 border rounded-md px-3 mb-2"
-                placeholder="Tiêu đề"
-                {...register("title", { required: "Tiêu đề là bắt buộc" })}
+                className="mb-2"
+                placeholder="Tên xe"
+                {...register("Name", { required: "Tên xe là bắt buộc" })}
               />
-              {errors.title && <p className="text-red-500 text-sm mb-2">{errors.title.message}</p>}
+              {errors.Name && (
+                <p className="text-red-500 text-sm">{errors.Name.message}</p>
+              )}
+
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <select className="h-10 border rounded-md px-3" {...register("brand", { required: "Hãng xe là bắt buộc" })}>
+                <select
+                  className="h-10 border rounded-md px-3"
+                  {...register("BrandId", { required: "Hãng xe là bắt buộc" })}
+                >
                   <option value="">Hãng xe</option>
-                  <option value="Giant">Giant</option>
-                  <option value="Trek">Trek</option>
-                  <option value="Specialized">Specialized</option>
+                  <option value="1">Trek</option>
+                  <option value="2">Specialized</option>
+                  <option value="3">Giant</option>
+                  <option value="4">Cannondale</option>
+                  <option value="5">Bianchi</option>
+                  <option value="6">Pinarello</option>
+                  <option value="7">Cervélo</option>
+                  <option value="8">Scott</option>
+                  <option value="9">Santa Cruz</option>
+                  <option value="10">Colnago</option>
+                  <option value="11">Khác</option>
                 </select>
-                <select className="h-10 border rounded-md px-3" {...register("category", { required: "Loại xe là bắt buộc" })}>
-                  <option value="">Loại xe</option>
-                  <option value="Road">Đường trường</option>
-                  <option value="Mountain">Địa hình</option>
+
+                <select
+                  className="h-10 border rounded-md px-3"
+                  {...register("CategoryId", {
+                    required: "Loại xe là bắt buộc",
+                  })}
+                >
+                  <option value="">Loại</option>
+                  <option value="1">Xe đạp đường trường (Road Bike)</option>
+                  <option value="2">Xe đạp địa hình (Mountain Bike - MTB)</option>
+                  <option value="3">Xe đạp đường phố (City/Hybrid Bike)</option>
+                  <option value="4">Xe đạp touring (Touring Bike)</option>
+                  <option value="5">Xe đạp đua tính giờ (Time Trial/Triathlon)</option>
+                  <option value="6">Xe đạp Gravel (Gravel Bike)</option>
+                  <option value="7">Xe đạp biểu diễn (BMX)</option>
+                  <option value="8">Xe đạp gấp (Folding Bike)</option>
+                  <option value="9">Xe đạp điện thể thao (E-Bike)</option>
+                  <option value="10">Khác</option>
                 </select>
               </div>
-              {errors.brand && <p className="text-red-500 text-sm mb-2">{errors.brand.message}</p>}
-              {errors.category && <p className="text-red-500 text-sm mb-2">{errors.category.message}</p>}
+
               <Input
-                className="w-full h-10 border rounded-md px-3 mb-2"
-                type="number"
-                placeholder="Năm sản xuất"
-                {...register("modelYear", { required: "Năm sản xuất là bắt buộc" })}
+                className="mb-2"
+                placeholder="Model (Năm sản xuất)"
+                {...register("Model", { required: "Model là bắt buộc" })}
               />
-              {errors.modelYear && <p className="text-red-500 text-sm mb-2">{errors.modelYear.message}</p>}
             </section>
+
+            {/* Giá & tình trạng */}
             <section className="bg-white border rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Giá & Tình trạng</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                Giá & Tình trạng
+              </h2>
+
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <Input
-                  className="h-10 border rounded-md px-3"
                   type="number"
+                  step="0.01"
                   placeholder="Giá bán (VNĐ)"
-                  {...register("price", { required: "Giá bán là bắt buộc" })}
+                  {...register("Price", {
+                    required: "Giá bán là bắt buộc",
+                    valueAsNumber: true,
+                  })}
                 />
-                <select className="h-10 border rounded-md px-3" {...register("condition", { required: "Tình trạng là bắt buộc" })}>
+
+                <select
+                  className="h-10 border rounded-md px-3"
+                  {...register("Condition", {
+                    required: "Tình trạng là bắt buộc",
+                  })}
+                >
                   <option value="">Tình trạng</option>
-                  <option value="New">Mới</option>
-                  <option value="Excellent">Xuất sắc</option>
-                  <option value="Good">Tốt</option>
+                  <option value="100%: Mới">100%: Mới</option>
+                  <option value="90%: Gần như mới">90%: Gần như mới</option>
+                  <option value="80%: Đã qua sử dụng – Tốt">80%: Đã qua sử dụng – Tốt</option>
+                  <option value="70%: Đã qua sử dụng – Khá">70%: Đã qua sử dụng – Khá</option>
+                  <option value="60%: Đã qua sử dụng – Cũ">60%: Đã qua sử dụng – Cũ</option>
+                  <option value="50%: Đã qua sử dụng – Cũ nhiều">50%: Đã qua sử dụng – Cũ nhiều</option>
                 </select>
               </div>
-              {errors.price && <p className="text-red-500 text-sm mb-2">{errors.price.message}</p>}
-              {errors.condition && <p className="text-red-500 text-sm mb-2">{errors.condition.message}</p>}
+
               <Input
-                className="w-full h-10 border rounded-md px-3 mb-2"
                 placeholder="Kích thước khung"
-                {...register("frameSize", { required: "Kích thước khung là bắt buộc" })}
+                {...register("FrameSize", {
+                  required: "Kích thước khung là bắt buộc",
+                })}
               />
-              {errors.frameSize && <p className="text-red-500 text-sm mb-2">{errors.frameSize.message}</p>}
             </section>
+
+            {/* Mô tả */}
             <section className="bg-white border rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4">Mô tả</h2>
+
               <textarea
                 className="w-full min-h-[120px] border rounded-md p-3 mb-2"
                 placeholder="Mô tả chi tiết..."
-                {...register("description", { required: "Mô tả là bắt buộc" })}
+                {...register("Description", {
+                  required: "Mô tả là bắt buộc",
+                })}
               />
-              {errors.description && <p className="text-red-500 text-sm mb-2">{errors.description.message}</p>}
+
               <Input
-                className="w-full h-10 border rounded-md px-3 mb-2"
                 placeholder="Lịch sử sử dụng"
-                {...register("usageHistory", { required: "Lịch sử sử dụng là bắt buộc" })}
+                {...register("UsageHistory", {
+                  required: "Lịch sử sử dụng là bắt buộc",
+                })}
               />
-              {errors.usageHistory && <p className="text-red-500 text-sm mb-2">{errors.usageHistory.message}</p>}
             </section>
+
             <Button
-              className="w-full h-12 bg-slate-950 text-white rounded-xl font-bold hover:bg-slate-900"
               type="submit"
+              className="w-full h-12 bg-slate-950 text-white rounded-xl font-bold hover:bg-slate-900"
+              disabled={loading}
             >
-              Đăng tin
+              {loading ? <LoadingSpinner message="Đang đăng tin..." /> : "Đăng tin"}
             </Button>
           </form>
         </div>

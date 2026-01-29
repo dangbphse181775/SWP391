@@ -8,10 +8,13 @@ import RegisterPage from '@/pages/Auth/RegisterPage';
 import Sell from '@/pages/User/Sell';
 import ProductPage from '@/pages/common/ProductsPage';
 import WishlistPage from '@/pages/User/WishlistPage';
+import AppToaster from "@/components/ui/Toaster";
+
 
 function App() {
   return (
     <Router>
+      <AppToaster />
       <Routes>
         {/* Routes with Header and Footer */}
         <Route element={<MainLayout />}>
@@ -23,7 +26,7 @@ function App() {
           <Route path="/wishlist" element={<WishlistPage />} />
         </Route>
         <Route element={<MainLayout />}>
-           <Route path="/sell" element={<Sell />} />
+          <Route path="/sell" element={<Sell />} />
         </Route>
 
 
