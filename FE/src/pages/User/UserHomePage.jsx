@@ -1,15 +1,63 @@
+import { useState, useEffect } from 'react';
 import HeroSection from '@/components/home/HeroSection';
-import ProductSection from '@/components/home/ProductSection';
 import FeaturesSection from '@/components/home/FeaturesSection';
-import { mockProducts } from '@/data/mockProducts';
+import ProductSection from '@/components/home/ProductSection';
+import productsApi from '@/service/productsApi';
+import { Loader2 } from 'lucide-react';
 
 const UserHomePage = () => {
+  const [productsByCategory, setProductsByCategory] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const categories = [
+    'Xe đạp đường trường (Road Bike)',
+    'Xe đạp địa hình (Mountain Bike - MTB)',
+    'Xe đạp đường phố (City/Hybrid Bike)',
+    'Xe đạp touring (Touring Bike)',
+    'Xe đạp đua tính giờ (Time Trial/Triathlon)',
+    'Xe đạp Gravel (Gravel Bike)',
+    'Xe đạp biểu diễn (BMX)',
+    'Xe đạp gấp (Folding Bike)',
+    'Xe đạp điện thể thao (E-Bike)',
+    'Khác',
+  ];
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        const data = await productsApi.getAllVehicles();
+        
+        // Group products by category
+        const grouped = {};
+        categories.forEach(cat => {
+          grouped[cat] = [];
+        });
+        
+        data.forEach(product => {
+          const category = product.categoryName || 'Khác';
+          if (grouped[category]) {
+            grouped[category].push(product);
+          } else {
+            grouped['Khác'].push(product);
+          }
+        });
+        
+        setProductsByCategory(grouped);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProductsByCategory({});
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
       <HeroSection />
 
-      {/* Featured Products Section */}
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8 space-y-2">
           <h2 className="text-3xl font-bold">SẢN PHẨM NỔI BẬT</h2>
@@ -18,26 +66,27 @@ const UserHomePage = () => {
           </p>
         </div>
 
-        {/* Street Bikes */}
-        <ProductSection
-          title="Xe đạp thể thao đường phố"
-          products={mockProducts.streetBikes}
-        />
-
-        {/* Mountain Bikes */}
-        <ProductSection
-          title="Xe đạp địa hình"
-          products={mockProducts.mountainBikes}
-        />
-
-        {/* Racing Bikes */}
-        <ProductSection
-          title="Xe đạp đua"
-          products={mockProducts.racingBikes}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-black" />
+          </div>
+        ) : (
+          <>
+            {categories.map((category) => {
+              const products = productsByCategory[category] || [];
+              
+              return (
+                <ProductSection
+                  key={category}
+                  title={category}
+                  products={products.slice(0, 4)}
+                />
+              );
+            })}
+          </>
+        )}
       </div>
 
-      {/* Features Section */}
       <FeaturesSection />
     </div>
   );

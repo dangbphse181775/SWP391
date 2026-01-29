@@ -15,7 +15,7 @@ const LoginPage = () => {
   const [errorMessage, setErrorMessage] = useState('')
 
   const [loginData, setLoginData] = useState({
-    phone: '',      
+    email: '',      
     password: '',
     rememberMe: false
   })
@@ -32,7 +32,7 @@ const LoginPage = () => {
 
     try {
         const payload = {
-            phone: loginData.phone,
+            email: loginData.email,
             password: loginData.password
         };
 
@@ -91,14 +91,14 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-gray-900 font-medium">
-                Số điện thoại
+              <Label htmlFor="email" className="text-gray-900 font-medium">
+                Email
               </Label>
               <Input
-                id="phone"
-                name="phone"  
-                type="text"
-                value={loginData.phone}
+                id="email"
+                name="email"  
+                type="email"
+                value={loginData.email}
                 onChange={handleChange}
                 className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
                 required
