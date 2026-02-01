@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Bike_Link.Application.DTO;
 using Bike_Link.Application.IService;
 using Bike_Link.Domain.IRepository;
+using Bike_Link.Domain.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
@@ -16,12 +17,14 @@ namespace Bike_Link.Application.Services
     public class AuthService : IAuthService
     {
         private readonly IAuthRepository _repo;
+        private readonly IWishlistRepository _wishlistRepo;
         private readonly IConfiguration _config;
 
-        public AuthService(IAuthRepository repo, IConfiguration config)
+        public AuthService(IAuthRepository repo, IConfiguration config, IWishlistRepository wishlistRepo)
         {
             _repo = repo;
             _config = config;
+            _wishlistRepo = wishlistRepo;
         }
 
         public async Task<RegisterResultDto> RegisterAsync(RegisterRequest req)
@@ -33,6 +36,10 @@ namespace Bike_Link.Application.Services
 
             var hash = BCrypt.Net.BCrypt.HashPassword(req.Password);
             int userId = await _repo.InsertUserAsync(req.Email, req.FullName, hash, buyerRoleId);
+            //Tạo Wishlist cho người dùng mới đăng ký
+            Wishlist wishlist = new Wishlist();
+            wishlist.UserId = userId;
+            await _wishlistRepo.CreateWishlistAsync(wishlist);
 
             return new RegisterResultDto
             {
