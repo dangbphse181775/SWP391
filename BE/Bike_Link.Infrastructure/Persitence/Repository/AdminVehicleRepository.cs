@@ -138,23 +138,23 @@ WHERE v.""VehicleId""=@id
                 }
             };
 
-            v.VehicleMedia = await GetImagesAsync(id);
+            v.VehicleMedia = await GetMediaAsync(id);
 
             return v;
         }
 
-        private async Task<List<VehicleMedium>> GetImagesAsync(int id)
+        private async Task<List<VehicleMedium>> GetMediaAsync(int vehicleId)
         {
             await using var conn = await _dataSource.OpenConnectionAsync();
 
             await using var cmd = new NpgsqlCommand(@"
-SELECT ""Url""
+SELECT ""Type"", ""Url""
 FROM ""VehicleMedia""
-WHERE ""VehicleId""=@id AND ""Type""='image'
+WHERE ""VehicleId"" = @id
 ORDER BY ""MediaId""
 ", conn);
 
-            cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("id", vehicleId);
 
             var list = new List<VehicleMedium>();
 
@@ -164,12 +164,14 @@ ORDER BY ""MediaId""
             {
                 list.Add(new VehicleMedium
                 {
-                    Url = rd.GetString(0)
+                    Type = rd.GetString(0),
+                    Url = rd.GetString(1)
                 });
             }
 
             return list;
         }
+
 
         public async Task ApproveAsync(int id)
         {

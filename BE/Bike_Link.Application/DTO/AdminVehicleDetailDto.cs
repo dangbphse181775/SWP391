@@ -20,7 +20,7 @@ namespace Bike_Link.Application.DTO
         public string SellerEmail { get; set; } = null!;
         public string? BrandName { get; set; }
         public string? CategoryName { get; set; }
-        public List<string> Images { get; set; } = new();
+        public List<MediaDto> Media { get; set; } = new();
         public string? AdminNote { get; set; }
         public DateTime CreatedAt { get; set; }
     }

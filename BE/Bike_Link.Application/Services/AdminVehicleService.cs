@@ -57,7 +57,11 @@ namespace Bike_Link.Application.Services
                 BrandName = v.Brand?.BrandName,
                 CategoryName = v.Category?.CategoryName,
 
-                Images = v.VehicleMedia.Select(x => x.Url).ToList(),
+                Media = v.VehicleMedia.Select(x => new MediaDto
+                {
+                    Type = x.Type!,
+                    Url = x.Url
+                }).ToList(),
 
                 AdminNote = v.AdminNote,
 

@@ -38,4 +38,10 @@ namespace Bike_Link.Application.DTO
         public string Type { get; set; } = null!; // image / video
         public string Url { get; set; } = null!;
     }
+
+    public class MediaDto
+    {
+        public string Type { get; set; } = null!; // image / video
+        public string Url { get; set; } = null!;
+    }
 }
