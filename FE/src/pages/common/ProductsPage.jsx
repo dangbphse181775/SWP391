@@ -57,8 +57,10 @@ const ProductsPage = () => {
       setIsLoading(true);
       try {
         const data = await productsApi.getAllVehicles();
-        setAllProducts(data);
-        setFilteredProducts(data);
+        // Safe check if data is array
+        const products = Array.isArray(data) ? data : [];
+        setAllProducts(products);
+        setFilteredProducts(products);
       } catch (error) {
         console.error('Error fetching products:', error);
         setAllProducts([]);
