@@ -32,7 +32,7 @@ namespace Bike_Link.Application.Services
                 Model = req.Model,
                 BrandId = req.BrandId,
                 CategoryId = req.CategoryId,
-                Status = "pending_approval",
+                Status = "pending_admin",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -142,6 +142,26 @@ namespace Bike_Link.Application.Services
         public async Task HideAsync(int id, int userId)
         {
             await _repo.HideAsync(id, userId);
+        }
+
+        public async Task<RejectedVehicleDto?> GetRejectReasonAsync(
+    int vehicleId,
+    int userId)
+        {
+            var vehicle = await _repo.GetByIdAsync(vehicleId, userId);
+
+            if (vehicle == null)
+                return null;
+
+            if (vehicle.Status != "rejected")
+                throw new Exception("Bài đăng chưa bị từ chối");
+
+            return new RejectedVehicleDto
+            {
+                VehicleId = vehicle.VehicleId,
+                Name = vehicle.Name,
+                AdminNote = vehicle.AdminNote
+            };
         }
     }
 }
