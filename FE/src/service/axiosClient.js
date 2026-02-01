@@ -15,4 +15,14 @@ axiosClient.interceptors.request.use(async (config) => {
   return config;
 });
 
+
+axiosClient.interceptors.response.use(
+  (response) => {
+    return response.data;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 export default axiosClient;

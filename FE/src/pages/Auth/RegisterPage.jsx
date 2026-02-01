@@ -4,16 +4,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Eye, EyeOff, AlertCircle } from 'lucide-react'
-import authApi from '@/service/authApi' 
+import { Eye, EyeOff } from 'lucide-react'
+import authApi from '@/service/authApi'
+import { toast } from 'sonner' 
 
 const RegisterPage = () => {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
 
   const [registerData, setRegisterData] = useState({
     fullName: '',
@@ -33,16 +32,19 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setErrorMessage('') 
 
     // Validate Client
     if (registerData.password !== registerData.confirmPassword) {
-      setErrorMessage('Mật khẩu không khớp!')
+      toast.error('Mật khẩu không khớp!', {
+        duration: 3000,
+      });
       return
     }
 
     if (!registerData.agreeToTerms) {
-      setErrorMessage('Vui lòng đồng ý với Điều khoản sử dụng!')
+      toast.warning('Vui lòng đồng ý với Điều khoản sử dụng!', {
+        duration: 3000,
+      });
       return
     }
 
@@ -55,22 +57,27 @@ const RegisterPage = () => {
         password: registerData.password
       }
 
-      console.log('Sending register payload:', payload)
-
       await authApi.register(payload)
       
-      // Đăng ký thành công, chuyển hướng ngay
-      navigate('/login')
+      toast.success('Đăng ký thành công! Vui lòng đăng nhập.', {
+        duration: 2000,
+      });
+
+      // Đăng ký thành công, chuyển hướng
+      setTimeout(() => {
+        navigate('/login')
+      }, 500);
 
     } catch (error) {
       console.error('Register Error:', error)
       
-
-      if (error.response && error.response.data) {
-        setErrorMessage(error.response.data.message || error.response.data.title || "Đăng ký thất bại");
-      } else {
-        setErrorMessage("Lỗi kết nối đến server");
-      }
+      const errorMsg = error.response?.data?.message || 
+                      error.response?.data?.title || 
+                      "Đăng ký thất bại";
+      
+      toast.error(errorMsg, {
+        duration: 3000,
+      });
     } finally {
       setLoading(false)
     }
@@ -211,20 +218,10 @@ const RegisterPage = () => {
               </label>
             </div>
 
-            {/* Hiển thị lỗi nếu có */}
-            {errorMessage && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {errorMessage}
-                </AlertDescription>
-              </Alert>
-            )}
-
             {/* Submit Button */}
             <Button 
               type="submit"
-              disabled={loading} // Disable khi đang gửi
+              disabled={loading}
               className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-lg font-medium text-base disabled:opacity-70"
             >
               {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}

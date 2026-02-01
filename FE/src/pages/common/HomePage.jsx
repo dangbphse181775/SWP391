@@ -28,6 +28,13 @@ const HomePage = () => {
       try {
         const data = await productsApi.getAllVehicles();
         
+        // Safe check if data is array
+        if (!Array.isArray(data)) {
+          console.error('Invalid data format:', data);
+          setProductsByCategory({});
+          return;
+        }
+        
         // Group products by category
         const grouped = {};
         categories.forEach(cat => {
