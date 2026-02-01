@@ -94,6 +94,10 @@ builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IPublicVehicleRepository, PublicVehicleRepository>();
 builder.Services.AddScoped<IPublicVehicleService, PublicVehicleService>();
 
+//admin service and repository
+builder.Services.AddScoped<IAdminVehicleRepository, AdminVehicleRepository>();
+builder.Services.AddScoped<IAdminVehicleService, AdminVehicleService>();
+
 
 // Cloudinary
 builder.Services.AddSingleton(sp =>

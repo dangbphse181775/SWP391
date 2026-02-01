@@ -15,5 +15,6 @@ namespace Bike_Link.Application.IService
         Task<VehicleDetailDto?> GetDetailAsync(int id, int userId);
         Task UpdateAsync(int id, UpdateVehicleRequest req, int userId);
         Task HideAsync(int id, int userId);
+        Task<RejectedVehicleDto?> GetRejectReasonAsync(int vehicleId, int userId);
     }
 }

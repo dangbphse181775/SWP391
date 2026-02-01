@@ -76,5 +76,27 @@ namespace BikeLink.Controllers
             await _sellerService.HideAsync(id, userId);
             return Ok(new { message = "Đã ẩn tin" });
         }
+
+        [Authorize]
+        [HttpGet("vehicles/{id}/rejection-reason")]
+        public async Task<IActionResult> GetRejectReason(int id)
+        {
+            int userId = User.GetUserId();
+
+            try
+            {
+                var result =
+                    await _sellerService.GetRejectReasonAsync(id, userId);
+
+                if (result == null)
+                    return NotFound(new { message = "Không tìm thấy bài đăng" });
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

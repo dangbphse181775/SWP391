@@ -23,8 +23,10 @@ public partial class Vehicle
     public int? BrandId { get; set; }
     public int? CategoryId { get; set; }
 
-    public string? Status { get; set; }        // pending_approval, active, hidden, sold
+    public string? Status { get; set; }
     public bool? IsInspected { get; set; }
+
+    public string? AdminNote { get; set; }
 
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
