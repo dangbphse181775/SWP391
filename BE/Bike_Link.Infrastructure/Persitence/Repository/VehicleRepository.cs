@@ -38,7 +38,7 @@ RETURNING ""VehicleId"";
             cmd.Parameters.AddWithValue("model", (object?)v.Model ?? DBNull.Value);
             cmd.Parameters.AddWithValue("brand", (object?)v.BrandId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("cat", (object?)v.CategoryId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("status", v.Status ?? "pending_approval");
+            cmd.Parameters.AddWithValue("status", v.Status ?? "pending_admin");
 
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
@@ -82,6 +82,7 @@ ORDER BY ""CreatedAt"" DESC
         public async Task<Vehicle?> GetByIdAsync(int id, int userId)
         {
             await using var conn = await _dataSource.OpenConnectionAsync();
+
             await using var cmd = new NpgsqlCommand(@"
 SELECT 
     ""VehicleId"", 
@@ -98,7 +99,8 @@ SELECT
     ""Status"",
     ""CreatedAt"", 
     ""UpdatedAt"", 
-    ""IsInspected""
+    ""IsInspected"",
+    ""AdminNote""
 FROM ""Vehicles""
 WHERE ""VehicleId"" = @id AND ""SellerId"" = @uid
 ", conn);
@@ -125,7 +127,9 @@ WHERE ""VehicleId"" = @id AND ""SellerId"" = @uid
                 Status = rd.IsDBNull(11) ? null : rd.GetString(11),
                 CreatedAt = rd.IsDBNull(12) ? null : rd.GetDateTime(12),
                 UpdatedAt = rd.IsDBNull(13) ? null : rd.GetDateTime(13),
-                IsInspected = rd.IsDBNull(14) ? null : rd.GetBoolean(14)
+                IsInspected = rd.IsDBNull(14) ? null : rd.GetBoolean(14),
+                AdminNote = rd.IsDBNull(15) ? null : rd.GetString(15)
+
             };
         }
 
@@ -192,5 +196,6 @@ VALUES (@vid, @type, @url)
 
             await cmd.ExecuteNonQueryAsync();
         }
+
     }
 }
