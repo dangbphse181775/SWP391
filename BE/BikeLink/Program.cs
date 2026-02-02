@@ -94,6 +94,9 @@ builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IPublicVehicleRepository, PublicVehicleRepository>();
 builder.Services.AddScoped<IPublicVehicleService, PublicVehicleService>();
 
+//user profile
+builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 // Cloudinary
 builder.Services.AddSingleton(sp =>
