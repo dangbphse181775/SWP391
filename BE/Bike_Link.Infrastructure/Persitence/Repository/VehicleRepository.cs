@@ -111,7 +111,7 @@ WHERE ""VehicleId"" = @id AND ""SellerId"" = @uid
             await using var rd = await cmd.ExecuteReaderAsync();
             if (!await rd.ReadAsync()) return null;
 
-            return new Vehicle
+            var vehicle = new Vehicle
             {
                 VehicleId = rd.GetInt32(0),
                 SellerId = rd.GetInt32(1),
@@ -129,8 +129,12 @@ WHERE ""VehicleId"" = @id AND ""SellerId"" = @uid
                 UpdatedAt = rd.IsDBNull(13) ? null : rd.GetDateTime(13),
                 IsInspected = rd.IsDBNull(14) ? null : rd.GetBoolean(14),
                 AdminNote = rd.IsDBNull(15) ? null : rd.GetString(15)
-
             };
+
+            
+            vehicle.VehicleMedia = await GetMediaAsync(vehicle.VehicleId);
+
+            return vehicle;
         }
 
         public async Task UpdateVehicleAsync(Vehicle v)
@@ -197,5 +201,36 @@ VALUES (@vid, @type, @url)
             await cmd.ExecuteNonQueryAsync();
         }
 
+        private async Task<List<VehicleMedium>> GetMediaAsync(int vehicleId)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT ""Type"", ""Url""
+FROM ""VehicleMedia""
+WHERE ""VehicleId"" = @id
+ORDER BY ""MediaId""
+", conn);
+
+            cmd.Parameters.AddWithValue("id", vehicleId);
+
+            var list = new List<VehicleMedium>();
+
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            while (await rd.ReadAsync())
+            {
+                list.Add(new VehicleMedium
+                {
+                    Type = rd.GetString(0),
+                    Url = rd.GetString(1)
+                });
+            }
+
+            return list;
+        }
+
     }
+
+
 }
