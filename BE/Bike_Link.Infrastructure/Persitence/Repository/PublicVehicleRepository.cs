@@ -112,5 +112,103 @@ LIMIT @limit OFFSET @offset
 
             return list;
         }
+
+        public async Task<Vehicle?> GetPublicByIdAsync(int id)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT 
+    v.""VehicleId"",
+    v.""Name"",
+    v.""Description"",
+    v.""Price"",
+    v.""Condition"",
+    v.""FrameSize"",
+    v.""Model"",
+    v.""IsInspected"",
+    v.""CreatedAt"",
+    v.""SellerId"",
+    u.""FullName"",
+    b.""BrandName"",
+    c.""CategoryName""
+FROM ""Vehicles"" v
+JOIN ""Users"" u ON v.""SellerId"" = u.""UserId""
+LEFT JOIN ""Brands"" b ON v.""BrandId"" = b.""BrandId""
+LEFT JOIN ""Categories"" c ON v.""CategoryId"" = c.""CategoryId""
+WHERE 
+    v.""VehicleId"" = @id
+    AND v.""Status"" = 'active'
+", conn);
+
+            cmd.Parameters.AddWithValue("id", id);
+
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            if (!await rd.ReadAsync()) return null;
+
+            var v = new Vehicle
+            {
+                VehicleId = rd.GetInt32(0),
+                Name = rd.GetString(1),
+                Description = rd.IsDBNull(2) ? null : rd.GetString(2),
+                Price = rd.GetDecimal(3),
+                Condition = rd.IsDBNull(4) ? null : rd.GetString(4),
+                FrameSize = rd.IsDBNull(5) ? null : rd.GetString(5),
+                Model = rd.IsDBNull(6) ? null : rd.GetString(6),
+                IsInspected = rd.IsDBNull(7) ? null : rd.GetBoolean(7),
+                CreatedAt = rd.GetDateTime(8),
+                SellerId = rd.GetInt32(9),
+
+                Seller = new User
+                {
+                    FullName = rd.IsDBNull(10) ? null : rd.GetString(10)
+                },
+
+                Brand = rd.IsDBNull(11) ? null : new Brand
+                {
+                    BrandName = rd.GetString(11)
+                },
+
+                Category = rd.IsDBNull(12) ? null : new Category
+                {
+                    CategoryName = rd.GetString(12)
+                }
+            };
+
+            v.VehicleMedia = await GetMediaAsync(v.VehicleId);
+
+            return v;
+        }
+
+        private async Task<List<VehicleMedium>> GetMediaAsync(int vehicleId)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT ""Type"", ""Url""
+FROM ""VehicleMedia""
+WHERE ""VehicleId"" = @id
+ORDER BY ""MediaId""
+", conn);
+
+            cmd.Parameters.AddWithValue("id", vehicleId);
+
+            var list = new List<VehicleMedium>();
+
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            while (await rd.ReadAsync())
+            {
+                list.Add(new VehicleMedium
+                {
+                    Type = rd.GetString(0),
+                    Url = rd.GetString(1)
+                });
+            }
+
+            return list;
+        }
+
     }
 }

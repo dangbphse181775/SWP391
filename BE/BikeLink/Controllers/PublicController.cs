@@ -8,6 +8,7 @@ namespace BikeLink.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PublicController : ControllerBase
     {
         private readonly IPublicVehicleService _service;
@@ -23,6 +24,16 @@ namespace BikeLink.Controllers
         {
             var list = await _service.SearchAsync(options);
             return Ok(list);
+        }
+
+        [HttpGet("vehicles/{id}")]
+        public async Task<IActionResult> Detail(int id)
+        {
+            var v = await _service.GetDetailAsync(id);
+
+            if (v == null) return NotFound();
+
+            return Ok(v);
         }
     }
 }

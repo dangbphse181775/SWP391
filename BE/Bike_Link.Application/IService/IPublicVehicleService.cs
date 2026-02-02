@@ -11,5 +11,6 @@ namespace Bike_Link.Application.IService
     public interface IPublicVehicleService
     {
         Task<List<HomeVehicleDto>> SearchAsync(VehicleSearchOptions options);
+        Task<PublicVehicleDetailDto?> GetDetailAsync(int id);
     }
 }
