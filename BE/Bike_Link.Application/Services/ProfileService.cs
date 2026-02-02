@@ -2,6 +2,7 @@
 using Bike_Link.Application.IService;
 using Bike_Link.Domain.IRepository;
 using Bike_Link.Domain.Models;
+using System.Text.RegularExpressions;
 
 namespace Bike_Link.Application.Services
 {
@@ -42,11 +43,34 @@ namespace Bike_Link.Application.Services
                 throw new KeyNotFoundException("Không tìm thấy người dùng");
 
             // Cập nhật thông tin, chỉ cập nhật những trường không null hoặc không rỗng
+            // Validate và cập nhật FullName
             if (!string.IsNullOrWhiteSpace(request.FullName))
-                user.FullName = request.FullName;
+            {
+                // Kiểm tra độ dài tối thiểu 2 ký tự
+                if (request.FullName.Trim().Length < 2)
+                    throw new ArgumentException("Tên phải có ít nhất 2 ký tự");
 
+                if (request.FullName.Length > 100)
+                    throw new ArgumentException("Tên không được vượt quá 100 ký tự");
+
+                user.FullName = request.FullName.Trim();
+            } else             {
+                user.FullName = user.FullName; // giữ nguyên giá trị hiện tại nếu không có cập nhật
+            }
+
+            // Validate và cập nhật Phone
             if (!string.IsNullOrWhiteSpace(request.Phone))
+            {
+                // Kiểm tra số điện thoại: 10 chữ số, bắt đầu bằng 0
+                string phonePattern = @"^0\d{9}$";
+                if (!Regex.IsMatch(request.Phone, phonePattern))
+                    throw new ArgumentException("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0");
+
                 user.Phone = request.Phone;
+            } else
+            {
+                user.Phone = user.Phone; // giữ nguyên giá trị hiện tại nếu không có cập nhật
+            }
             // Lưu thay đổi vào kho lưu trữ
             await _profileRepository.UpdateUserAsync(user);
             // Trả về thông tin hồ sơ đã cập nhật

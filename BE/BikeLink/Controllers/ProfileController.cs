@@ -9,7 +9,7 @@ namespace BikeLink.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize] // Yêu cầu phải đăng nhập
     public class ProfileController : ControllerBase
     {
         private readonly IProfileService _profileService;
@@ -37,45 +37,83 @@ namespace BikeLink.Controllers
         [HttpGet("profile")]
         public async Task<IActionResult> GetProfile()
         {
-            int userID = CurrentUserId;
-            ProfileDto profile = await _profileService.GetProfileAsync(userID);
-            return Ok(profile);
+            try
+            {
+                int userID = CurrentUserId;
+                ProfileDto profile = await _profileService.GetProfileAsync(userID);
+                return Ok(profile);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
         // Lấy thông tin profile của user theo ID 
         [HttpGet("profile/{userId}")]
         public async Task<IActionResult> GetProfileById(int userId)
         {
-            ProfileDto profile = await _profileService.GetProfileAsync(userId);
-            return Ok(profile);
+            try
+            {
+                ProfileDto profile = await _profileService.GetProfileAsync(userId);
+                return Ok(profile);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
         // Cập nhật thông tin profile
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
         {
-
-            int userID = CurrentUserId;
-            ProfileDto profile = await _profileService.UpdateProfileAsync(userID, request);
-            return Ok(new
+            try
             {
-                data = profile,
-                message = "Cập nhật thông tin hồ sơ thành công"
-            });
+                int userID = CurrentUserId;
+                // Cập nhật profile thông qua service
+                ProfileDto profile = await _profileService.UpdateProfileAsync(userID, request);
+                return Ok(new
+                {
+                    data = profile,
+                    message = "Cập nhật thông tin hồ sơ thành công"
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
 
         // Cập nhật avatar
         [HttpPatch("profile/avatar")]
-        public async Task<IActionResult> UpdateAvatar([FromForm] UpdateAvatarRequest request)
+        public async Task<IActionResult> UpdateAvatar([FromBody] UpdateAvatarRequest request)
         {
-            int userID = CurrentUserId;
-            var profile = await _profileService.UpdateAvatarAsync(userID, request);
-            return Ok(new
+            try
             {
-                data = profile,
-                message = "Cập nhật avatar thành công"
-            });
+                
+                int userID = CurrentUserId;
+                // Cập nhật avatar thông qua service
+                ProfileDto profile = await _profileService.UpdateAvatarAsync(userID, request);
+                return Ok(new
+                {
+                    data = profile,
+                    message = "Cập nhật avatar thành công"
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }
