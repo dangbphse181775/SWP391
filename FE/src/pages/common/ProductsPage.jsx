@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ShoppingCart, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,7 +16,11 @@ import {
 import productsApi from '@/service/productsApi';
 import { useDebounce } from 'use-debounce';
 
+
+
+
 const ProductsPage = () => {
+  const navigate = useNavigate();
   const [priceRange, setPriceRange] = useState([0, 100000000]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
@@ -27,7 +32,7 @@ const ProductsPage = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [wishlist, setWishlist] = useState(JSON.parse(localStorage.getItem("wishlist")) || []
-);
+  );
   // Debounce search query
   const [debouncedSearchQuery] = useDebounce(searchQuery, 1000);
 
@@ -144,27 +149,29 @@ const ProductsPage = () => {
     setCurrentPage(1);
   };
 
+
+
   const handleAddToCart = (e, product) => {
     e.stopPropagation();
     console.log('Add to cart:', product);
   };
 
-const toggleWishlist = (product) => {
-  setWishlist(prev => {
-    const exists = prev.find(p => p.vehicleId === product.vehicleId);
+  const toggleWishlist = (product) => {
+    setWishlist(prev => {
+      const exists = prev.find(p => p.vehicleId === product.vehicleId);
 
-    let updated;
+      let updated;
 
-    if (exists) {
-      updated = prev.filter(p => p.vehicleId !== product.vehicleId);
-    } else {
-      updated = [...prev, product];
-    }
+      if (exists) {
+        updated = prev.filter(p => p.vehicleId !== product.vehicleId);
+      } else {
+        updated = [...prev, product];
+      }
 
-    localStorage.setItem("wishlist", JSON.stringify(updated));
-    return updated;
-  });
-};
+      localStorage.setItem("wishlist", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const formatPrice = (value) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -305,17 +312,17 @@ const toggleWishlist = (product) => {
                     className="w-full h-11 pl-11 pr-4 bg-gray-100/80 hover:bg-white focus:bg-white border border-transparent focus:border-black rounded-full transition-all duration-300 outline-none shadow-sm placeholder:text-gray-400 text-sm font-medium"
                   />
                   <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors">
-                     {debouncedSearchQuery !== searchQuery ? (
-                       <Loader2 className="h-4 w-4 animate-spin" />
-                     ) : (
-                       <Search className="h-4 w-4" />
-                     )}
+                    {debouncedSearchQuery !== searchQuery ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center justify-between md:justify-end gap-4">
-                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wide whitespace-nowrap hidden sm:block">
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide whitespace-nowrap hidden sm:block">
                   {filteredProducts.length} Sản phẩm
                 </p>
                 <div className="flex items-center gap-2">
@@ -366,6 +373,7 @@ const toggleWishlist = (product) => {
                     onAddToCart={handleAddToCart}
                     wishlist={wishlist}
                     onToggleWishlist={toggleWishlist}
+                    onProductClick={() => navigate(`/Vehicle_Detail/${product.vehicleId}`)}
                   />
                 ))}
               </div>
@@ -388,11 +396,10 @@ const toggleWishlist = (product) => {
                   <Button
                     key={page}
                     variant={currentPage === page ? 'default' : 'ghost'}
-                    className={`h-8 w-8 rounded-full text-xs font-medium transition-all ${
-                      currentPage === page
-                        ? 'bg-black text-white hover:bg-gray-800 scale-110'
-                        : 'text-gray-500 hover:text-black hover:bg-gray-50'
-                    }`}
+                    className={`h-8 w-8 rounded-full text-xs font-medium transition-all ${currentPage === page
+                      ? 'bg-black text-white hover:bg-gray-800 scale-110'
+                      : 'text-gray-500 hover:text-black hover:bg-gray-50'
+                      }`}
                     onClick={() => setCurrentPage(page)}
                   >
                     {page}
@@ -418,7 +425,7 @@ const toggleWishlist = (product) => {
 };
 
 
-const ProductCardDetailed = ({ product, wishlist, onToggleWishlist }) => {
+const ProductCardDetailed = ({ product, wishlist, onToggleWishlist, onProductClick }) => {
   const {
     name,
     price,
@@ -433,25 +440,27 @@ const ProductCardDetailed = ({ product, wishlist, onToggleWishlist }) => {
   };
 
   return (
-    <div className="group cursor-pointer flex flex-col h-full bg-gray-50 rounded-lg border border-transparent hover:border-black hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+    <div
+      onClick={onProductClick}
+      className="group cursor-pointer flex flex-col h-full bg-gray-50 rounded-lg border border-transparent hover:border-black hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+    >
       <div className="relative aspect-square w-full bg-white overflow-hidden">
-         {/* Wishlist button */}
-         <button
-           onClick={(e) => {
-             e.stopPropagation();
-             onToggleWishlist(product);
-            }}
-            className="absolute top-3 right-3 z-20 bg-white rounded-full p-2 shadow hover:scale-110 transition"
-         >
-            <Heart
-              className={`h-5 w-5 ${
-              wishlist.some(p => p.vehicleId === product.vehicleId)
-                ? "fill-red-500 text-red-500"
-                : "text-gray-400"
+        {/* Wishlist button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleWishlist(product);
+          }}
+          className="absolute top-3 right-3 z-20 bg-white rounded-full p-2 shadow hover:scale-110 transition"
+        >
+          <Heart
+            className={`h-5 w-5 ${wishlist.some(p => p.vehicleId === product.vehicleId)
+              ? "fill-red-500 text-red-500"
+              : "text-gray-400"
               }`}
-            />
-          </button>
-          
+          />
+        </button>
+
         <img
           src={thumbnailUrl || '/placeholder-bike.jpg'}
           alt={name}

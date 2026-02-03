@@ -14,6 +14,7 @@ import PostDetail from '@/pages/role/admin/PostDetail';
 import AppToaster from "@/components/ui/Toaster";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RoleBasedRoute } from '@/components/auth/RoleBasedRoute';
+import Vehicle_Detail from '@/pages/role/user/Vehicle_Detail';
 
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/products" element={<ProductPage />} />
+            <Route path="/Vehicle_Detail/:id" element={<Vehicle_Detail />} />
           </Route>
 
           <Route element={<MainLayout />}>
