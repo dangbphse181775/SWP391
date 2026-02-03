@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Eye, EyeOff } from 'lucide-react'
 import authApi from '@/service/authApi'
-import { toast } from 'sonner' 
+import { toast } from 'sonner'
 
 const RegisterPage = () => {
   const navigate = useNavigate()
@@ -16,7 +16,7 @@ const RegisterPage = () => {
 
   const [registerData, setRegisterData] = useState({
     fullName: '',
-    phone: '',
+    email: '',
     password: '',
     confirmPassword: '',
     agreeToTerms: false
@@ -53,12 +53,12 @@ const RegisterPage = () => {
     try {
       const payload = {
         fullName: registerData.fullName,
-        phone: registerData.phone,
+        email: registerData.email,
         password: registerData.password
       }
 
       await authApi.register(payload)
-      
+
       toast.success('Đăng ký thành công! Vui lòng đăng nhập.', {
         duration: 2000,
       });
@@ -70,11 +70,11 @@ const RegisterPage = () => {
 
     } catch (error) {
       console.error('Register Error:', error)
-      
-      const errorMsg = error.response?.data?.message || 
-                      error.response?.data?.title || 
-                      "Đăng ký thất bại";
-      
+
+      const errorMsg = error.response?.data?.message ||
+        error.response?.data?.title ||
+        "Đăng ký thất bại";
+
       toast.error(errorMsg, {
         duration: 3000,
       });
@@ -89,9 +89,9 @@ const RegisterPage = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex flex-col items-center space-y-3 mb-6">
-            <img 
-              src="/Cycling-race-silhouette-logo-vector-icon-Graphics-5229446-1 (1).jpg" 
-              alt="Đạp House Logo" 
+            <img
+              src="/Cycling-race-silhouette-logo-vector-icon-Graphics-5229446-1 (1).jpg"
+              alt="Đạp House Logo"
               className="w-40 h-32 object-contain"
             />
             <span className="font-bold text-3xl text-gray-900 italic">Đạp House</span>
@@ -106,7 +106,7 @@ const RegisterPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            
+
             {/* Full Name Field*/}
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-gray-900 font-medium">
@@ -116,7 +116,7 @@ const RegisterPage = () => {
                 id="fullName"
                 name="fullName"
                 type="text"
-                
+
                 value={registerData.fullName}
                 onChange={handleChange}
                 className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
@@ -124,17 +124,17 @@ const RegisterPage = () => {
               />
             </div>
 
-            {/* Phone Field*/}
+            {/* Email Field*/}
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-gray-900 font-medium">
-                Số điện thoại
+              <Label htmlFor="email" className="text-gray-900 font-medium">
+                Email
               </Label>
               <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                
-                value={registerData.phone}
+                id="email"
+                name="email"
+                type="email"
+
+                value={registerData.email}
                 onChange={handleChange}
                 className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
                 required
@@ -205,7 +205,7 @@ const RegisterPage = () => {
               <Checkbox
                 id="agreeToTerms"
                 checked={registerData.agreeToTerms}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setRegisterData(prev => ({ ...prev, agreeToTerms: checked }))
                 }
                 className="mt-1"
@@ -219,7 +219,7 @@ const RegisterPage = () => {
             </div>
 
             {/* Submit Button */}
-            <Button 
+            <Button
               type="submit"
               disabled={loading}
               className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-lg font-medium text-base disabled:opacity-70"

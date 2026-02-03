@@ -15,6 +15,10 @@ const ProductCard = ({ product }) => {
     }).format(value);
   };
 
+  const handleProductClick = () => {
+    navigate(`/Vehicle_Detail/${vehicleId}`);
+  };
+
   const handleWishlistClick = (e) => {
     e.stopPropagation();
     const token = localStorage.getItem('access_token');
@@ -29,7 +33,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="group cursor-pointer flex flex-col h-full bg-gray-50 rounded-lg border border-transparent hover:border-black hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+    <div className="group cursor-pointer flex flex-col h-full bg-gray-50 rounded-lg border border-transparent hover:border-black hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden" onClick={handleProductClick}>
       <div className="relative aspect-square w-full bg-white overflow-hidden">
         <img
           src={thumbnailUrl || '/placeholder-bike.jpg'}
@@ -39,9 +43,8 @@ const ProductCard = ({ product }) => {
         />
         <button
           onClick={handleWishlistClick}
-          className={`absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 hover:bg-white shadow-sm z-10 transition-colors flex items-center justify-center ${
-            isWishlisted ? 'text-red-500' : 'text-gray-700'
-          }`}
+          className={`absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 hover:bg-white shadow-sm z-10 transition-colors flex items-center justify-center ${isWishlisted ? 'text-red-500' : 'text-gray-700'
+            }`}
         >
           <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
         </button>
