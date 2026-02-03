@@ -8,7 +8,7 @@ namespace BikeLink.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    
     public class PublicController : ControllerBase
     {
         private readonly IPublicVehicleService _service;
