@@ -3,7 +3,8 @@ import { useParams } from "react-router-dom";
 import Vehicle from "@/service/VehicleDetailAPI";
 import productsApi from '@/service/productsApi';
 import ProductCard from "@/components/home/ProductCard";
-
+import WishlistAPI from "@/service/WishlistAPI";
+import { Heart } from "lucide-react";
 const BRANDS = {
     1: "Trek",
     2: "Specialized",
@@ -40,6 +41,9 @@ const Vehicle_Detail = () => {
     const [activeMedia, setActiveMedia] = useState(null);
     const [similarProducts, setSimilarProducts] = useState([]);
     const [similarLoading, setSimilarLoading] = useState(false);
+// Wishlist states
+    const [isInWishlist, setIsInWishlist] = useState(false);
+    const [wishlistLoading, setWishlistLoading] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -60,6 +64,7 @@ const Vehicle_Detail = () => {
                 }
 
                 await fetchSimilarProducts(data?.categoryName);
+                await checkWishlistStatus(data?.vehicleId || id);
             } catch (err) {
                 console.error("Fetch vehicle failed:", err);
             } finally {
@@ -100,8 +105,38 @@ const Vehicle_Detail = () => {
             setSimilarLoading(false);
         }
     };
+const checkWishlistStatus = async (vehicleId) => {
+    try {
+        const wishlistData = await WishlistAPI.getWishlist();
+        const isInList = wishlistData.some(item => item.vehicleId === Number(vehicleId));
+        setIsInWishlist(isInList);
+    } catch (err) {
+        console.error("Check wishlist status failed:", err);
+        setIsInWishlist(false);
+    }
+};
 
-
+const handleAddToWishlist = async () => {
+    try {
+        setWishlistLoading(true);
+        const vehicleId = vehicle?.vehicleId || id;
+        
+        if (isInWishlist) {
+            await WishlistAPI.removeWishlist(vehicleId);
+            setIsInWishlist(false);
+            alert('Đã xóa khỏi danh sách yêu thích');
+        } else {
+            await WishlistAPI.addWishlist(vehicleId);
+            setIsInWishlist(true);
+            alert('Đã thêm vào danh sách yêu thích');
+        }
+    } catch (err) {
+        console.error('Wishlist error:', err);
+        alert('Lỗi khi cập nhật danh sách yêu thích!');
+    } finally {
+        setWishlistLoading(false);
+    }
+};
 
     if (loading) return <p>Đang tải...</p>;
     if (!vehicle) return <p>Không tìm thấy xe</p>;
@@ -267,11 +302,19 @@ const Vehicle_Detail = () => {
                                 </div>
 
                                 <div className="flex items-center justify-between px-2">
-                                    <button className="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors text-sm font-medium">
-                                        <span className="material-symbols-outlined text-lg">
-                                            favorite
-                                        </span>
-                                        Thêm vào danh sách yêu thích
+                                    <button 
+                                      onClick={handleAddToWishlist} 
+                                      disabled={wishlistLoading}
+                                      className="flex items-center gap-2 text-slate-500 hover:text-red-600 transition-colors text-sm font-medium disabled:opacity-50"
+                                    >
+                                        <Heart
+                                        size={20} className={`transition-all ${
+                                            isInWishlist
+                                            ? 'fill-red-600 text-red-600' 
+                                          : 'text-slate-500'
+                                          }`}
+                                           />
+                                           {isInWishlist ? 'Đã thích' : 'Thêm vào danh sách yêu thích'}
                                     </button>
 
                                     <button className="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors text-sm font-medium">
