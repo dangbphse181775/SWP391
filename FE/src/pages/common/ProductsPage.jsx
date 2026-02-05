@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import productsApi from '@/service/productsApi';
+import WishlistAPI from '@/service/WishlistAPI';
 import { useDebounce } from 'use-debounce';
 
 
@@ -31,8 +32,7 @@ const ProductsPage = () => {
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [wishlist, setWishlist] = useState(JSON.parse(localStorage.getItem("wishlist")) || []
-  );
+  const [wishlist, setWishlist] = useState([]);
   // Debounce search query
   const [debouncedSearchQuery] = useDebounce(searchQuery, 1000);
 
@@ -75,6 +75,20 @@ const ProductsPage = () => {
       }
     };
     fetchProducts();
+  }, []);
+
+  // Fetch wishlist
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      try {
+        const data = await WishlistAPI.getWishlist();
+        setWishlist(data || []);
+      } catch (error) {
+        console.error('Error fetching wishlist:', error);
+        setWishlist([]);
+      }
+    };
+    fetchWishlist();
   }, []);
 
   // Filter products
@@ -156,21 +170,21 @@ const ProductsPage = () => {
     console.log('Add to cart:', product);
   };
 
-  const toggleWishlist = (product) => {
-    setWishlist(prev => {
-      const exists = prev.find(p => p.vehicleId === product.vehicleId);
-
-      let updated;
+  const toggleWishlist = async (product) => {
+    try {
+      const exists = wishlist.find(p => p.vehicleId === product.vehicleId);
 
       if (exists) {
-        updated = prev.filter(p => p.vehicleId !== product.vehicleId);
+        await WishlistAPI.removeWishlist(product.vehicleId);
+        setWishlist(prev => prev.filter(p => p.vehicleId !== product.vehicleId));
       } else {
-        updated = [...prev, product];
+        await WishlistAPI.addWishlist(product.vehicleId);
+        setWishlist(prev => [...prev, product]);
       }
-
-      localStorage.setItem("wishlist", JSON.stringify(updated));
-      return updated;
-    });
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      // Có thể hiển thị toast hoặc alert lỗi ở đây
+    }
   };
 
   const formatPrice = (value) => {
