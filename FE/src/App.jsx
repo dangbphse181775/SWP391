@@ -17,11 +17,13 @@ import { RoleBasedRoute } from '@/components/auth/RoleBasedRoute';
 import Vehicle_Detail from '@/pages/role/user/Vehicle_Detail';
 
 
+
 function App() {
   return (
     <Router>
       <AuthProvider>
         <AppToaster />
+        
         <Routes>
           {/* Public Routes with Header and Footer */}
           <Route element={<MainLayout />}>

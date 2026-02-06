@@ -6,6 +6,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Heart } from "lucide-react";
+import { toast } from 'sonner';
+
 import {
   Select,
   SelectContent,
@@ -70,6 +72,7 @@ const ProductsPage = () => {
         console.error('Error fetching products:', error);
         setAllProducts([]);
         setFilteredProducts([]);
+        toast.error('Lỗi khi tải sản phẩm');
       } finally {
         setIsLoading(false);
       }
@@ -175,15 +178,38 @@ const ProductsPage = () => {
       const exists = wishlist.find(p => p.vehicleId === product.vehicleId);
 
       if (exists) {
+        
         await WishlistAPI.removeWishlist(product.vehicleId);
         setWishlist(prev => prev.filter(p => p.vehicleId !== product.vehicleId));
+        toast.warning('Đã xóa khỏi danh sách yêu thích!', {
+          description: product.name,
+          duration: 2000,
+          className: 'bg-red-600 border-red-700',      
+          descriptionClassName: 'text-white',          
+        });
       } else {
+        
         await WishlistAPI.addWishlist(product.vehicleId);
         setWishlist(prev => [...prev, product]);
+        toast.success('Đã thêm vào danh sách yêu thích!', {
+          description: product.name,
+          duration: 2000,
+          className: 'bg-green-50 border-green-200',  
+          descriptionClassName: 'text-green-700',
+        });
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
-      // Có thể hiển thị toast hoặc alert lỗi ở đây
+      const errorMessage = error?.response?.data?.message || 
+                          error?.message || 
+                          'Lỗi khi cập nhật danh sách yêu thích!';
+      
+      toast.error('Lỗi!', {
+        description: errorMessage,
+        duration: 3000,
+        className: 'bg-red-600 border-red-700',      
+        descriptionClassName: 'text-white',          
+      });
     }
   };
 

@@ -4,15 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Trash2, ImageOff, Filter, X } from "lucide-react";
+import { Heart, Trash2, ImageOff, Filter, X, Search  } from "lucide-react";
 import WishlistAPI from "@/service/WishlistAPI";
 import { useNavigate } from 'react-router-dom';
-
+import { toast } from 'sonner';
 export default function WishlistPage() {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imageLoadErrors, setImageLoadErrors] = useState({});
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Filter states
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
@@ -36,6 +37,7 @@ export default function WishlistPage() {
     } catch (err) {
       console.error('Fetch wishlist failed:', err);
       setError('Lỗi khi tải danh sách yêu thích');
+      toast.error('Lỗi khi tải danh sách yêu thích');
     } finally {
       setLoading(false);
     }
@@ -45,9 +47,11 @@ export default function WishlistPage() {
     try {
       await WishlistAPI.removeWishlist(vehicleId);
       setWishlist(wishlist.filter((item) => item.vehicleId !== vehicleId));
+      toast.success('Xóa khỏi danh sách yêu thích thành công!');
     } catch (err) {
       console.error('Remove from wishlist failed:', err);
       alert('Lỗi khi xóa khỏi danh sách yêu thích!');
+          toast.error('Lỗi khi xóa khỏi danh sách yêu thích!');
     }
   };
 
@@ -80,6 +84,19 @@ export default function WishlistPage() {
   // Filter wishlist based on selected filters
   const filteredWishlist = useMemo(() => {
     return wishlist.filter(item => {
+
+        // Search filter 
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        if (
+          !item.name?.toLowerCase().includes(query) &&
+          !item.brandName?.toLowerCase().includes(query) &&
+          !item.model?.toLowerCase().includes(query)
+        ) {
+          return false;
+        }
+      }
+      
       // Price filter
       if (priceRange.min && item.price < parseFloat(priceRange.min)) return false;
       if (priceRange.max && item.price > parseFloat(priceRange.max)) return false;
@@ -98,7 +115,7 @@ export default function WishlistPage() {
 
       return true;
     });
-  }, [wishlist, priceRange, selectedBrand, selectedCategory, selectedStatus, selectedCondition]);
+  }, [wishlist, priceRange, selectedBrand, selectedCategory, selectedStatus, selectedCondition, searchQuery]);
 
   // Clear all filters
   const clearFilters = () => {
@@ -107,6 +124,7 @@ export default function WishlistPage() {
     setSelectedCategory('');
     setSelectedStatus('');
     setSelectedCondition('');
+     setSearchQuery('');
   };
 
   // Check if any filters are active
@@ -137,7 +155,23 @@ export default function WishlistPage() {
         <h1 className="text-2xl font-bold">
           My Wishlist
         </h1>
-
+      
+       {/* Search Bar */}
+        <div className="relative w-full md:w-[350px]">
+          <div className="relative group">
+            <input
+              type="text"
+              placeholder="Tìm kiếm sản phẩm..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-11 pl-11 pr-4 bg-gray-100/80 hover:bg-white focus:bg-white border border-transparent focus:border-black rounded-full transition-all duration-300 outline-none shadow-sm placeholder:text-gray-400 text-sm font-medium"
+            />
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors">
+              <Search className="h-4 w-4" />
+            </div>
+          </div>
+        </div>
+        
         {/* Filter Section */}
         <div className="flex flex-wrap gap-4 items-center">
           {/* Price Range Filter */}

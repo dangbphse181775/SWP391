@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import Vehicle from "@/service/VehicleDetailAPI";
+//import Vehicle from "@/service/VehicleDetailAPI";
+import vehicleDetailApi from "@/service/VehicleDetailAPI";
 import productsApi from '@/service/productsApi';
 import ProductCard from "@/components/home/ProductCard";
 import WishlistAPI from "@/service/WishlistAPI";
-import { Heart } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
+import { toast } from 'sonner';
+
 const BRANDS = {
     1: "Trek",
     2: "Specialized",
@@ -55,7 +58,8 @@ const Vehicle_Detail = () => {
 
         const fetchVehicle = async () => {
             try {
-                const data = await Vehicle.getVehicleById(id);
+                //const data = await Vehicle.getVehicleById(id);
+                const data = await vehicleDetailApi.getVehicleById(id);
 
                 setVehicle(data);
 
@@ -96,8 +100,11 @@ const Vehicle_Detail = () => {
                 .slice(0, 4);
 
             console.log("Similar products after filter:", similar);
+          const uniqueSimilarProducts = Array.from(
+                  new Map(similar.map(product => [product.vehicleId, product])).values()
+                );
 
-            setSimilarProducts(similar);
+            setSimilarProducts(uniqueSimilarProducts);
         } catch (err) {
             console.error("Fetch similar products failed:", err);
             setSimilarProducts([]);
@@ -124,15 +131,34 @@ const handleAddToWishlist = async () => {
         if (isInWishlist) {
             await WishlistAPI.removeWishlist(vehicleId);
             setIsInWishlist(false);
-            alert('Đã xóa khỏi danh sách yêu thích');
+           toast.success('Đã xóa khỏi danh sách yêu thích!', {
+                description: vehicle?.name || 'Sản phẩm',
+                duration: 2000,
+                className: 'bg-red-600 border-red-700',      
+                descriptionClassName: 'text-white',   
+            });
         } else {
             await WishlistAPI.addWishlist(vehicleId);
             setIsInWishlist(true);
-            alert('Đã thêm vào danh sách yêu thích');
+            toast.success('Đã thêm vào danh sách yêu thích!', {
+                description: vehicle?.name || 'Sản phẩm',
+                duration: 2000,
+                className: 'bg-green-50 border-green-200',  
+                descriptionClassName: 'text-green-700',
+            });
         }
     } catch (err) {
         console.error('Wishlist error:', err);
-        alert('Lỗi khi cập nhật danh sách yêu thích!');
+         const errorMessage = err?.response?.data?.message || 
+                            err?.message || 
+                            'Lỗi khi cập nhật danh sách yêu thích!';
+        
+        toast.error('Lỗi!', {
+            description: errorMessage,
+            duration: 3000,
+            className: 'bg-red-50 border-red-300',  
+            descriptionClassName: 'text-red-800',
+        });
     } finally {
         setWishlistLoading(false);
     }
