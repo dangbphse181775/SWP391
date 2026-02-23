@@ -35,6 +35,8 @@ public partial class BikeLinkContext : DbContext
     public virtual DbSet<VehicleMedium> VehicleMedia { get; set; }
     public virtual DbSet<Wishlist> Wishlists { get; set; }
     public virtual DbSet<WishlistItem> WishlistItems { get; set; }
+    public virtual DbSet<Cart> Carts { get; set; }
+    public virtual DbSet<CartItem> CartItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -193,6 +195,29 @@ public partial class BikeLinkContext : DbContext
                 .HasForeignKey(m => m.VehicleId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+
+        // 1 User - 1 Cart
+        modelBuilder.Entity<Cart>()
+            .HasOne(c => c.User)
+            .WithOne(u => u.Cart)
+            .HasForeignKey<Cart>(c => c.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // 1 Cart - Many CartItems
+        modelBuilder.Entity<CartItem>()
+            .HasOne(ci => ci.Cart)
+            .WithMany(c => c.CartItems)
+            .HasForeignKey(ci => ci.CartId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CartItem>()
+            .HasOne(ci => ci.Vehicle)
+            .WithMany()
+            .HasForeignKey(ci => ci.VehicleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+
         base.OnModelCreating(modelBuilder);
     }
 }
