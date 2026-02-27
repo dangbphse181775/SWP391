@@ -34,7 +34,7 @@ namespace BikeLink.Controllers
         }
 
         // GET: api/wishlist/{userId}
-        [HttpGet("{userId}")]
+        [HttpGet("{userID}")]
         public async Task<IActionResult> GetWishlistByUserId(int userID)
         {
             WishlistDto wishlist = await _wishlistService.GetUserWishlistAsync(userID);
