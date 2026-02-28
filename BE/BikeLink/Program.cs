@@ -98,6 +98,9 @@ builder.Services.AddScoped<IPublicVehicleService, PublicVehicleService>();
 builder.Services.AddScoped<IAdminVehicleRepository, AdminVehicleRepository>();
 builder.Services.AddScoped<IAdminVehicleService, AdminVehicleService>();
 
+//inspector service and repository
+builder.Services.AddScoped<IInspectorRepository, InspectorRepository>();
+builder.Services.AddScoped<IInspectorService, InspectorService>();
 
 // Cloudinary
 builder.Services.AddSingleton(sp =>
