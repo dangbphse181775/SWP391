@@ -102,6 +102,11 @@ builder.Services.AddScoped<IAdminVehicleService, AdminVehicleService>();
 builder.Services.AddScoped<IInspectorRepository, InspectorRepository>();
 builder.Services.AddScoped<IInspectorService, InspectorService>();
 
+//seller view inspection report
+builder.Services.AddScoped<IInspectionRepository, InspectionRepository>();
+builder.Services.AddScoped<ISellerInspectionService, SellerInspectionService>();
+
+
 // Cloudinary
 builder.Services.AddSingleton(sp =>
 {

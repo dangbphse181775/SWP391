@@ -230,7 +230,43 @@ ORDER BY ""MediaId""
             return list;
         }
 
+
+        public async Task<Vehicle?> GetByIdAsync(int vehicleId)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT 
+    ""VehicleId"",
+    ""SellerId"",
+    ""Name"",
+    ""Status"",
+    ""CreatedAt"",
+    ""UpdatedAt"",
+    ""AdminNote"",
+    ""IsInspected""
+FROM ""Vehicles""
+WHERE ""VehicleId"" = @id
+", conn);
+
+            cmd.Parameters.AddWithValue("id", vehicleId);
+
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            if (!await rd.ReadAsync())
+                return null;
+
+            return new Vehicle
+            {
+                VehicleId = rd.GetInt32(0),
+                SellerId = rd.GetInt32(1),
+                Name = rd.GetString(2),
+                Status = rd.IsDBNull(3) ? null : rd.GetString(3),
+                CreatedAt = rd.IsDBNull(4) ? null : rd.GetDateTime(4),
+                UpdatedAt = rd.IsDBNull(5) ? null : rd.GetDateTime(5),
+                AdminNote = rd.IsDBNull(6) ? null : rd.GetString(6),
+                IsInspected = rd.IsDBNull(7) ? null : rd.GetBoolean(7)
+            };
+        }
     }
-
-
 }
