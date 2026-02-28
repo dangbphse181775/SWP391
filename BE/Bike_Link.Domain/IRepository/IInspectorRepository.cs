@@ -13,5 +13,6 @@ namespace Bike_Link.Domain.IRepository
         Task<Vehicle?> GetVehicleAsync(int vehicleId);
         Task CreateReportAsync(InspectionReport report);
         Task UpdateVehicleStatusAsync(int vehicleId, string status);
+        
     }
 }

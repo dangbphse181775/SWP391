@@ -16,6 +16,7 @@ namespace Bike_Link.Infrastructure.Persitence.Repository
         Task<Vehicle?> GetByIdAsync(int id, int userId);
         Task HideAsync(int id, int userId);
         Task InsertMediaAsync(int vehicleId, string type, string url);
+        Task<Vehicle?> GetByIdAsync(int vehicleId);
 
     }
 }

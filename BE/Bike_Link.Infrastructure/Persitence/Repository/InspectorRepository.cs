@@ -130,6 +130,6 @@ WHERE ""VehicleId"" = @id
             cmd.Parameters.AddWithValue("id", vehicleId);
 
             await cmd.ExecuteNonQueryAsync();
-        }
+        }       
     }
 }
