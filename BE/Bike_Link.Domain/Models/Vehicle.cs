@@ -41,7 +41,8 @@ public partial class Vehicle
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<VehicleMedium> VehicleMedia { get; set; } = new List<VehicleMedium>();
     public virtual ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
-
+    public virtual ICollection <CartItem> CartItems { get; set; } = new List<CartItem>();
+    
     [NotMapped]
     public string? ThumbnailUrl { get; set; }
 

@@ -213,7 +213,7 @@ public partial class BikeLinkContext : DbContext
 
         modelBuilder.Entity<CartItem>()
             .HasOne(ci => ci.Vehicle)
-            .WithMany()
+            .WithMany(v => v.CartItems)
             .HasForeignKey(ci => ci.VehicleId)
             .OnDelete(DeleteBehavior.Restrict);
 

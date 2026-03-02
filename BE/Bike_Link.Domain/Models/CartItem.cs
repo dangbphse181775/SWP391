@@ -18,6 +18,7 @@ namespace Bike_Link.Domain.Models
 
         public DateTime CreatedAt { get; set; }
 
+        // Navigation
         public virtual Cart Cart { get; set; } = null!;
 
         public virtual Vehicle Vehicle { get; set; } = null!;

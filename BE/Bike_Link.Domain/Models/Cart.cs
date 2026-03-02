@@ -18,7 +18,6 @@ namespace Bike_Link.Domain.Models
 
         public virtual User User { get; set; } = null!;
 
-        public virtual ICollection<CartItem> CartItems { get; set; }
-            = new List<CartItem>();
+        public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
     }
 }

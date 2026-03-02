@@ -19,12 +19,14 @@ namespace Bike_Link.Application.Services
         private readonly IAuthRepository _repo;
         private readonly IWishlistRepository _wishlistRepo;
         private readonly IConfiguration _config;
+        private readonly ICartRepository _cartRepo;
 
-        public AuthService(IAuthRepository repo, IConfiguration config, IWishlistRepository wishlistRepo)
+        public AuthService(IAuthRepository repo, IConfiguration config, IWishlistRepository wishlistRepo, ICartRepository cartRepo)
         {
             _repo = repo;
             _config = config;
             _wishlistRepo = wishlistRepo;
+            _cartRepo = cartRepo;
         }
 
         public async Task<RegisterResultDto> RegisterAsync(RegisterRequest req)
@@ -40,6 +42,11 @@ namespace Bike_Link.Application.Services
             Wishlist wishlist = new Wishlist();
             wishlist.UserId = userId;
             await _wishlistRepo.CreateWishlistAsync(wishlist);
+
+            //Tạo Cart cho người dùng mới đăng ký
+            Cart cart = new Cart();
+            cart.UserId = userId;
+            await _cartRepo.CreateCartAsync(cart);
 
             return new RegisterResultDto
             {

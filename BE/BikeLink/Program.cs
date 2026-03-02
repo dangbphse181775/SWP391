@@ -90,6 +90,11 @@ builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
 builder.Services.AddScoped<IWishlistItemRepository, WishlistItemRepository>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 
+//cart
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<ICartItemRepository, CartItemRepository>();
+builder.Services.AddScoped<ICartService, CartService>();
+
 //show public vehicles
 builder.Services.AddScoped<IPublicVehicleRepository, PublicVehicleRepository>();
 builder.Services.AddScoped<IPublicVehicleService, PublicVehicleService>();
