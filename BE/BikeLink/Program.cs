@@ -106,6 +106,10 @@ builder.Services.AddScoped<IInspectorService, InspectorService>();
 builder.Services.AddScoped<IInspectionRepository, InspectionRepository>();
 builder.Services.AddScoped<ISellerInspectionService, SellerInspectionService>();
 
+//user profile
+builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+
 
 // Cloudinary
 builder.Services.AddSingleton(sp =>
