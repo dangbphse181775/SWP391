@@ -1,18 +1,20 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import authApi from '@/service/authApi'
+import { useAuth } from '@/contexts/AuthContext'
+import { toast } from 'sonner'
 
 const LoginPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
 
   const [loginData, setLoginData] = useState({
     email: '',      
@@ -28,7 +30,6 @@ const LoginPage = () => {
   const handleSubmit = async (e) => { 
     e.preventDefault()
     setLoading(true)
-    setErrorMessage('')
 
     try {
         const payload = {
@@ -36,32 +37,64 @@ const LoginPage = () => {
             password: loginData.password
         };
 
-        console.log('Sending payload:', payload);
         const res = await authApi.login(payload);
+        console.log('API Response:', res);
         
-        console.log('Login success:', res);
-        const token = res.token || res.data?.token; 
+        // Handle different response structures
+        const authData = res.data || res;
+        const token = authData.token || authData.data?.token;
         
         if (token) {
-            localStorage.setItem('access_token', token);
+            // Prepare user data object
+            const userData = {
+                token: token,
+                userId: authData.userId || authData.data?.userId,
+                fullName: authData.fullName || authData.data?.fullName || authData.name,
+                email: authData.email || authData.data?.email || loginData.email,
+                role: authData.role || authData.data?.role
+            };
+            
+            login(userData);
+            
             if (loginData.rememberMe) {
                 localStorage.setItem('remember_me', 'true');
             }
-            navigate('/user'); 
+            
+            toast.success('Đăng nhập thành công!', {
+              duration: 2000,
+            });
+
+            // Redirect based on user role
+            const userRole = (authData.role || 'user').toLowerCase();
+            const from = location.state?.from?.pathname;
+            let redirectPath;
+
+            // If there's a 'from' path and it matches the user's role, use it
+            if (from && from.startsWith(`/${userRole}`)) {
+              redirectPath = from;
+            } else {
+              // Otherwise, redirect to role's home page
+              redirectPath = `/${userRole}`;
+            }
+
+            setTimeout(() => {
+              navigate(redirectPath, { replace: true });
+            }, 500);
         } else {
-             
-             if (res) localStorage.setItem('access_token', res); 
-             navigate('/user');
+            console.error('No token in response:', res);
+            throw new Error('Không nhận được token từ server');
         }
 
     } catch (error) {
         console.error('Login Error:', error);
-        if (error.response && error.response.data) {
-            
-            setErrorMessage(error.response.data.message || error.response.data.title || "Đăng nhập thất bại");
-        } else {
-            setErrorMessage("Không thể kết nối đến server");
-        }
+        const errorMsg = error.response?.data?.message || 
+                        error.response?.data?.title || 
+                        error.message ||
+                        "Email hoặc mật khẩu không đúng";
+        
+        toast.error(errorMsg, {
+          duration: 3000,
+        });
     } finally {
         setLoading(false);
     }
@@ -158,16 +191,6 @@ const LoginPage = () => {
                 Quên mật khẩu?
               </button>
             </div>
-
-            
-            {errorMessage && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {errorMessage}
-                </AlertDescription>
-              </Alert>
-            )}
 
             {/* Submit Button */}
             <Button 

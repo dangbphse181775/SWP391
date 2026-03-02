@@ -47,4 +47,6 @@ public partial class User
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
     //public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
     public virtual Wishlist Wishlist { get; set; }
+
+    public virtual Cart? Cart { get; set; }
 }

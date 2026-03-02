@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
+import WishlistAPI from '@/service/WishlistAPI';
 import { useNavigate } from 'react-router-dom';
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { vehicleId, name, price, thumbnailUrl } = product;
 
@@ -15,21 +17,66 @@ const ProductCard = ({ product }) => {
     }).format(value);
   };
 
+  const handleProductClick = () => {
+    navigate(`/Vehicle_Detail/${vehicleId}`);
+  };
+
   const handleWishlistClick = (e) => {
     e.stopPropagation();
     const token = localStorage.getItem('access_token');
     if (!token) {
       alert('Vui lòng đăng nhập để thêm vào yêu thích!');
       navigate('/login');
-    } else {
-      setIsWishlisted(!isWishlisted);
-      console.log('Toggle wishlist:', vehicleId);
-      // TODO: Call API to add/remove from wishlist
+      return;
     }
+
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    (async () => {
+      try {
+        if (isWishlisted) {
+          await WishlistAPI.removeWishlist(vehicleId);
+          setIsWishlisted(false);
+        } else {
+          await WishlistAPI.addWishlist(vehicleId);
+          setIsWishlisted(true);
+        }
+      } catch (err) {
+        console.error('Add/Remove wishlist failed:', err);
+        const status = err?.response?.status;
+        const serverMessage = err?.response?.data?.message || err?.message || 'Lỗi khi thao tác với wishlist';
+        // Nếu server trả 409 (đã tồn tại), cập nhật trạng thái UI cho đúng
+        if (status === 409) {
+          setIsWishlisted(true);
+        }
+        alert(serverMessage);
+      } finally {
+        setIsProcessing(false);
+      }
+    })();
   };
 
+  // Initialize wishlist state from server so heart reflects saved wishlist
+  useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      try {
+        const items = await WishlistAPI.getWishlist();
+        if (!mounted) return;
+        const exists = items.some((i) => i.vehicleId === vehicleId);
+        setIsWishlisted(!!exists);
+      } catch (err) {
+        // fail silently; keep default false
+        console.error('Error fetching wishlist for product card:', err);
+      }
+    };
+    init();
+    return () => { mounted = false; };
+  }, [vehicleId]);
+
   return (
-    <div className="group cursor-pointer flex flex-col h-full bg-gray-50 rounded-lg border border-transparent hover:border-black hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+    <div className="group cursor-pointer flex flex-col h-full bg-gray-50 rounded-lg border border-transparent hover:border-black hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden" onClick={handleProductClick}>
       <div className="relative aspect-square w-full bg-white overflow-hidden">
         <img
           src={thumbnailUrl || '/placeholder-bike.jpg'}
@@ -39,9 +86,8 @@ const ProductCard = ({ product }) => {
         />
         <button
           onClick={handleWishlistClick}
-          className={`absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 hover:bg-white shadow-sm z-10 transition-colors flex items-center justify-center ${
-            isWishlisted ? 'text-red-500' : 'text-gray-700'
-          }`}
+          className={`absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 hover:bg-white shadow-sm z-10 transition-colors flex items-center justify-center ${isWishlisted ? 'text-red-500' : 'text-gray-700'
+              } ${isProcessing ? 'opacity-60 pointer-events-none' : ''}`}
         >
           <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
         </button>

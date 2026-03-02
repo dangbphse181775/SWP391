@@ -10,6 +10,7 @@ namespace Bike_Link.Domain.IRepository
     public interface IPublicVehicleRepository
     {
         Task<List<Vehicle>> SearchAsync(VehicleSearchOptions options);
+        Task<Vehicle?> GetPublicByIdAsync(int id);
     }
 
 

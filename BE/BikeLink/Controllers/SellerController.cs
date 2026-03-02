@@ -12,10 +12,12 @@ namespace BikeLink.Controllers
     public class SellerController : ControllerBase
     {
         private readonly ISellerService _sellerService;
+        private readonly ISellerInspectionService _inspectionService;
 
-        public SellerController(ISellerService sellerService)
+        public SellerController(ISellerService sellerService, ISellerInspectionService inspectionService)
         {
             _sellerService = sellerService;
+            _inspectionService = inspectionService;
         }
 
         [Authorize]
@@ -75,6 +77,46 @@ namespace BikeLink.Controllers
 
             await _sellerService.HideAsync(id, userId);
             return Ok(new { message = "Đã ẩn tin" });
+        }
+
+        [Authorize]
+        [HttpGet("vehicles/{id}/rejection-reason")]
+        public async Task<IActionResult> GetRejectReason(int id)
+        {
+            int userId = User.GetUserId();
+
+            try
+            {
+                var result =
+                    await _sellerService.GetRejectReasonAsync(id, userId);
+
+                if (result == null)
+                    return NotFound(new { message = "Không tìm thấy bài đăng" });
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [Authorize]
+        [HttpGet("vehicles/{id}/inspection-report")]
+        public async Task<IActionResult> InspectionReport(int id)
+        {
+            int sellerId = User.GetUserId();
+
+            var result = await _inspectionService
+                .GetInspectionReportAsync(id, sellerId);
+
+            if (result == null)
+                return NotFound(new
+                {
+                    message = "Không tìm thấy báo cáo kiểm định"
+                });
+
+            return Ok(result);
         }
     }
 }

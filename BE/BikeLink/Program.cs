@@ -94,9 +94,18 @@ builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IPublicVehicleRepository, PublicVehicleRepository>();
 builder.Services.AddScoped<IPublicVehicleService, PublicVehicleService>();
 
-//user profile
-builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
-builder.Services.AddScoped<IProfileService, ProfileService>();
+//admin service and repository
+builder.Services.AddScoped<IAdminVehicleRepository, AdminVehicleRepository>();
+builder.Services.AddScoped<IAdminVehicleService, AdminVehicleService>();
+
+//inspector service and repository
+builder.Services.AddScoped<IInspectorRepository, InspectorRepository>();
+builder.Services.AddScoped<IInspectorService, InspectorService>();
+
+//seller view inspection report
+builder.Services.AddScoped<IInspectionRepository, InspectionRepository>();
+builder.Services.AddScoped<ISellerInspectionService, SellerInspectionService>();
+
 
 // Cloudinary
 builder.Services.AddSingleton(sp =>

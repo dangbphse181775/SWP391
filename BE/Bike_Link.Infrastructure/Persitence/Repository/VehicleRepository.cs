@@ -38,7 +38,7 @@ RETURNING ""VehicleId"";
             cmd.Parameters.AddWithValue("model", (object?)v.Model ?? DBNull.Value);
             cmd.Parameters.AddWithValue("brand", (object?)v.BrandId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("cat", (object?)v.CategoryId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("status", v.Status ?? "pending_approval");
+            cmd.Parameters.AddWithValue("status", v.Status ?? "pending_admin");
 
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
@@ -82,6 +82,7 @@ ORDER BY ""CreatedAt"" DESC
         public async Task<Vehicle?> GetByIdAsync(int id, int userId)
         {
             await using var conn = await _dataSource.OpenConnectionAsync();
+
             await using var cmd = new NpgsqlCommand(@"
 SELECT 
     ""VehicleId"", 
@@ -98,7 +99,8 @@ SELECT
     ""Status"",
     ""CreatedAt"", 
     ""UpdatedAt"", 
-    ""IsInspected""
+    ""IsInspected"",
+    ""AdminNote""
 FROM ""Vehicles""
 WHERE ""VehicleId"" = @id AND ""SellerId"" = @uid
 ", conn);
@@ -109,7 +111,7 @@ WHERE ""VehicleId"" = @id AND ""SellerId"" = @uid
             await using var rd = await cmd.ExecuteReaderAsync();
             if (!await rd.ReadAsync()) return null;
 
-            return new Vehicle
+            var vehicle = new Vehicle
             {
                 VehicleId = rd.GetInt32(0),
                 SellerId = rd.GetInt32(1),
@@ -125,8 +127,14 @@ WHERE ""VehicleId"" = @id AND ""SellerId"" = @uid
                 Status = rd.IsDBNull(11) ? null : rd.GetString(11),
                 CreatedAt = rd.IsDBNull(12) ? null : rd.GetDateTime(12),
                 UpdatedAt = rd.IsDBNull(13) ? null : rd.GetDateTime(13),
-                IsInspected = rd.IsDBNull(14) ? null : rd.GetBoolean(14)
+                IsInspected = rd.IsDBNull(14) ? null : rd.GetBoolean(14),
+                AdminNote = rd.IsDBNull(15) ? null : rd.GetString(15)
             };
+
+            
+            vehicle.VehicleMedia = await GetMediaAsync(vehicle.VehicleId);
+
+            return vehicle;
         }
 
         public async Task UpdateVehicleAsync(Vehicle v)
@@ -191,6 +199,74 @@ VALUES (@vid, @type, @url)
             cmd.Parameters.AddWithValue("url", url);
 
             await cmd.ExecuteNonQueryAsync();
+        }
+
+        private async Task<List<VehicleMedium>> GetMediaAsync(int vehicleId)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT ""Type"", ""Url""
+FROM ""VehicleMedia""
+WHERE ""VehicleId"" = @id
+ORDER BY ""MediaId""
+", conn);
+
+            cmd.Parameters.AddWithValue("id", vehicleId);
+
+            var list = new List<VehicleMedium>();
+
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            while (await rd.ReadAsync())
+            {
+                list.Add(new VehicleMedium
+                {
+                    Type = rd.GetString(0),
+                    Url = rd.GetString(1)
+                });
+            }
+
+            return list;
+        }
+
+
+        public async Task<Vehicle?> GetByIdAsync(int vehicleId)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT 
+    ""VehicleId"",
+    ""SellerId"",
+    ""Name"",
+    ""Status"",
+    ""CreatedAt"",
+    ""UpdatedAt"",
+    ""AdminNote"",
+    ""IsInspected""
+FROM ""Vehicles""
+WHERE ""VehicleId"" = @id
+", conn);
+
+            cmd.Parameters.AddWithValue("id", vehicleId);
+
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            if (!await rd.ReadAsync())
+                return null;
+
+            return new Vehicle
+            {
+                VehicleId = rd.GetInt32(0),
+                SellerId = rd.GetInt32(1),
+                Name = rd.GetString(2),
+                Status = rd.IsDBNull(3) ? null : rd.GetString(3),
+                CreatedAt = rd.IsDBNull(4) ? null : rd.GetDateTime(4),
+                UpdatedAt = rd.IsDBNull(5) ? null : rd.GetDateTime(5),
+                AdminNote = rd.IsDBNull(6) ? null : rd.GetString(6),
+                IsInspected = rd.IsDBNull(7) ? null : rd.GetBoolean(7)
+            };
         }
     }
 }

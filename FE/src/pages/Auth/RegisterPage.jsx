@@ -4,20 +4,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Eye, EyeOff, AlertCircle } from 'lucide-react'
-import authApi from '@/service/authApi' 
+import { Eye, EyeOff } from 'lucide-react'
+import authApi from '@/service/authApi'
+import { toast } from 'sonner'
 
 const RegisterPage = () => {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
 
   const [registerData, setRegisterData] = useState({
     fullName: '',
-    phone: '',
+    email: '',
     password: '',
     confirmPassword: '',
     agreeToTerms: false
@@ -33,16 +32,19 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setErrorMessage('') 
 
     // Validate Client
     if (registerData.password !== registerData.confirmPassword) {
-      setErrorMessage('Mật khẩu không khớp!')
+      toast.error('Mật khẩu không khớp!', {
+        duration: 3000,
+      });
       return
     }
 
     if (!registerData.agreeToTerms) {
-      setErrorMessage('Vui lòng đồng ý với Điều khoản sử dụng!')
+      toast.warning('Vui lòng đồng ý với Điều khoản sử dụng!', {
+        duration: 3000,
+      });
       return
     }
 
@@ -51,26 +53,31 @@ const RegisterPage = () => {
     try {
       const payload = {
         fullName: registerData.fullName,
-        phone: registerData.phone,
+        email: registerData.email,
         password: registerData.password
       }
 
-      console.log('Sending register payload:', payload)
-
       await authApi.register(payload)
-      
-      // Đăng ký thành công, chuyển hướng ngay
-      navigate('/login')
+
+      toast.success('Đăng ký thành công! Vui lòng đăng nhập.', {
+        duration: 2000,
+      });
+
+      // Đăng ký thành công, chuyển hướng
+      setTimeout(() => {
+        navigate('/login')
+      }, 500);
 
     } catch (error) {
       console.error('Register Error:', error)
-      
 
-      if (error.response && error.response.data) {
-        setErrorMessage(error.response.data.message || error.response.data.title || "Đăng ký thất bại");
-      } else {
-        setErrorMessage("Lỗi kết nối đến server");
-      }
+      const errorMsg = error.response?.data?.message ||
+        error.response?.data?.title ||
+        "Đăng ký thất bại";
+
+      toast.error(errorMsg, {
+        duration: 3000,
+      });
     } finally {
       setLoading(false)
     }
@@ -82,9 +89,9 @@ const RegisterPage = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex flex-col items-center space-y-3 mb-6">
-            <img 
-              src="/Cycling-race-silhouette-logo-vector-icon-Graphics-5229446-1 (1).jpg" 
-              alt="Đạp House Logo" 
+            <img
+              src="/Cycling-race-silhouette-logo-vector-icon-Graphics-5229446-1 (1).jpg"
+              alt="Đạp House Logo"
               className="w-40 h-32 object-contain"
             />
             <span className="font-bold text-3xl text-gray-900 italic">Đạp House</span>
@@ -99,7 +106,7 @@ const RegisterPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            
+
             {/* Full Name Field*/}
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-gray-900 font-medium">
@@ -109,7 +116,7 @@ const RegisterPage = () => {
                 id="fullName"
                 name="fullName"
                 type="text"
-                
+
                 value={registerData.fullName}
                 onChange={handleChange}
                 className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
@@ -117,17 +124,17 @@ const RegisterPage = () => {
               />
             </div>
 
-            {/* Phone Field*/}
+            {/* Email Field*/}
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-gray-900 font-medium">
-                Số điện thoại
+              <Label htmlFor="email" className="text-gray-900 font-medium">
+                Email
               </Label>
               <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                
-                value={registerData.phone}
+                id="email"
+                name="email"
+                type="email"
+
+                value={registerData.email}
                 onChange={handleChange}
                 className="h-12 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-gray-300"
                 required
@@ -198,7 +205,7 @@ const RegisterPage = () => {
               <Checkbox
                 id="agreeToTerms"
                 checked={registerData.agreeToTerms}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setRegisterData(prev => ({ ...prev, agreeToTerms: checked }))
                 }
                 className="mt-1"
@@ -211,20 +218,10 @@ const RegisterPage = () => {
               </label>
             </div>
 
-            {/* Hiển thị lỗi nếu có */}
-            {errorMessage && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {errorMessage}
-                </AlertDescription>
-              </Alert>
-            )}
-
             {/* Submit Button */}
-            <Button 
+            <Button
               type="submit"
-              disabled={loading} // Disable khi đang gửi
+              disabled={loading}
               className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-lg font-medium text-base disabled:opacity-70"
             >
               {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}

@@ -52,6 +52,60 @@ namespace Bike_Link.Infrastructure.Migrations
                     b.ToTable("Brands");
                 });
 
+            modelBuilder.Entity("Bike_Link.Domain.Models.Cart", b =>
+                {
+                    b.Property<int>("CartId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CartId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CartId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Carts");
+                });
+
+            modelBuilder.Entity("Bike_Link.Domain.Models.CartItem", b =>
+                {
+                    b.Property<int>("CartItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CartItemId"));
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VehicleId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CartItemId");
+
+                    b.HasIndex("CartId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.ToTable("CartItems");
+                });
+
             modelBuilder.Entity("Bike_Link.Domain.Models.Category", b =>
                 {
                     b.Property<int>("CategoryId")
@@ -419,6 +473,9 @@ namespace Bike_Link.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VehicleId"));
 
+                    b.Property<string>("AdminNote")
+                        .HasColumnType("text");
+
                     b.Property<int?>("BrandId")
                         .HasColumnType("integer");
 
@@ -547,6 +604,36 @@ namespace Bike_Link.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Bike_Link.Domain.Models.Cart", b =>
+                {
+                    b.HasOne("Bike_Link.Domain.Models.User", "User")
+                        .WithOne("Cart")
+                        .HasForeignKey("Bike_Link.Domain.Models.Cart", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Bike_Link.Domain.Models.CartItem", b =>
+                {
+                    b.HasOne("Bike_Link.Domain.Models.Cart", "Cart")
+                        .WithMany("CartItems")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bike_Link.Domain.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("Vehicle");
                 });
 
             modelBuilder.Entity("Bike_Link.Domain.Models.Dispute", b =>
@@ -767,6 +854,11 @@ namespace Bike_Link.Infrastructure.Migrations
                     b.Navigation("Vehicles");
                 });
 
+            modelBuilder.Entity("Bike_Link.Domain.Models.Cart", b =>
+                {
+                    b.Navigation("CartItems");
+                });
+
             modelBuilder.Entity("Bike_Link.Domain.Models.Category", b =>
                 {
                     b.Navigation("Vehicles");
@@ -798,6 +890,8 @@ namespace Bike_Link.Infrastructure.Migrations
                     b.Navigation("Admin");
 
                     b.Navigation("BuyOrders");
+
+                    b.Navigation("Cart");
 
                     b.Navigation("Disputes");
 
