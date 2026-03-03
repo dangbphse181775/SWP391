@@ -16,5 +16,7 @@ namespace Bike_Link.Application.IService
             int vehicleId,
             int inspectorUserId,
             CreateInspectionReportRequest req);
+
+        Task<VehicleDetailDto?> GetVehicleDetailForInspectionAsync(int vehicleId);
     }
 }

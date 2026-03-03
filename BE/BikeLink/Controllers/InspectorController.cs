@@ -36,5 +36,20 @@ namespace BikeLink.Controllers
 
             return Ok(new { message = "Kiểm định thành công" });
         }
+
+        [HttpGet("vehicles/{id}")]
+        public async Task<IActionResult> Detail(int id)
+        {
+            var result = await _service
+                .GetVehicleDetailForInspectionAsync(id);
+
+            if (result == null)
+                return NotFound(new
+                {
+                    message = "Không tìm thấy xe cần kiểm định"
+                });
+
+            return Ok(result);
+        }
     }
 }

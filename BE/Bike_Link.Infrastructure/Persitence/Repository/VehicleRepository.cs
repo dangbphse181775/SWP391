@@ -201,7 +201,7 @@ VALUES (@vid, @type, @url)
             await cmd.ExecuteNonQueryAsync();
         }
 
-        private async Task<List<VehicleMedium>> GetMediaAsync(int vehicleId)
+        public async Task<List<VehicleMedium>> GetMediaAsync(int vehicleId)
         {
             await using var conn = await _dataSource.OpenConnectionAsync();
 
@@ -268,5 +268,31 @@ WHERE ""VehicleId"" = @id
                 IsInspected = rd.IsDBNull(7) ? null : rd.GetBoolean(7)
             };
         }
+        public async Task<User?> GetSellerAsync(int sellerId)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT ""UserId"", ""FullName"", ""Phone"", ""Email""
+FROM ""Users""
+WHERE ""UserId"" = @id
+", conn);
+
+            cmd.Parameters.AddWithValue("id", sellerId);
+
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            if (!await rd.ReadAsync())
+                return null;
+
+            return new User
+            {
+                UserId = rd.GetInt32(0),
+                FullName = rd.IsDBNull(1) ? null : rd.GetString(1),
+                Phone = rd.IsDBNull(2) ? null : rd.GetString(2),
+                Email = rd.IsDBNull(3) ? null : rd.GetString(3)
+            };
+        }
+
     }
 }

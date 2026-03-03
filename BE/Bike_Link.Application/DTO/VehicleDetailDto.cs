@@ -30,6 +30,9 @@ namespace Bike_Link.Application.DTO
         public DateTime? UpdatedAt { get; set; }
 
         public List<VehicleMediaDto> Media { get; set; } = new();
+        public string? AdminNote { get; set; }
+
+        public SellerInfoDto? Seller { get; set; }
     }
 
     public class VehicleMediaDto
