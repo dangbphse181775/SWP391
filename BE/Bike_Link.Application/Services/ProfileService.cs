@@ -1,4 +1,5 @@
-﻿using Bike_Link.Application.DTO;
+﻿
+using Bike_Link.Application.DTO;
 using Bike_Link.Application.IService;
 using Bike_Link.Domain.IRepository;
 using Bike_Link.Domain.Models;
@@ -33,6 +34,29 @@ namespace Bike_Link.Application.Services
                 Role = user.Role?.RoleName,
                 CreatedAt = user.CreatedAt
             };
+        }
+
+        public async Task<List<UserListDto>> GetAllUsersAsync()
+        {
+            // Lấy tất cả người dùng từ DB
+            List<User> users = await _profileRepository.GetAllUsersAsync();
+            // Mapping danh sách User sang danh sách UserListDTO và trả về
+            return users.Select(user => new UserListDto
+            {
+                UserId = user.UserId,
+                Email = user.Email,
+                FullName = user.FullName,
+                Phone = user.Phone,
+                AvatarUrl = user.AvatarUrl,
+                Status = user.Status,
+                Role = user.Role.RoleName,
+                TotalPurchases = user.TotalPurchases,
+                BuyerRatingAvg = user.BuyerRatingAvg,
+                TotalSales = user.TotalSales,
+                SellerRatingAvg = user.SellerRatingAvg,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt
+            }).ToList();
         }
 
         public async Task<ProfileDto> UpdateProfileAsync(int userId, UpdateProfileRequest request)

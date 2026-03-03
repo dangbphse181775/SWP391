@@ -1,5 +1,6 @@
 ﻿using Bike_Link.Application.DTO;
 using Bike_Link.Application.IService;
+using Bike_Link.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -33,8 +34,10 @@ namespace BikeLink.Controllers
             }
         }
 
+
         // Lấy thông tin profile của user hiện tại
         [HttpGet("profile")]
+        [Authorize]
         public async Task<IActionResult> GetProfile()
         {
             try
@@ -49,8 +52,9 @@ namespace BikeLink.Controllers
             }
         }
 
-        // Lấy thông tin profile của user theo ID 
+        // Lấy thông tin profile của user theo ID (Admin)
         [HttpGet("profile/{userId}")]
+        [Authorize]
         public async Task<IActionResult> GetProfileById(int userId)
         {
             try
@@ -66,11 +70,39 @@ namespace BikeLink.Controllers
 
         // Cập nhật thông tin profile
         [HttpPut("profile")]
+        [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
         {
             try
             {
                 int userID = CurrentUserId;
+                // Cập nhật profile thông qua service
+                ProfileDto profile = await _profileService.UpdateProfileAsync(userID, request);
+                return Ok(new
+                {
+                    data = profile,
+                    message = "Cập nhật thông tin hồ sơ thành công"
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Cập nhật thông tin profile (Admin)
+        [HttpPut("profile/{userId}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfileById([FromBody] UpdateProfileRequest request, int userId)
+        {
+            try
+            {
+
+                int userID = userId;
                 // Cập nhật profile thông qua service
                 ProfileDto profile = await _profileService.UpdateProfileAsync(userID, request);
                 return Ok(new
@@ -113,6 +145,26 @@ namespace BikeLink.Controllers
             catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Lấy danh sách tất cả người dùng (Admin only)
+        [HttpGet("users")]
+        [Authorize]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {
+                List<UserListDto> users = await _profileService.GetAllUsersAsync();
+                return Ok(new
+                {
+                    total = users.Count,
+                    data = users
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách người dùng", error = ex.Message });
             }
         }
     }
