@@ -7,5 +7,6 @@ namespace Bike_Link.Application.IService
         Task<ProfileDto> GetProfileAsync(int userId);
         Task<ProfileDto> UpdateProfileAsync(int userId, UpdateProfileRequest request);
         Task<ProfileDto> UpdateAvatarAsync(int userId, UpdateAvatarRequest request);
+        Task<List<UserListDto>> GetAllUsersAsync();
     }
 }

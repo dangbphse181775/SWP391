@@ -1,6 +1,11 @@
 import axiosClient from './axiosClient';
 
 const vehicleDetailApi = {
+    getVehicleDetail: async (vehicleId) => {
+        const res = await axiosClient.get(`/Public/vehicles/${vehicleId}`);
+        return res;
+    },
+
     getVehicleById: async (vehicleId) => {
         const res = await axiosClient.get(`/Public/vehicles/${vehicleId}`);
         return res;

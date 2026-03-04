@@ -15,10 +15,19 @@ namespace Bike_Link.Infrastructure.Persitence.Repository
 
         public async Task<User?> GetUserByIdAsync(int userId)
         {
-            // 
+            // Sử dụng Entity Framework để truy vấn người dùng theo userId, bao gồm thông tin Role
             return await _context.Users
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
+        }
+
+        // Lấy tất cả người dùng, sắp xếp theo userID
+        public async Task<List<User>> GetAllUsersAsync()
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .OrderByDescending(u => u.UserId)
+                .ToListAsync();
         }
 
         public async Task<bool> UpdateUserAsync(User user)

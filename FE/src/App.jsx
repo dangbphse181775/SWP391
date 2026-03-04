@@ -8,6 +8,7 @@ import RegisterPage from '@/pages/auth/RegisterPage';
 import Sell from '@/pages/role/user/Sell';
 import ProductPage from '@/pages/common/ProductsPage';
 import WishlistPage from '@/pages/role/user/WishlistPage';
+import CartPage from '@/pages/role/user/Cart';
 import Dashboard from '@/pages/role/admin/Dashboard';
 import PostApproval from '@/pages/role/admin/PostApproval';
 import PostDetail from '@/pages/role/admin/PostDetail';
@@ -49,6 +50,11 @@ function App() {
                 <WishlistPage />
               </RoleBasedRoute>
             } />
+            <Route path="/buyer/Cart" element={
+              <RoleBasedRoute>
+                <CartPage />
+              </RoleBasedRoute>
+            } />
             <Route path="/buyer/sell" element={
               <RoleBasedRoute>
                 <Sell />
@@ -76,6 +82,11 @@ function App() {
                 <WishlistPage />
               </RoleBasedRoute>
             } />
+            <Route path="/seller/Cart" element={
+              <RoleBasedRoute>
+                <CartPage />
+              </RoleBasedRoute>
+            } />
             <Route path="/seller/sell" element={
               <RoleBasedRoute>
                 <Sell />
@@ -101,6 +112,11 @@ function App() {
             <Route path="/inspector/wishlist" element={
               <RoleBasedRoute>
                 <WishlistPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/Cart" element={
+              <RoleBasedRoute>
+                <CartPage />
               </RoleBasedRoute>
             } />
             <Route path="/inspector/sell" element={
@@ -131,6 +147,11 @@ function App() {
             <Route path="/admin/wishlist" element={
               <RoleBasedRoute>
                 <WishlistPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/Cart" element={
+              <RoleBasedRoute>
+                <CartPage />
               </RoleBasedRoute>
             } />
             <Route path="/admin/sell" element={

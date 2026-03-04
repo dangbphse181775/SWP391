@@ -5,6 +5,7 @@ import vehicleDetailApi from "@/service/VehicleDetailAPI";
 import productsApi from '@/service/productsApi';
 import ProductCard from "@/components/home/ProductCard";
 import WishlistAPI from "@/service/WishlistAPI";
+import cartApi from "@/service/addCartAPI";
 import { Heart, Loader2 } from "lucide-react";
 import { toast } from 'sonner';
 
@@ -44,6 +45,7 @@ const Vehicle_Detail = () => {
     const [activeMedia, setActiveMedia] = useState(null);
     const [similarProducts, setSimilarProducts] = useState([]);
     const [similarLoading, setSimilarLoading] = useState(false);
+    const [buyNowLoading, setBuyNowLoading] = useState(false);
 // Wishlist states
     const [isInWishlist, setIsInWishlist] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
@@ -161,6 +163,38 @@ const handleAddToWishlist = async () => {
         });
     } finally {
         setWishlistLoading(false);
+    }
+};
+
+const handleBuyNow = async () => {
+    const vehicleId = vehicle?.vehicleId || Number(id);
+
+    if (!vehicleId) {
+        toast.error('Không xác định được sản phẩm để thêm vào giỏ hàng');
+        return;
+    }
+
+    try {
+        setBuyNowLoading(true);
+        await cartApi.addToCart(vehicleId);
+
+        toast.success('Đã thêm vào giỏ hàng!', {
+            duration: 2000,
+        });
+    } catch (err) {
+        console.error('Add to cart error:', err);
+
+        const errorMessage =
+            err?.response?.data?.message ||
+            err?.message ||
+            'Lỗi khi thêm sản phẩm vào giỏ hàng!';
+
+        toast.error('Lỗi!', {
+            description: errorMessage,
+            duration: 3000,
+        });
+    } finally {
+        setBuyNowLoading(false);
     }
 };
 
@@ -312,11 +346,15 @@ const handleAddToWishlist = async () => {
 
                             <div className="space-y-4">
                                 <div className="flex flex-col gap-3">
-                                    <button className="w-full bg-slate-800 text-white hover:bg-slate-700 hover:shadow-xl hover:-translate-y-0.5 h-14 rounded-xl font-bold text-lg shadow-lg shadow-slate-900/20 transition-all duration-300 flex items-center justify-center gap-2">
+                                    <button
+                                        onClick={handleBuyNow}
+                                        disabled={buyNowLoading}
+                                        className="w-full bg-slate-800 text-white hover:bg-slate-700 hover:shadow-xl hover:-translate-y-0.5 h-14 rounded-xl font-bold text-lg shadow-lg shadow-slate-900/20 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
                                         <span className="material-symbols-outlined">
                                             shopping_cart
                                         </span>
-                                        Mua ngay
+                                        {buyNowLoading ? 'Đang xử lý...' : 'Mua ngay'}
                                     </button>
 
                                     <button className="w-full bg-white text-slate-800 hover:bg-slate-100 hover:shadow-xl hover:-translate-y-0.5 h-14 rounded-xl font-bold text-lg shadow-lg shadow-slate-900/20 transition-all duration-300 flex items-center justify-center gap-2">
