@@ -115,6 +115,11 @@ builder.Services.AddScoped<ISellerInspectionService, SellerInspectionService>();
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 
+//wallet and payment
+builder.Services.AddScoped<VNPayService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IWalletRepository, WalletRepository>();
+
 
 // Cloudinary
 builder.Services.AddSingleton(sp =>
