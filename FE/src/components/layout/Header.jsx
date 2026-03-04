@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Heart, User, Search, Menu, LogOut, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, Heart, User, Search, Menu, LogOut, LayoutDashboard, ClipboardCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRolePath } from '@/hooks/useRolePath';
@@ -135,6 +135,15 @@ const Header = () => {
                       <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         <span>Dashboard</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {user?.role?.toLowerCase() === 'inspector' && (
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/inspector/inspection')}>
+                        <ClipboardCheck className="mr-2 h-4 w-4" />
+                        <span>Kiểm định xe</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>

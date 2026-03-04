@@ -101,6 +101,11 @@ function App() {
             {/* Inspector Role Routes */}
             <Route path="/inspector" element={
               <RoleBasedRoute>
+                <UserHomePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/inspection" element={
+              <RoleBasedRoute>
                 <InspectorDashboard />
               </RoleBasedRoute>
             } />
