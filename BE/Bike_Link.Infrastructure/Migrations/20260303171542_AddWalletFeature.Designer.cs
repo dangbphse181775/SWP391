@@ -3,6 +3,7 @@ using System;
 using Bike_Link.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Bike_Link.Infrastructure.Migrations
 {
     [DbContext(typeof(BikeLinkContext))]
-    partial class BikeLinkContextModelSnapshot : ModelSnapshot
+    [Migration("20260303171542_AddWalletFeature")]
+    partial class AddWalletFeature
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -595,13 +598,6 @@ namespace Bike_Link.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TxnRef")
                         .HasColumnType("text");
 
                     b.Property<string>("Type")

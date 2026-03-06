@@ -20,13 +20,15 @@ namespace Bike_Link.Application.Services
         private readonly IWishlistRepository _wishlistRepo;
         private readonly IConfiguration _config;
         private readonly ICartRepository _cartRepo;
+        private readonly IWalletRepository _walletRepo;
 
-        public AuthService(IAuthRepository repo, IConfiguration config, IWishlistRepository wishlistRepo, ICartRepository cartRepo)
+        public AuthService(IAuthRepository repo, IConfiguration config, IWishlistRepository wishlistRepo, ICartRepository cartRepo, IWalletRepository walletRepo)
         {
             _repo = repo;
             _config = config;
             _wishlistRepo = wishlistRepo;
             _cartRepo = cartRepo;
+            _walletRepo = walletRepo;
         }
 
         public async Task<RegisterResultDto> RegisterAsync(RegisterRequest req)
@@ -47,6 +49,8 @@ namespace Bike_Link.Application.Services
             Cart cart = new Cart();
             cart.UserId = userId;
             await _cartRepo.CreateCartAsync(cart);
+
+            await _walletRepo.CreateWalletAsync(userId);
 
             return new RegisterResultDto
             {

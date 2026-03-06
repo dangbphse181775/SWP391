@@ -37,6 +37,8 @@ public partial class BikeLinkContext : DbContext
     public virtual DbSet<WishlistItem> WishlistItems { get; set; }
     public virtual DbSet<Cart> Carts { get; set; }
     public virtual DbSet<CartItem> CartItems { get; set; }
+    public virtual DbSet<Wallet> Wallets { get; set; }
+    public virtual DbSet<WalletTransaction> WalletTransactions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -216,6 +218,19 @@ public partial class BikeLinkContext : DbContext
             .WithMany(v => v.CartItems)
             .HasForeignKey(ci => ci.VehicleId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // 1 User - 1 Wallet
+        modelBuilder.Entity<Wallet>()
+            .HasOne(w => w.User)
+            .WithOne(u => u.Wallet)
+            .HasForeignKey<Wallet>(w => w.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WalletTransaction>()
+            .HasOne(t => t.Wallet)
+            .WithMany(w => w.Transactions)
+            .HasForeignKey(t => t.WalletId)
+            .OnDelete(DeleteBehavior.Cascade);
 
 
         base.OnModelCreating(modelBuilder);

@@ -91,17 +91,18 @@ namespace Bike_Link.Application.Services
                 throw new InvalidOperationException("Chỉ có thể thêm xe đạp đang active vào giỏ hàng");
             }
 
-            // Kiểm tra xem item đã tồn tại trong cart chưa
+            // Không cho mua xe của chính mình
+            if (vehicle.SellerId == userId)
+            {
+                throw new InvalidOperationException("Bạn không thể thêm xe đạp do chính mình đăng bán vào giỏ hàng");
+            }
+
+            // UPSERT: Nếu đã có trong giỏ thì giữ nguyên (xe cũ = 1 chiếc duy nhất)
             CartItem existingItem = cart.CartItems.FirstOrDefault(ci => ci.VehicleId == vehicleId);
             
             if (existingItem != null)
             {
-                // Nếu đã tồn tại: Tăng quantity lên 1
-                existingItem.Quantity += 1;
-                // Cập nhật vào database
-                await _cartItemRepo.UpdateCartItemAsync(existingItem);
-
-                // Map sang DTO và trả về
+                // Đã có trong giỏ → trả về luôn, không tăng quantity
                 return new CartItemDto
                 {
                     CartItemId = existingItem.CartItemId,
@@ -112,7 +113,7 @@ namespace Bike_Link.Application.Services
             }
             else
             {
-                // Nếu chưa tồn tại: Tạo mới CartItem với quantity = 1
+                // Chưa có → thêm mới với quantity = 1
                 CartItem cartItem = new CartItem
                 {
                     CartId = cart.CartId,
@@ -121,10 +122,8 @@ namespace Bike_Link.Application.Services
                     CreatedAt = DateTime.UtcNow
                 };
 
-                // Thêm vào database
                 CartItem addedItem = await _cartItemRepo.AddCartItemAsync(cartItem);
 
-                // Map sang DTO và trả về
                 return new CartItemDto
                 {
                     CartItemId = addedItem.CartItemId,
