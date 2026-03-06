@@ -33,5 +33,25 @@ namespace Bike_Link.Domain.IRepository
         /// Xoá CartItem theo cartId + vehicleId (raw SQL, tránh EF tracking conflict)
         /// </summary>
         Task RemoveCartItemsAsync(int cartId, List<int> vehicleIds);
+
+        /// <summary>
+        /// Lấy Order theo OrderId
+        /// </summary>
+        Task<Order?> GetOrderByIdAsync(int orderId);
+
+        /// <summary>
+        /// Cập nhật trạng thái Order
+        /// </summary>
+        Task UpdateOrderStatusAsync(int orderId, string status);
+
+        /// <summary>
+        /// Lấy danh sách Order đặt cọc đã quá hạn 72h
+        /// </summary>
+        Task<List<Order>> GetExpiredDepositOrdersAsync();
+
+        /// <summary>
+        /// Lấy danh sách VehicleId từ OrderDetails của 1 Order
+        /// </summary>
+        Task<List<int>> GetVehicleIdsByOrderIdAsync(int orderId);
     }
 }

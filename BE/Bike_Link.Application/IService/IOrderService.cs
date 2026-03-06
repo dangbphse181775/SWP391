@@ -9,9 +9,26 @@ namespace Bike_Link.Application.IService
 {
     public interface IOrderService
     {
-        /// <summary>
-        /// Thanh toán bằng ví — kiểm tra số dư, tạo Order, trừ ví
-        /// </summary>
         Task<CheckoutResultDto> CheckoutAsync(int buyerId, CheckoutRequest request);
+
+        /// <summary>
+        /// Đặt cọc 20% giá trị xe — trừ ví, tạo Order status="deposited", khóa xe thành "booked"
+        /// </summary>
+        Task<DepositResultDto> DepositAsync(int buyerId, DepositOrderRequest request);
+
+        /// <summary>
+        /// Hủy cọc trong vòng 72h — hoàn 95% tiền cọc, xe trở về "active"
+        /// </summary>
+        Task<CancelDepositResultDto> CancelDepositAsync(int buyerId, int orderId);
+
+        /// <summary>
+        /// Thanh toán khoản còn lại (80%) sau khi đặt cọc — xe chuyển thành "sold"
+        /// </summary>
+        Task<PayRemainingResultDto> PayRemainingAsync(int buyerId, int orderId);
+
+        /// <summary>
+        /// Xử lý các đơn cọc quá hạn 72h — tiền cọc chuyển cho seller, xe về "active"
+        /// </summary>
+        Task ProcessExpiredDepositsAsync();
     }
 }

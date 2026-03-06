@@ -152,5 +152,105 @@ WHERE ""CartId"" = @cartId
 
             await cmd.ExecuteNonQueryAsync();
         }
+
+        public async Task<Order?> GetOrderByIdAsync(int orderId)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT ""OrderId"", ""BuyerId"", ""SellerId"", ""Status"", ""Amount"", ""DepositAmount"", ""CreatedAt"", ""UpdatedAt""
+FROM ""Orders""
+WHERE ""OrderId"" = @orderId
+", conn);
+
+            cmd.Parameters.AddWithValue("orderId", orderId);
+
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            if (!await rd.ReadAsync()) return null;
+
+            return new Order
+            {
+                OrderId = rd.GetInt32(0),
+                BuyerId = rd.GetInt32(1),
+                SellerId = rd.GetInt32(2),
+                Status = rd.GetString(3),
+                Amount = rd.GetDecimal(4),
+                DepositAmount = rd.IsDBNull(5) ? null : rd.GetDecimal(5),
+                CreatedAt = rd.GetDateTime(6),
+                UpdatedAt = rd.IsDBNull(7) ? null : rd.GetDateTime(7)
+            };
+        }
+
+        public async Task UpdateOrderStatusAsync(int orderId, string status)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+UPDATE ""Orders""
+SET ""Status"" = @status,
+    ""UpdatedAt"" = NOW()
+WHERE ""OrderId"" = @orderId
+", conn);
+
+            cmd.Parameters.AddWithValue("orderId", orderId);
+            cmd.Parameters.AddWithValue("status", status);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<List<Order>> GetExpiredDepositOrdersAsync()
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT ""OrderId"", ""BuyerId"", ""SellerId"", ""Status"", ""Amount"", ""DepositAmount"", ""CreatedAt""
+FROM ""Orders""
+WHERE ""Status"" = 'deposited'
+  AND ""CreatedAt"" < NOW() - INTERVAL '72 hours'
+", conn);
+
+            var list = new List<Order>();
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            while (await rd.ReadAsync())
+            {
+                list.Add(new Order
+                {
+                    OrderId = rd.GetInt32(0),
+                    BuyerId = rd.GetInt32(1),
+                    SellerId = rd.GetInt32(2),
+                    Status = rd.GetString(3),
+                    Amount = rd.GetDecimal(4),
+                    DepositAmount = rd.IsDBNull(5) ? null : rd.GetDecimal(5),
+                    CreatedAt = rd.GetDateTime(6)
+                });
+            }
+
+            return list;
+        }
+
+        public async Task<List<int>> GetVehicleIdsByOrderIdAsync(int orderId)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT ""VehicleId""
+FROM ""OrderDetails""
+WHERE ""OrderId"" = @orderId
+", conn);
+
+            cmd.Parameters.AddWithValue("orderId", orderId);
+
+            var ids = new List<int>();
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            while (await rd.ReadAsync())
+            {
+                ids.Add(rd.GetInt32(0));
+            }
+
+            return ids;
+        }
     }
 }

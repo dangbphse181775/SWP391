@@ -124,6 +124,9 @@ builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 
+// Background service: tự động xử lý cọc quá hạn 72h
+builder.Services.AddHostedService<BikeLink.BackgroundServices.DepositExpiryService>();
+
 
 // Cloudinary
 builder.Services.AddSingleton(sp =>
