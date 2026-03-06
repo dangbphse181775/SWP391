@@ -16,8 +16,7 @@ import AppToaster from "@/components/ui/Toaster";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RoleBasedRoute } from '@/components/auth/RoleBasedRoute';
 import Vehicle_Detail from '@/pages/role/user/Vehicle_Detail';
-
-
+import InspectorDashboard from '@/pages/role/inspector/InspectorDashboard';
 
 function App() {
   return (
@@ -103,6 +102,11 @@ function App() {
             <Route path="/inspector" element={
               <RoleBasedRoute>
                 <UserHomePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/inspection" element={
+              <RoleBasedRoute>
+                <InspectorDashboard />
               </RoleBasedRoute>
             } />
             <Route path="/inspector/profile" element={

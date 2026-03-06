@@ -58,7 +58,11 @@ const ProductCard = ({ product }) => {
   };
 
   // Initialize wishlist state from server so heart reflects saved wishlist
+  // Only fetch when user is authenticated to avoid 404 spam on public pages
   useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
     let mounted = true;
     const init = async () => {
       try {
@@ -68,7 +72,6 @@ const ProductCard = ({ product }) => {
         setIsWishlisted(!!exists);
       } catch (err) {
         // fail silently; keep default false
-        console.error('Error fetching wishlist for product card:', err);
       }
     };
     init();
