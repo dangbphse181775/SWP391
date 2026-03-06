@@ -213,5 +213,56 @@ NOW()
 
             await cmd.ExecuteNonQueryAsync();
         }
+
+        public async Task<bool> DeductBalanceAsync(int walletId, decimal amount)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+UPDATE ""Wallets""
+SET ""Balance"" = ""Balance"" - @amount
+WHERE ""WalletId"" = @walletId
+  AND ""Balance"" >= @amount
+", conn);
+
+            cmd.Parameters.AddWithValue("walletId", walletId);
+            cmd.Parameters.AddWithValue("amount", amount);
+
+            int rows = await cmd.ExecuteNonQueryAsync();
+            return rows > 0; // false nếu không đủ tiền
+        }
+
+        public async Task CreatePaymentTransactionAsync(
+            int walletId, decimal amount, string description, string status = "success")
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+INSERT INTO ""WalletTransactions""
+(
+    ""WalletId"",
+    ""Amount"",
+    ""Type"",
+    ""Status"",
+    ""Description"",
+    ""CreatedAt""
+)
+VALUES
+(
+    @walletId,
+    @amount,
+    'payment',
+    @status,
+    @description,
+    NOW()
+)", conn);
+
+            cmd.Parameters.AddWithValue("walletId", walletId);
+            cmd.Parameters.AddWithValue("amount", amount);
+            cmd.Parameters.AddWithValue("status", status);
+            cmd.Parameters.AddWithValue("description", description);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 }
