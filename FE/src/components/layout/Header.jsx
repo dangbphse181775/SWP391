@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Heart, User, Search, Menu, LogOut, LayoutDashboard, ClipboardCheck } from 'lucide-react';
+import { ShoppingCart, Heart, User, Search, Menu, LogOut, LayoutDashboard, ClipboardCheck, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRolePath } from '@/hooks/useRolePath';
@@ -55,7 +55,7 @@ const Header = () => {
           <a href="#" onClick={handleHomeClick} className="flex items-center gap-2">
             <img
               src="/Cycling-race-silhouette-logo-vector-icon-Graphics-5229446-1 (1).jpg"
-              alt="Đạp House Logo"
+              alt="Dap House Logo"
               className="w-12 h-10 object-contain"
             />
             <span className="text-lg font-semibold italic">Đạp House</span>
@@ -106,6 +106,14 @@ const Header = () => {
                   onClick={() => navigate(getPath('Cart'))}
                 >
                   <ShoppingCart className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hidden md:flex"
+                  onClick={() => navigate(getPath('wallet'))}
+                >
+                  <CreditCard className="h-5 w-5" />
                 </Button>
               </>
             )}
