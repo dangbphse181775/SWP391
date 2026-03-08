@@ -18,6 +18,7 @@ import { RoleBasedRoute } from '@/components/auth/RoleBasedRoute';
 import Vehicle_Detail from '@/pages/role/user/Vehicle_Detail';
 import InspectorDashboard from '@/pages/role/inspector/InspectorDashboard';
 import DigitalWallet from '@/pages/common/DigitalWallet';
+import TransactionsPage from '@/pages/common/TransactionsPage';
 
 function App() {
   return (
@@ -71,6 +72,11 @@ function App() {
                 <DigitalWallet />
               </RoleBasedRoute>
             } />
+            <Route path="/buyer/transactions" element={
+              <RoleBasedRoute>
+                <TransactionsPage />
+              </RoleBasedRoute>
+            } />
 
             {/* Seller Role Routes */}
             <Route path="/seller" element={
@@ -106,6 +112,11 @@ function App() {
             <Route path="/seller/wallet" element={
               <RoleBasedRoute>
                 <DigitalWallet />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/transactions" element={
+              <RoleBasedRoute>
+                <TransactionsPage />
               </RoleBasedRoute>
             } />
 
@@ -150,6 +161,11 @@ function App() {
                 <DigitalWallet />
               </RoleBasedRoute>
             } />
+            <Route path="/inspector/transactions" element={
+              <RoleBasedRoute>
+                <TransactionsPage />
+              </RoleBasedRoute>
+            } />
 
           </Route>
 
@@ -188,6 +204,11 @@ function App() {
             <Route path="/admin/wallet" element={
               <RoleBasedRoute>
                 <DigitalWallet />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/transactions" element={
+              <RoleBasedRoute>
+                <TransactionsPage />
               </RoleBasedRoute>
             } />
           </Route>

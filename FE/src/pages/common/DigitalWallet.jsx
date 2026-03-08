@@ -1,19 +1,25 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import walletAPI from "@/service/getBalance";
 import walletTransactionsAPI from "@/service/getTransactinos";
 import paymentAPI from "@/service/paymentDeposit";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRolePath } from "@/hooks/useRolePath";
 import { toast } from "sonner";
 
 export default function DigitalWallet() {
   const MIN_TOPUP_AMOUNT = 5000;
+  const MAX_RECENT_TRANSACTIONS = 6;
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { getPath } = useRolePath();
   const [balance, setBalance] = useState(0);
   const [isLoadingBalance, setIsLoadingBalance] = useState(true);
   const [transactions, setTransactions] = useState([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
   const [topUpAmount, setTopUpAmount] = useState("");
   const [isDepositing, setIsDepositing] = useState(false);
+  const [showFullMemberCode, setShowFullMemberCode] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -122,12 +128,24 @@ export default function DigitalWallet() {
     .filter((item) => String(item?.status || "").toLowerCase() === "success")
     .reduce((sum, item) => sum + Number(item?.amount || 0), 0);
 
-  const totalSpent = transactions.reduce((sum, item) => {
-    const amount = Number(item?.amount || 0);
-    return amount < 0 ? sum + Math.abs(amount) : sum;
-  }, 0);
+  const totalSpent = transactions
+    .filter((item) => String(item?.type || "").toLowerCase() === "payment")
+    .filter((item) => String(item?.status || "").toLowerCase() === "success")
+    .reduce((sum, item) => sum + Math.abs(Number(item?.amount || 0)), 0);
 
-  const formattedMemberCode = String(user?.userId ?? 0).padStart(4, "0");
+  const currentUserId = Number(user?.userId);
+  const recentTransactions = [...transactions]
+    .filter((item) => {
+      if (!Number.isFinite(currentUserId)) return true;
+      if (typeof item?.userId === "undefined" || item?.userId === null) return true;
+      return Number(item.userId) === currentUserId;
+    })
+    .sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime())
+    .slice(0, MAX_RECENT_TRANSACTIONS);
+
+  const rawMemberId = String(user?.userId ?? "").replace(/\D/g, "");
+  const fullMemberCode = (rawMemberId || "0").padStart(8, "0").slice(-8);
+  const hiddenMemberCode = `**** ${fullMemberCode.slice(-4)}`;
 
   const handleAmountChange = (event) => {
     const digitsOnly = event.target.value.replace(/\D/g, "");
@@ -216,9 +234,23 @@ export default function DigitalWallet() {
                     Velo Platinum Member
                   </span>
 
-                  <span className="text-xs font-mono">
-                    **** {formattedMemberCode}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono">
+                      {showFullMemberCode ? fullMemberCode : hiddenMemberCode}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowFullMemberCode((prev) => !prev)}
+                      className="inline-flex items-center justify-center text-slate-300 hover:text-white transition-colors"
+                      aria-label={showFullMemberCode ? "Ẩn mã thành viên" : "Hiện mã thành viên"}
+                      title={showFullMemberCode ? "Ẩn mã thành viên" : "Hiện mã thành viên"}
+                    >
+                      <span className="material-symbols-outlined text-base">
+                        {showFullMemberCode ? "visibility_off" : "visibility"}
+                      </span>
+                    </button>
+                  </div>
 
                 </div>
 
@@ -329,7 +361,7 @@ export default function DigitalWallet() {
                   Lịch sử giao dịch
                 </h4>
 
-                <button className="text-xs font-bold text-accent flex items-center gap-1 hover:underline transition-all duration-150 active:scale-95 active:translate-y-[1px]" type="button">
+                <button className="text-xs font-bold text-accent flex items-center gap-1 hover:underline transition-all duration-150 active:scale-95 active:translate-y-[1px]" type="button" onClick={() => navigate(getPath('transactions'))}>
 
                   Xem toàn bộ báo cáo
 
@@ -378,7 +410,7 @@ export default function DigitalWallet() {
                       </tr>
                     )}
 
-                    {!isLoadingTransactions && transactions.length === 0 && (
+                    {!isLoadingTransactions && recentTransactions.length === 0 && (
                       <tr>
                         <td className="px-6 py-6 text-sm text-slate-500" colSpan={4}>
                           Chưa có giao dịch nào.
@@ -386,12 +418,14 @@ export default function DigitalWallet() {
                       </tr>
                     )}
 
-                    {!isLoadingTransactions && transactions.map((item, index) => {
+                    {!isLoadingTransactions && recentTransactions.map((item, index) => {
                       const isDeposit = String(item?.type || "").toLowerCase() === "deposit";
+                      const isPayment = String(item?.type || "").toLowerCase() === "payment";
                       const status = getStatusMeta(item?.status);
                       const amountValue = Number(item?.amount || 0);
-                      const amountClass = amountValue < 0 ? "text-rose-500" : "text-emerald-500";
-                      const signedAmount = `${amountValue < 0 ? "-" : "+"} ${formatCurrency(Math.abs(amountValue))}`;
+                      const isExpense = isPayment || amountValue < 0;
+                      const amountClass = isExpense ? "text-rose-500" : "text-emerald-500";
+                      const signedAmount = `${isExpense ? "-" : "+"} ${formatCurrency(Math.abs(amountValue))}`;
 
                       return (
                         <tr className="hover:bg-slate-50" key={`${item?.createdAt || "tx"}-${index}`}>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 //import Vehicle from "@/service/VehicleDetailAPI";
 import vehicleDetailApi from "@/service/VehicleDetailAPI";
 import productsApi from '@/service/productsApi';
@@ -39,6 +39,7 @@ const CATEGORIES = {
 
 const Vehicle_Detail = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
 
     const [vehicle, setVehicle] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -167,6 +168,15 @@ const handleAddToWishlist = async () => {
 };
 
 const handleBuyNow = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        toast.error('Bạn phải đăng nhập trước', {
+            duration: 2500,
+        });
+        navigate('/login');
+        return;
+    }
+
     const vehicleId = vehicle?.vehicleId || Number(id);
 
     if (!vehicleId) {
