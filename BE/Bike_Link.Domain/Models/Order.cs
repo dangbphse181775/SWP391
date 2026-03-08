@@ -28,4 +28,5 @@ public partial class Order
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
     public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+    public virtual Shipping? Shipping { get; set; }
 }

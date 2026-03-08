@@ -39,6 +39,7 @@ public partial class BikeLinkContext : DbContext
     public virtual DbSet<CartItem> CartItems { get; set; }
     public virtual DbSet<Wallet> Wallets { get; set; }
     public virtual DbSet<WalletTransaction> WalletTransactions { get; set; }
+    public virtual DbSet<Shipping> Shippings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -231,6 +232,17 @@ public partial class BikeLinkContext : DbContext
             .WithMany(w => w.Transactions)
             .HasForeignKey(t => t.WalletId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // 1 Order - 1 Shipping
+        modelBuilder.Entity<Shipping>(entity =>
+        {
+            entity.HasKey(s => s.ShippingId);
+
+            entity.HasOne(s => s.Order)
+                .WithOne(o => o.Shipping)
+                .HasForeignKey<Shipping>(s => s.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
 
         base.OnModelCreating(modelBuilder);
