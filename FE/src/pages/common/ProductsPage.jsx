@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useRolePath } from '@/hooks/useRolePath';
 import { ChevronLeft, ChevronRight, ShoppingCart, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,6 +25,7 @@ import { useDebounce } from 'use-debounce';
 
 const ProductsPage = () => {
   const navigate = useNavigate();
+  const { role } = useRolePath();
   const [priceRange, setPriceRange] = useState([0, 100000000]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
@@ -413,7 +415,7 @@ const ProductsPage = () => {
                     onAddToCart={handleAddToCart}
                     wishlist={wishlist}
                     onToggleWishlist={toggleWishlist}
-                    onProductClick={() => navigate(`/Vehicle_Detail/${product.vehicleId}`)}
+                    onProductClick={() => navigate(role ? `/${role}/Vehicle_Detail/${product.vehicleId}` : `/Vehicle_Detail/${product.vehicleId}`)}
                   />
                 ))}
               </div>

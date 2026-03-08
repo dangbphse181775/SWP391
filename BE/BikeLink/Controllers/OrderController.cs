@@ -159,6 +159,54 @@ namespace BikeLink.Controllers
         }
 
         /// <summary>
+        /// Seller xác nhận đã giao xe → order "shipped"
+        /// </summary>
+        [HttpPost("confirm-shipped/{orderId}")]
+        public async Task<IActionResult> ConfirmShipped(int orderId)
+        {
+            try
+            {
+                int sellerId = User.GetUserId();
+                await _orderService.SellerConfirmShippedAsync(sellerId, orderId);
+
+                return Ok(new
+                {
+                    success = true,
+                    orderId,
+                    message = "Đã xác nhận giao xe thành công. Đơn hàng chuyển sang 'shipped'."
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Buyer xác nhận đã nhận hàng → order "completed", tiền chuyển cho seller
+        /// </summary>
+        [HttpPost("confirm-received/{orderId}")]
+        public async Task<IActionResult> ConfirmReceived(int orderId)
+        {
+            try
+            {
+                int buyerId = User.GetUserId();
+                await _orderService.BuyerConfirmReceivedAsync(buyerId, orderId);
+
+                return Ok(new
+                {
+                    success = true,
+                    orderId,
+                    message = "Đã xác nhận nhận hàng. Tiền đã chuyển cho seller."
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// [Admin] Xử lý tự động các đơn cọc quá hạn 72h
         /// </summary>
         [HttpPost("process-expired-deposits")]

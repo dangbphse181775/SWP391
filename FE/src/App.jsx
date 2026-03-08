@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import HomePage from '@/pages/common/HomePage';
 import UserHomePage from '@/pages/role/user/UserHomePage';
@@ -14,11 +14,21 @@ import PostApproval from '@/pages/role/admin/PostApproval';
 import PostDetail from '@/pages/role/admin/PostDetail';
 import AppToaster from "@/components/ui/Toaster";
 import { AuthProvider } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { RoleBasedRoute } from '@/components/auth/RoleBasedRoute';
 import Vehicle_Detail from '@/pages/role/user/Vehicle_Detail';
 import InspectorDashboard from '@/pages/role/inspector/InspectorDashboard';
 import DigitalWallet from '@/pages/common/DigitalWallet';
 import TransactionsPage from '@/pages/common/TransactionsPage';
+
+const VehicleDetailRoute = () => {
+  const { id } = useParams();
+  const { user } = useAuth();
+  if (user?.role) {
+    return <Navigate to={`/${user.role.toLowerCase()}/Vehicle_Detail/${id}`} replace />;
+  }
+  return <Vehicle_Detail />;
+};
 
 function App() {
   return (
@@ -32,7 +42,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/products" element={<ProductPage />} />
-            <Route path="/Vehicle_Detail/:id" element={<Vehicle_Detail />} />
+            <Route path="/Vehicle_Detail/:id" element={<VehicleDetailRoute />} />
           </Route>
 
           <Route element={<MainLayout />}>
@@ -67,6 +77,7 @@ function App() {
                 <ProductPage />
               </RoleBasedRoute>
             } />
+            <Route path="/buyer/Vehicle_Detail/:id" element={<Vehicle_Detail />} />
             <Route path="/buyer/wallet" element={
               <RoleBasedRoute>
                 <DigitalWallet />
@@ -109,6 +120,7 @@ function App() {
                 <ProductPage />
               </RoleBasedRoute>
             } />
+            <Route path="/seller/Vehicle_Detail/:id" element={<Vehicle_Detail />} />
             <Route path="/seller/wallet" element={
               <RoleBasedRoute>
                 <DigitalWallet />
@@ -156,6 +168,7 @@ function App() {
                 <ProductPage />
               </RoleBasedRoute>
             } />
+            <Route path="/inspector/Vehicle_Detail/:id" element={<Vehicle_Detail />} />
             <Route path="/inspector/wallet" element={
               <RoleBasedRoute>
                 <DigitalWallet />
@@ -196,6 +209,7 @@ function App() {
                 <Sell />
               </RoleBasedRoute>
             } />
+            <Route path="/admin/Vehicle_Detail/:id" element={<Vehicle_Detail />} />
             <Route path="/admin/products" element={
               <RoleBasedRoute>
                 <ProductPage />
