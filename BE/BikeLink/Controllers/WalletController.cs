@@ -85,7 +85,7 @@ namespace BikeLink.Controllers
                 if (!string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase))
                     return Forbid();
 
-                var transactions = await _walletRepo.GetTransactionsAsync(0);
+                var transactions = await _walletRepo.GetTransactionsAsync(1);
 
                 return Ok(new
                 {

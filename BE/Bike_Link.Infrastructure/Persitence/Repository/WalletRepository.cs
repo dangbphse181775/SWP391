@@ -267,15 +267,15 @@ VALUES
 
         public async Task<Wallet> GetSystemWalletAsync()
         {
-            // Ví Tổng sử dụng UserId = 0
-            var wallet = await GetByUserIdAsync(0);
+            // Ví Tổng sử dụng UserId = 1 (Admin)
+            var wallet = await GetByUserIdAsync(1);
             if (wallet != null) return wallet;
 
             // Tự tạo nếu chưa có
             await using var conn = await _dataSource.OpenConnectionAsync();
             await using var cmd = new NpgsqlCommand(@"
 INSERT INTO ""Wallets"" (""UserId"", ""Balance"", ""CreatedAt"")
-VALUES (0, 0, NOW())
+VALUES (1, 0, NOW())
 ON CONFLICT (""UserId"") DO NOTHING
 RETURNING ""WalletId"", ""UserId"", ""Balance""
 ", conn);
@@ -292,7 +292,7 @@ RETURNING ""WalletId"", ""UserId"", ""Balance""
             }
 
             // Fallback: đọc lại (trường hợp ON CONFLICT)
-            return (await GetByUserIdAsync(0))!;
+            return (await GetByUserIdAsync(1))!;
         }
     }
 }

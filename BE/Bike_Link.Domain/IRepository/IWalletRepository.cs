@@ -34,7 +34,7 @@ namespace Bike_Link.Domain.IRepository
         Task CreatePaymentTransactionAsync(int walletId, decimal amount, string description, string status = "success");
 
         /// <summary>
-        /// Lấy Ví Tổng (System Wallet) — UserId = 0
+        /// Lấy Ví Tổng (System Wallet) — UserId = 1 (Admin)
         /// </summary>
         Task<Wallet> GetSystemWalletAsync();
     }
