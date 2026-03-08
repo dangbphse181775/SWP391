@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import WishlistAPI from '@/service/WishlistAPI';
 import { useNavigate } from 'react-router-dom';
+import { useRolePath } from '@/hooks/useRolePath';
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
+  const { role } = useRolePath();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -18,7 +20,7 @@ const ProductCard = ({ product }) => {
   };
 
   const handleProductClick = () => {
-    navigate(`/Vehicle_Detail/${vehicleId}`);
+    navigate(role ? `/${role}/Vehicle_Detail/${vehicleId}` : `/Vehicle_Detail/${vehicleId}`);
   };
 
   const handleWishlistClick = (e) => {

@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Heart, Trash2, ImageOff, Filter, X, Search  } from "lucide-react";
+import { Heart, Filter } from "lucide-react";
 import WishlistAPI from "@/service/WishlistAPI";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import WishlistCard from "./components/WishlistCard";
+import WishlistFilters from "./components/WishlistFilters";
 export default function WishlistPage() {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -151,131 +149,30 @@ export default function WishlistPage() {
     // Container chính, căn giữa và padding
     <div className="container  mx-auto py-10">
 
-      <div className="flex flex-col lg:flex-row gap-6 mb-6">
-        <h1 className="text-2xl font-bold">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-4">
           My Wishlist
         </h1>
-      
-       {/* Search Bar */}
-        <div className="relative w-full md:w-[350px]">
-          <div className="relative group">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-11 pl-11 pr-4 bg-gray-100/80 hover:bg-white focus:bg-white border border-transparent focus:border-black rounded-full transition-all duration-300 outline-none shadow-sm placeholder:text-gray-400 text-sm font-medium"
-            />
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors">
-              <Search className="h-4 w-4" />
-            </div>
-          </div>
-        </div>
-        
-        {/* Filter Section */}
-        <div className="flex flex-wrap gap-4 items-center">
-          {/* Price Range Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Giá:</span>
-            <Input
-              type="number"
-              placeholder="Min"
-              value={priceRange.min}
-              onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
-              className="w-20 h-8"
-            />
-            <span className="text-sm">-</span>
-            <Input
-              type="number"
-              placeholder="Max"
-              value={priceRange.max}
-              onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
-              className="w-20 h-8"
-            />
-          </div>
-
-          {/* Brand Filter */}
-          <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-            <SelectTrigger className="w-32 h-8">
-              <SelectValue placeholder="Thương hiệu" />
-            </SelectTrigger>
-            <SelectContent>
-              {brands.map(brand => (
-                <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Category Filter */}
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-32 h-8">
-              <SelectValue placeholder="Danh mục" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map(category => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Status Filter */}
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-32 h-8">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Condition Filter */}
-          <Select value={selectedCondition} onValueChange={setSelectedCondition}>
-            <SelectTrigger className="w-32 h-8">
-              <SelectValue placeholder="Tình trạng" />
-            </SelectTrigger>
-            <SelectContent>
-              {conditions.map(condition => (
-                <SelectItem key={condition} value={condition}>{condition}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Clear Filters Button */}
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearFilters}
-              className="h-8"
-            >
-              <X className="w-4 h-4 mr-1" />
-              Xóa bộ lọc
-            </Button>
-          )}
-        </div>
+        <WishlistFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          priceRange={priceRange}
+          onPriceRangeChange={setPriceRange}
+          selectedBrand={selectedBrand}
+          onBrandChange={setSelectedBrand}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          selectedCondition={selectedCondition}
+          onConditionChange={setSelectedCondition}
+          brands={brands}
+          categories={categories}
+          conditions={conditions}
+          hasActiveFilters={hasActiveFilters}
+          onClearFilters={clearFilters}
+        />
       </div>
-
-      {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {priceRange.min && (
-            <Badge variant="secondary">
-              Giá từ: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(priceRange.min)}
-            </Badge>
-          )}
-          {priceRange.max && (
-            <Badge variant="secondary">
-              Giá đến: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(priceRange.max)}
-            </Badge>
-          )}
-          {selectedBrand && <Badge variant="secondary">Thương hiệu: {selectedBrand}</Badge>}
-          {selectedCategory && <Badge variant="secondary">Danh mục: {selectedCategory}</Badge>}
-          {selectedStatus && <Badge variant="secondary">Trạng thái: {selectedStatus}</Badge>}
-          {selectedCondition && <Badge variant="secondary">Tình trạng: {selectedCondition}</Badge>}
-        </div>
-      )}
 
       {/* Results count */}
       {wishlist.length > 0 && (
@@ -314,60 +211,15 @@ export default function WishlistPage() {
       {filteredWishlist.length > 0 && (
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {filteredWishlist.map((item) => (
-              <Card key={item.vehicleId} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/Vehicle_Detail/${item.vehicleId}`)}>
-            <div className="relative aspect-square bg-gray-100 overflow-hidden flex items-center justify-center">
-              {imageLoadErrors[item.vehicleId] ? (
-                <div className="flex flex-col items-center justify-center w-full h-full bg-gray-200">
-                  <ImageOff className="w-12 h-12 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">Không thể tải ảnh</p>
-                </div>
-              ) : (
-                <img
-                  src={item.thumbnailUrl || '/placeholder-bike.jpg'}
-                  alt={item.name}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform"
-                  onError={() => handleImageError(item.vehicleId)}
-                  loading="lazy"
-                />
-              )}
-            </div>
-            <CardContent className="p-4 flex flex-col gap-3">
-              <div>
-                <h2 className="font-semibold line-clamp-2">{item.name || 'Sản phẩm'}</h2>
-                <p className="text-lg font-bold text-red-600 mt-2">
-                  {item.price ? new Intl.NumberFormat('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND',
-                  }).format(item.price) : 'N/A'}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-  <Button
-    className="flex-1 bg-slate-800 text-white hover:bg-slate-700"
-    onClick={(e) => { 
-      e.stopPropagation(); 
-      navigate(`/Vehicle_Detail/${item.vehicleId}`);
-    }}
-  >
-    Xem chi tiết
-  </Button>
-
-  <Button
-    variant="outline"
-    className="flex-1 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-    onClick={(e) => { 
-      e.stopPropagation(); 
-      handleRemoveFromWishlist(item.vehicleId); 
-    }}
-  >
-    <Trash2 className="w-4 h-4 mr-2" />
-    Xóa khỏi danh sách yêu thích
-  </Button>
-</div>
-            </CardContent>
-          </Card>
-          ))}
+              <WishlistCard
+                key={item.vehicleId}
+                item={item}
+                onRemove={handleRemoveFromWishlist}
+                onNavigate={(id) => navigate(`/Vehicle_Detail/${id}`)}
+                imageError={imageLoadErrors[item.vehicleId]}
+                onImageError={handleImageError}
+              />
+            ))}
         </div>
       )}
     </div>
