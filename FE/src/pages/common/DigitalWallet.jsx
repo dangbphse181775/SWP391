@@ -423,9 +423,10 @@ export default function DigitalWallet() {
                       const isPayment = String(item?.type || "").toLowerCase() === "payment";
                       const status = getStatusMeta(item?.status);
                       const amountValue = Number(item?.amount || 0);
+                      const isPending = String(item?.status || "").toLowerCase() !== "success" && String(item?.status || "").toLowerCase() !== "failed";
                       const isExpense = isPayment || amountValue < 0;
-                      const amountClass = isExpense ? "text-rose-500" : "text-emerald-500";
-                      const signedAmount = `${isExpense ? "-" : "+"} ${formatCurrency(Math.abs(amountValue))}`;
+                      const amountClass = isPending ? "text-slate-900" : isExpense ? "text-rose-500" : "text-emerald-500";
+                      const signedAmount = isPending ? formatCurrency(Math.abs(amountValue)) : `${isExpense ? "-" : "+"} ${formatCurrency(Math.abs(amountValue))}`;
 
                       return (
                         <tr className="hover:bg-slate-50" key={`${item?.createdAt || "tx"}-${index}`}>

@@ -186,8 +186,8 @@ export default function Sell() {
         </div>
 
         {/* RIGHT – FORM */}
-        <div className="col-span-12 lg:col-span-5 space-y-6">
-          <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="col-span-12 lg:col-span-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
             {/* Thông tin xe */}
             <section className="bg-white border rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4">Thông tin xe</h2>
