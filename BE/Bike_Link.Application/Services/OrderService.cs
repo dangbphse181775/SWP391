@@ -104,12 +104,12 @@ namespace Bike_Link.Application.Services
                 int sellerId = group.Key;
                 decimal orderAmount = group.Sum(ci => ci.Vehicle.Price * ci.Quantity);
 
-                // 7a. Tạo Order
+                // 7a. Tạo Order — status = processing (chờ seller giao)
                 var order = new Order
                 {
                     BuyerId = buyerId,
                     SellerId = sellerId,
-                    Status = "paid",
+                    Status = "processing",
                     Amount = orderAmount,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -152,7 +152,7 @@ namespace Bike_Link.Application.Services
                 throw new Exception("Số dư ví đã thay đổi. Vui lòng thử lại.");
             }
 
-            // 9. Ghi WalletTransaction type = "payment"
+            // 9. Ghi WalletTransaction cho buyer
             string desc = orderIds.Count == 1
                 ? $"Thanh toán đơn hàng #{orderIds[0]}"
                 : $"Thanh toán {orderIds.Count} đơn hàng (#{string.Join(", #", orderIds)})";
@@ -160,18 +160,25 @@ namespace Bike_Link.Application.Services
             await _walletRepo.CreatePaymentTransactionAsync(
                 wallet.WalletId, totalAmount, desc);
 
-            // 10. Cập nhật vehicle status → "sold"
+            // 10. Cộng tiền vào Ví Tổng
+            var systemWallet = await _walletRepo.GetSystemWalletAsync();
+            await _walletRepo.AddBalanceAsync(systemWallet.WalletId, totalAmount);
+            await _walletRepo.CreatePaymentTransactionAsync(
+                systemWallet.WalletId, totalAmount,
+                $"Nhận thanh toán từ buyer #{buyerId} — {desc}");
+
+            // 11. Cập nhật vehicle status → "booked" (chờ giao hàng)
             foreach (var item in selectedItems)
             {
                 await _orderRepo.UpdateVehicleStatusAsync(
-                    item.VehicleId, "sold");
+                    item.VehicleId, "booked");
             }
 
-            // 11. Xoá các CartItem đã mua 
+            // 12. Xoá các CartItem đã mua 
             var vehicleIds = selectedItems.Select(i => i.VehicleId).ToList();
             await _orderRepo.RemoveCartItemsAsync(cart.CartId, vehicleIds);
 
-            // 12. Lấy số dư mới sau khi trừ
+            // 13. Lấy số dư mới sau khi trừ
             decimal newBalance = await _walletRepo.GetBalanceAsync(buyerId);
 
             return new CheckoutResultDto
@@ -277,10 +284,17 @@ namespace Bike_Link.Application.Services
             if (!deducted)
                 throw new Exception("Số dư ví đã thay đổi. Vui lòng thử lại.");
 
-            // 9. Ghi WalletTransaction
+            // 9. Ghi WalletTransaction cho buyer
             await _walletRepo.CreatePaymentTransactionAsync(
                 wallet.WalletId, depositAmount,
                 $"Đặt cọc đơn hàng #{orderId} — xe \"{vehicle.Name}\"");
+
+            // 9b. Cộng tiền cọc vào Ví Tổng
+            var systemWallet = await _walletRepo.GetSystemWalletAsync();
+            await _walletRepo.AddBalanceAsync(systemWallet.WalletId, depositAmount);
+            await _walletRepo.CreatePaymentTransactionAsync(
+                systemWallet.WalletId, depositAmount,
+                $"Nhận tiền cọc đơn #{orderId} từ buyer #{buyerId}");
 
             // 10. Khóa xe → "booked"
             await _orderRepo.UpdateVehicleStatusAsync(vehicle.VehicleId, "booked");
@@ -324,27 +338,42 @@ namespace Bike_Link.Application.Services
             if (DateTime.UtcNow > expiry)
                 throw new Exception("Đã quá hạn 72h. Đơn cọc sẽ được xử lý tự động.");
 
-            // 3. Tính hoàn 95% tiền cọc
+            // 3. Tính hoàn 95% tiền cọc, 5% phạt cho seller
             decimal depositAmount = order.DepositAmount ?? 0;
             decimal refundAmount = Math.Round(depositAmount * 0.95m, 0);
+            decimal penaltyAmount = depositAmount - refundAmount; // 5%
 
             // 4. Cập nhật Order → "cancelled"
             await _orderRepo.UpdateOrderStatusAsync(orderId, "cancelled");
 
-            // 5. Hoàn tiền vào ví buyer
+            // 5. Trừ toàn bộ tiền cọc từ Ví Tổng
+            var systemWallet = await _walletRepo.GetSystemWalletAsync();
+            await _walletRepo.DeductBalanceAsync(systemWallet.WalletId, depositAmount);
+            await _walletRepo.CreatePaymentTransactionAsync(
+                systemWallet.WalletId, depositAmount,
+                $"Hoàn cọc + phạt hủy đơn #{orderId}");
+
+            // 6. Hoàn 95% vào ví buyer
             Wallet wallet = await _walletRepo.GetByUserIdAsync(buyerId);
             if (wallet == null)
                 throw new Exception("Không tìm thấy ví người mua");
 
             await _walletRepo.AddBalanceAsync(wallet.WalletId, refundAmount);
-
-            // 6. Ghi WalletTransaction — refund
             await _walletRepo.CreatePaymentTransactionAsync(
                 wallet.WalletId, refundAmount,
                 $"Hoàn tiền cọc đơn hàng #{orderId} (95%)", "success");
 
-            // 7. Giải phóng xe → "active"
-            
+            // 7. Chuyển 5% phạt cho seller
+            Wallet sellerWallet = await _walletRepo.GetByUserIdAsync(order.SellerId);
+            if (sellerWallet != null && penaltyAmount > 0)
+            {
+                await _walletRepo.AddBalanceAsync(sellerWallet.WalletId, penaltyAmount);
+                await _walletRepo.CreatePaymentTransactionAsync(
+                    sellerWallet.WalletId, penaltyAmount,
+                    $"Nhận phí phạt hủy cọc đơn #{orderId} (5%)", "success");
+            }
+
+            // 8. Giải phóng xe → "active"
             await ReleaseVehicleFromOrder(orderId);
 
             decimal newBalance = await _walletRepo.GetBalanceAsync(buyerId);
@@ -355,7 +384,7 @@ namespace Bike_Link.Application.Services
                 OrderId = orderId,
                 RefundAmount = refundAmount,
                 WalletBalance = newBalance,
-                Message = $"Hủy cọc thành công! Đã hoàn {refundAmount:N0}đ (95%) vào ví."
+                Message = $"Hủy cọc thành công! Đã hoàn {refundAmount:N0}đ (95%) vào ví. Phí phạt {penaltyAmount:N0}đ (5%) đã chuyển cho seller."
             };
         }
 
@@ -416,10 +445,17 @@ namespace Bike_Link.Application.Services
             if (!deducted)
                 throw new Exception("Số dư ví đã thay đổi. Vui lòng thử lại.");
 
-            // 6. Ghi WalletTransaction
+            // 6. Ghi WalletTransaction cho buyer
             await _walletRepo.CreatePaymentTransactionAsync(
                 wallet.WalletId, remainingAmount,
                 $"Thanh toán khoản còn lại đơn hàng #{orderId}");
+
+            // 6b. Cộng tiền vào Ví Tổng
+            var systemWallet = await _walletRepo.GetSystemWalletAsync();
+            await _walletRepo.AddBalanceAsync(systemWallet.WalletId, remainingAmount);
+            await _walletRepo.CreatePaymentTransactionAsync(
+                systemWallet.WalletId, remainingAmount,
+                $"Nhận thanh toán khoản còn lại đơn #{orderId} từ buyer #{buyerId}");
 
             // 7. Tạo Payment record cho khoản còn lại
             await _orderRepo.CreatePaymentAsync(new Payment
@@ -432,15 +468,10 @@ namespace Bike_Link.Application.Services
                 Status = "success"
             });
 
-            // 8. Cập nhật Order → "paid"
-            await _orderRepo.UpdateOrderStatusAsync(orderId, "paid");
+            // 8. Cập nhật Order → "processing" (chờ seller giao)
+            await _orderRepo.UpdateOrderStatusAsync(orderId, "processing");
 
-            // 9. Cập nhật vehicle → "sold"
-            var vehicleIds = await _orderRepo.GetVehicleIdsByOrderIdAsync(orderId);
-            foreach (var vid in vehicleIds)
-            {
-                await _orderRepo.UpdateVehicleStatusAsync(vid, "sold");
-            }
+            // Vehicle giữ nguyên "booked" — chưa sold cho đến buyer confirm
 
             decimal newBalance = await _walletRepo.GetBalanceAsync(buyerId);
 
@@ -450,7 +481,7 @@ namespace Bike_Link.Application.Services
                 OrderId = orderId,
                 RemainingAmount = remainingAmount,
                 WalletBalance = newBalance,
-                Message = $"Thanh toán thành công! Đã trừ {remainingAmount:N0}đ (khoản còn lại). Tổng đã thanh toán: {order.Amount:N0}đ."
+                Message = $"Thanh toán thành công! Đã trừ {remainingAmount:N0}đ (khoản còn lại). Chờ seller giao hàng."
             };
         }
 
@@ -459,26 +490,42 @@ namespace Bike_Link.Application.Services
         public async Task ProcessExpiredDepositsAsync()
         {
             var expiredOrders = await _orderRepo.GetExpiredDepositOrdersAsync();
+            var systemWallet = await _walletRepo.GetSystemWalletAsync();
 
             foreach (var order in expiredOrders)
             {
                 decimal depositAmount = order.DepositAmount ?? 0;
+                decimal sellerShare = Math.Round(depositAmount * 0.80m, 0);  // 80% cho seller
+                decimal systemKeep = depositAmount - sellerShare;            // 20% giữ lại
 
                 // 1. Cập nhật Order → "cancelled"
                 await _orderRepo.UpdateOrderStatusAsync(order.OrderId, "cancelled");
 
-                // 2. Chuyển tiền cọc cho seller
+                // 2. Trừ tiền cọc từ Ví Tổng
+                await _walletRepo.DeductBalanceAsync(systemWallet.WalletId, sellerShare);
+
+                // 3. Chuyển 80% cho seller
                 Wallet sellerWallet = await _walletRepo.GetByUserIdAsync(order.SellerId);
                 if (sellerWallet != null)
                 {
-                    await _walletRepo.AddBalanceAsync(sellerWallet.WalletId, depositAmount);
-
+                    await _walletRepo.AddBalanceAsync(sellerWallet.WalletId, sellerShare);
                     await _walletRepo.CreatePaymentTransactionAsync(
-                        sellerWallet.WalletId, depositAmount,
-                        $"Nhận tiền cọc quá hạn đơn hàng #{order.OrderId}", "success");
+                        sellerWallet.WalletId, sellerShare,
+                        $"Nhận 80% tiền cọc quá hạn đơn #{order.OrderId}", "success");
                 }
 
-                // 3. Ghi WalletTransaction cho buyer (thông báo mất cọc)
+                // 4. Ghi transaction cho Ví Tổng (giữ 20%)
+                await _walletRepo.CreatePaymentTransactionAsync(
+                    systemWallet.WalletId, sellerShare,
+                    $"Chuyển 80% cọc đơn #{order.OrderId} cho seller #{order.SellerId}");
+                if (systemKeep > 0)
+                {
+                    await _walletRepo.CreatePaymentTransactionAsync(
+                        systemWallet.WalletId, systemKeep,
+                        $"Giữ lại 20% cọc đơn #{order.OrderId} (phí hệ thống)");
+                }
+
+                // 5. Ghi WalletTransaction cho buyer (thông báo mất cọc)
                 Wallet buyerWallet = await _walletRepo.GetByUserIdAsync(order.BuyerId);
                 if (buyerWallet != null)
                 {
@@ -487,26 +534,75 @@ namespace Bike_Link.Application.Services
                         $"Mất tiền cọc đơn hàng #{order.OrderId} — quá hạn 72h", "failed");
                 }
 
-                // 4. Giải phóng xe → "active"
+                // 6. Giải phóng xe → "active"
                 await ReleaseVehicleFromOrder(order.OrderId);
+            }
+        }
+
+        // ===================== SELLER XÁC NHẬN GIAO HÀNG =====================
+
+        public async Task SellerConfirmShippedAsync(int sellerId, int orderId)
+        {
+            var order = await _orderRepo.GetOrderByIdAsync(orderId);
+            if (order == null)
+                throw new Exception("Không tìm thấy đơn hàng");
+
+            if (order.SellerId != sellerId)
+                throw new Exception("Bạn không có quyền xác nhận đơn hàng này");
+
+            if (order.Status != "processing")
+                throw new Exception($"Đơn hàng không ở trạng thái chờ giao (status: {order.Status})");
+
+            await _orderRepo.UpdateOrderStatusAsync(orderId, "shipped");
+        }
+
+        // ===================== BUYER XÁC NHẬN NHẬN HÀNG =====================
+
+        public async Task BuyerConfirmReceivedAsync(int buyerId, int orderId)
+        {
+            var order = await _orderRepo.GetOrderByIdAsync(orderId);
+            if (order == null)
+                throw new Exception("Không tìm thấy đơn hàng");
+
+            if (order.BuyerId != buyerId)
+                throw new Exception("Bạn không có quyền xác nhận đơn hàng này");
+
+            if (order.Status != "shipped")
+                throw new Exception($"Đơn hàng chưa được giao (status: {order.Status})");
+
+            // 1. Order → "completed"
+            await _orderRepo.UpdateOrderStatusAsync(orderId, "completed");
+
+            // 2. Vehicle → "sold"
+            var vehicleIds = await _orderRepo.GetVehicleIdsByOrderIdAsync(orderId);
+            foreach (var vid in vehicleIds)
+            {
+                await _orderRepo.UpdateVehicleStatusAsync(vid, "sold");
+            }
+
+            // 3. Chuyển tiền từ Ví Tổng → Ví Seller
+            var systemWallet = await _walletRepo.GetSystemWalletAsync();
+            decimal amount = order.Amount;
+
+            await _walletRepo.DeductBalanceAsync(systemWallet.WalletId, amount);
+            await _walletRepo.CreatePaymentTransactionAsync(
+                systemWallet.WalletId, amount,
+                $"Chuyển tiền đơn #{orderId} cho seller #{order.SellerId}");
+
+            Wallet sellerWallet = await _walletRepo.GetByUserIdAsync(order.SellerId);
+            if (sellerWallet != null)
+            {
+                await _walletRepo.AddBalanceAsync(sellerWallet.WalletId, amount);
+                await _walletRepo.CreatePaymentTransactionAsync(
+                    sellerWallet.WalletId, amount,
+                    $"Nhận tiền đơn hàng #{orderId} — buyer đã xác nhận nhận hàng", "success");
             }
         }
 
         // ===================== HELPER =====================
 
-        /// <summary>
-        /// Lấy VehicleId từ OrderDetail rồi chuyển status về "active"
-        /// </summary>
         private async Task ReleaseVehicleFromOrder(int orderId)
         {
-            // Sử dụng raw query thông qua OrderRepository
-            // Lấy VehicleId từ OrderDetail có OrderId tương ứng
-            // Vì deposit chỉ 1 xe nên lấy xe đầu tiên
-            var order = await _orderRepo.GetOrderByIdAsync(orderId);
-            if (order == null) return;
-
-            // Dùng method có sẵn - cần thêm method lấy VehicleId từ OrderDetail
-            // Tạm workaround: thêm method GetVehicleIdsByOrderIdAsync vào repo
             var vehicleIds = await _orderRepo.GetVehicleIdsByOrderIdAsync(orderId);
             foreach (var vid in vehicleIds)
             {

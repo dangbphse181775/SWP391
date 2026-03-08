@@ -32,5 +32,10 @@ namespace Bike_Link.Domain.IRepository
         /// Ghi WalletTransaction khi thanh toán
         /// </summary>
         Task CreatePaymentTransactionAsync(int walletId, decimal amount, string description, string status = "success");
+
+        /// <summary>
+        /// Lấy Ví Tổng (System Wallet) — UserId = 0
+        /// </summary>
+        Task<Wallet> GetSystemWalletAsync();
     }
 }
