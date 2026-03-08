@@ -22,12 +22,22 @@ namespace Bike_Link.Application.IService
         Task<CancelDepositResultDto> CancelDepositAsync(int buyerId, int orderId);
 
         /// <summary>
-        /// Thanh toán khoản còn lại (80%) sau khi đặt cọc — xe chuyển thành "sold"
+        /// Thanh toán khoản còn lại (80%) sau khi đặt cọc → order "processing"
         /// </summary>
         Task<PayRemainingResultDto> PayRemainingAsync(int buyerId, int orderId);
 
         /// <summary>
-        /// Xử lý các đơn cọc quá hạn 72h — tiền cọc chuyển cho seller, xe về "active"
+        /// Seller xác nhận đã giao xe → order "shipped"
+        /// </summary>
+        Task SellerConfirmShippedAsync(int sellerId, int orderId);
+
+        /// <summary>
+        /// Buyer xác nhận đã nhận hàng → order "completed", tiền Ví Tổng → Ví Seller
+        /// </summary>
+        Task BuyerConfirmReceivedAsync(int buyerId, int orderId);
+
+        /// <summary>
+        /// Xử lý các đơn cọc quá hạn 72h
         /// </summary>
         Task ProcessExpiredDepositsAsync();
     }
