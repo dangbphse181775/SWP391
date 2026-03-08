@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-//import Vehicle from "@/service/VehicleDetailAPI";
 import vehicleDetailApi from "@/service/VehicleDetailAPI";
 import productsApi from '@/service/productsApi';
-import ProductCard from "@/components/home/ProductCard";
 import WishlistAPI from "@/service/WishlistAPI";
 import cartApi from "@/service/addCartAPI";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart } from "lucide-react";
 import { toast } from 'sonner';
+import VehicleMediaGallery from "./components/VehicleMediaGallery";
+import SellerInfoCard from "./components/SellerInfoCard";
+import SimilarProducts from "./components/SimilarProducts";
 
 const BRANDS = {
     1: "Trek",
@@ -217,74 +218,11 @@ const handleBuyNow = async () => {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                     <div className="lg:col-span-7 space-y-4">
-                        <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-200 relative group">
-                            {activeMedia?.type === "video" ? (
-                                <video
-                                    src={activeMedia.url}
-                                    controls
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <img
-                                    alt={vehicle?.name}
-                                    src={activeMedia?.url || "/placeholder-bike.jpg"}
-                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                    onError={(e) => {
-                                        e.currentTarget.src = "/placeholder-bike.jpg";
-                                    }}
-                                />
-                            )}
-
-                            <div className="absolute top-4 left-4">
-                                <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border border-slate-100">
-                                    Nổi bật
-                                </span>
-                            </div>
-                        </div>
-
-
-
-                        <div className="grid grid-cols-5 gap-3">
-                            {(vehicle.media || []).slice(0, 4).map((media, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setActiveMedia(media)}
-                                    className={`aspect-square rounded-lg overflow-hidden border transition-colors
-                ${activeMedia?.url === media.url
-                                            ? "border-primary ring-2 ring-primary ring-offset-2"
-                                            : "border-slate-200 hover:border-primary"
-                                        }`}
-                                >
-                                    {media.type === "video" ? (
-                                        <video
-                                            src={media.url}
-                                            className="w-full h-full object-cover"
-                                            muted
-                                        />
-                                    ) : (
-                                        <img
-                                            src={media.url}
-                                            alt={`Thumbnail ${index + 1}`}
-                                            className="w-full h-full object-cover opacity-80 hover:opacity-100"
-                                            onError={(e) => {
-                                                e.currentTarget.src = "/placeholder-bike.jpg";
-                                            }}
-                                        />
-                                    )}
-                                </button>
-                            ))}
-
-                            {vehicle.media?.length > 4 && (
-                                <button className="aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
-                                    <span className="text-xs font-bold text-slate-500">
-                                        +{vehicle.media.length - 4} more
-                                    </span>
-                                </button>
-                            )}
-                        </div>
-
-
-
+                        <VehicleMediaGallery
+                            vehicle={vehicle}
+                            activeMedia={activeMedia}
+                            onMediaSelect={setActiveMedia}
+                        />
                     </div>
 
                     <div className="lg:col-span-5 flex flex-col">
@@ -364,14 +302,7 @@ const handleBuyNow = async () => {
                                         <span className="material-symbols-outlined">
                                             shopping_cart
                                         </span>
-                                        {buyNowLoading ? 'Đang xử lý...' : 'Mua ngay'}
-                                    </button>
-
-                                    <button className="w-full bg-white text-slate-800 hover:bg-slate-100 hover:shadow-xl hover:-translate-y-0.5 h-14 rounded-xl font-bold text-lg shadow-lg shadow-slate-900/20 transition-all duration-300 flex items-center justify-center gap-2">
-                                        <span className="material-symbols-outlined">
-                                            update
-                                        </span>
-                                        Đặt trước
+                                        {buyNowLoading ? 'Đang xử lý...' : 'Thêm vào giỏ hàng'}
                                     </button>
                                 </div>
 
@@ -431,60 +362,11 @@ const handleBuyNow = async () => {
                     </div>
 
                     <div className="lg:col-span-4">
-                        <div className="sticky top-24">
-                            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">
-                                    Thông tin người bán
-                                </h2>
-
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center border-2 border-primary/10">
-                                        <span className="material-symbols-outlined text-primary text-2xl">
-                                            person
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-1.5">
-                                            <h4 className="font-bold text-lg">
-                                                {vehicle?.sellerName || "N/A"}
-                                            </h4>
-                                            <span className="material-symbols-outlined text-primary text-base">
-                                                verified
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-slate-500">
-                                            ⭐ 4.9 (24 đánh giá)
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <button className="w-full mt-6 py-3 rounded-xl border border-primary text-primary font-bold hover:bg-primary hover:text-white transition-colors">
-                                    Xem cửa hàng của người bán
-                                </button>
-                            </div>
-                        </div>
+                        <SellerInfoCard sellerName={vehicle?.sellerName} />
                     </div>
                 </div>
 
-                <section className="mt-16">
-                    <h2 className="text-2xl font-bold mb-6">SẢN PHẨM TƯƠNG TỰ</h2>
-
-                    {similarLoading ? (
-                        <div className="flex justify-center items-center py-12">
-                            <Loader2 className="h-6 w-6 animate-spin text-black" />
-                        </div>
-                    ) : similarProducts.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500">
-                            Không có sản phẩm tương tự
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {similarProducts.map(product => (
-                                <ProductCard key={product.vehicleId} product={product} />
-                            ))}
-                        </div>
-                    )}
-                </section>
+                <SimilarProducts products={similarProducts} loading={similarLoading} />
 
             </main>
         </div>
