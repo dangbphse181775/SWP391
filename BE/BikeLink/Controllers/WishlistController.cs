@@ -1,9 +1,8 @@
 ﻿using Bike_Link.Application.DTO;
 using Bike_Link.Application.IService;
-using Bike_Link.Domain.Models;
+using BikeLink.Helper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace BikeLink.Controllers
 {
@@ -19,17 +18,12 @@ namespace BikeLink.Controllers
             _wishlistService = wishlistService;
         }
 
-        // Helper method để lấy userId từ JWT token
+        // Helper property để lấy userId từ JWT token
         private int CurrentUserId
         {
             get
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userIdClaim))
-                {
-                    throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
-                }
-                return int.Parse(userIdClaim);
+                return User.GetUserId();
             }
         }
 
@@ -48,7 +42,6 @@ namespace BikeLink.Controllers
         [HttpGet]
         public async Task<IActionResult> GetWishlist()
         {
-
             int userID = CurrentUserId;
             WishlistDto wishlist = await _wishlistService.GetUserWishlistAsync(userID);
             if (wishlist == null)
@@ -60,7 +53,6 @@ namespace BikeLink.Controllers
                 message = "Các xe đạp không còn active đã được tự động xóa khỏi wishlist"
             });
         }
-
 
         // POST: api/wishlist/{wishlistId}/items/{vehicleId}
         [HttpPost("{userID}/items/{vehicleId}")]
@@ -115,6 +107,5 @@ namespace BikeLink.Controllers
 
             return Ok(new { message = "Đã xóa khỏi wishlist" });
         }
-
     }
 }
