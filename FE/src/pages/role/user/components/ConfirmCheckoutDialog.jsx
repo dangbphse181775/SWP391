@@ -45,7 +45,7 @@ export default function ConfirmCheckoutDialog({
                     <Button variant="outline" className="flex-1" onClick={onClose}>
                         Hủy
                     </Button>
-                    <Button className="flex-1" onClick={onConfirm} disabled={loading}>
+                    <Button className="flex-1 bg-black hover:bg-black/80 text-white" onClick={onConfirm} disabled={loading}>
                         Xác nhận
                     </Button>
                 </DialogFooter>
