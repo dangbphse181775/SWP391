@@ -19,7 +19,7 @@ import Vehicle_Detail from '@/pages/role/user/Vehicle_Detail';
 import InspectorDashboard from '@/pages/role/inspector/InspectorDashboard';
 import DigitalWallet from '@/pages/common/DigitalWallet';
 import TransactionsPage from '@/pages/common/TransactionsPage';
-
+import ProfileEditPage from '@/pages/role/user/ProfileEditPage'; 
 function App() {
   return (
     <Router>
@@ -45,6 +45,11 @@ function App() {
             <Route path="/buyer/profile" element={
               <RoleBasedRoute>
                 <ProfilePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/profile/edit" element={
+              <RoleBasedRoute>
+                <ProfileEditPage />
               </RoleBasedRoute>
             } />
             <Route path="/buyer/wishlist" element={
