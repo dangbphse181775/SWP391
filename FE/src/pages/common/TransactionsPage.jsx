@@ -278,6 +278,7 @@ export default function TransactionsPage() {
                     const status = getStatusMeta(item?.status);
                     const typeIcon = getTypeIcon(item?.type);
                     const amountValue = Number(item?.amount || 0);
+                    const isPending = String(item?.status || "").toLowerCase() !== "success" && String(item?.status || "").toLowerCase() !== "failed";
                     const isExpense = isPayment || amountValue < 0;
 
                     return (
@@ -322,10 +323,10 @@ export default function TransactionsPage() {
 
                         <td
                           className={`px-6 py-5 text-right font-bold ${
-                            isExpense ? "text-slate-900" : "text-emerald-600"
+                            isPending ? "text-slate-900" : isExpense ? "text-rose-600" : "text-emerald-600"
                           }`}
                         >
-                          {isExpense ? "-" : "+"}
+                          {!isPending && (isExpense ? "-" : "+")}
                           {formatCurrency(Math.abs(amountValue))}
                         </td>
                       </tr>

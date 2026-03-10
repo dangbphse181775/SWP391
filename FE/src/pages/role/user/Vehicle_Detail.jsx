@@ -4,6 +4,7 @@ import vehicleDetailApi from "@/service/VehicleDetailAPI";
 import productsApi from '@/service/productsApi';
 import WishlistAPI from "@/service/WishlistAPI";
 import cartApi from "@/service/addCartAPI";
+import cartAPI from "@/service/cartAPI";
 import { Heart } from "lucide-react";
 import { toast } from 'sonner';
 import VehicleMediaGallery from "./components/VehicleMediaGallery";
@@ -51,6 +52,8 @@ const Vehicle_Detail = () => {
 // Wishlist states
     const [isInWishlist, setIsInWishlist] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
+// Cart states
+    const [isInCart, setIsInCart] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -73,6 +76,7 @@ const Vehicle_Detail = () => {
 
                 await fetchSimilarProducts(data?.categoryName);
                 await checkWishlistStatus(data?.vehicleId || id);
+                await checkCartStatus(data?.vehicleId || id);
             } catch (err) {
                 console.error("Fetch vehicle failed:", err);
             } finally {
@@ -116,6 +120,18 @@ const Vehicle_Detail = () => {
             setSimilarLoading(false);
         }
     };
+const checkCartStatus = async (vehicleId) => {
+    try {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+        const cartData = await cartAPI.getCart();
+        const items = Array.isArray(cartData) ? cartData : Array.isArray(cartData?.data) ? cartData.data : [];
+        setIsInCart(items.some(item => item.vehicleId === Number(vehicleId)));
+    } catch (err) {
+        setIsInCart(false);
+    }
+};
+
 const checkWishlistStatus = async (vehicleId) => {
     try {
         const wishlistData = await WishlistAPI.getWishlist();
@@ -187,7 +203,16 @@ const handleBuyNow = async () => {
 
     try {
         setBuyNowLoading(true);
+
+        if (isInCart) {
+            toast.warning('Xe đã có trong giỏ hàng!', {
+                duration: 2500,
+            });
+            return;
+        }
+
         await cartApi.addToCart(vehicleId);
+        setIsInCart(true);
 
         toast.success('Đã thêm vào giỏ hàng!', {
             duration: 2000,
@@ -210,7 +235,10 @@ const handleBuyNow = async () => {
 };
 
     if (loading) return <p>Đang tải...</p>;
-    if (!vehicle) return <p>Không tìm thấy xe</p>;
+    if (!vehicle) {
+        navigate("/", { replace: true });
+        return null;
+    }
 
 
     return (
