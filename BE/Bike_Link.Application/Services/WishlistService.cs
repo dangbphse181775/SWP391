@@ -95,7 +95,7 @@ namespace Bike_Link.Application.Services
             }
 
             // Lấy thông tin vehicle để kiểm tra status
-            Vehicle vehicle = await _vehicleRepo.GetByIdAsync(vehicleId, userId);
+            Vehicle vehicle = await _vehicleRepo.GetByIdAsync(vehicleId);
             if (vehicle == null)
             {
                 throw new InvalidOperationException("Không tìm thấy xe đạp");
