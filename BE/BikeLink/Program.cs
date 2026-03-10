@@ -128,6 +128,10 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IShippingRepository, ShippingRepository>();
 builder.Services.AddScoped<IShippingService, ShippingService>();
 
+//review
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
 // Background service: tự động xử lý cọc quá hạn 72h
 builder.Services.AddHostedService<BikeLink.BackgroundServices.DepositExpiryService>();
 

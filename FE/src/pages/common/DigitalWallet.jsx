@@ -385,15 +385,15 @@ export default function DigitalWallet() {
                         Chi tiết giao dịch
                       </th>
 
-                      <th className="px-6 py-4">
+                      <th className="px-6 py-4 whitespace-nowrap">
                         Ngày
                       </th>
 
-                      <th className="px-6 py-4">
+                      <th className="px-6 py-4 whitespace-nowrap">
                         Trạng thái
                       </th>
 
-                      <th className="px-6 py-4 text-right">
+                      <th className="px-6 py-4 text-right whitespace-nowrap">
                         Số tiền
                       </th>
 
@@ -448,17 +448,17 @@ export default function DigitalWallet() {
                             </div>
                           </td>
 
-                          <td className="px-6 py-4 text-sm text-slate-600">
+                          <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">
                             {formatTransactionDate(item?.createdAt)}
                           </td>
 
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 text-xs rounded-full font-bold ${status.className}`}>
                               {status.label}
                             </span>
                           </td>
 
-                          <td className={`px-6 py-4 text-right font-bold ${amountClass}`}>
+                          <td className={`px-6 py-4 text-right font-bold whitespace-nowrap ${amountClass}`}>
                             {signedAmount}
                           </td>
                         </tr>
