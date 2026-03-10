@@ -20,6 +20,7 @@ import Vehicle_Detail from '@/pages/role/user/Vehicle_Detail';
 import InspectorDashboard from '@/pages/role/inspector/InspectorDashboard';
 import DigitalWallet from '@/pages/common/DigitalWallet';
 import TransactionsPage from '@/pages/common/TransactionsPage';
+import PaymentResult from '@/pages/common/PaymentResult';
 
 const VehicleDetailRoute = () => {
   const { id } = useParams();
@@ -247,6 +248,7 @@ function App() {
           {/* Auth Routes without Header and Footer */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/payment" element={<PaymentResult />} />
         </Routes>
       </AuthProvider>
     </Router>

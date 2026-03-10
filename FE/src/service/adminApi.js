@@ -23,6 +23,16 @@ const adminApi = {
     rejectVehicle(id, adminNote) {
         const url = `/Admin/vehicles/${id}/reject`;
         return axiosClient.post(url, { adminNote });
+    },
+
+    // Get system wallet balance (admin only)
+    getSystemWalletBalance() {
+        return axiosClient.get('/Wallet/system/balance');
+    },
+
+    // Get system wallet transactions (admin only)
+    getSystemWalletTransactions() {
+        return axiosClient.get('/Wallet/system/transactions');
     }
 };
 

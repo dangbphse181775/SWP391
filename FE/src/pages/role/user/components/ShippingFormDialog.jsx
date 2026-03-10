@@ -16,7 +16,7 @@ export default function ShippingFormDialog({ open, shippingForm, onFormChange, o
         <Dialog open={open}>
             <DialogContent
                 showCloseButton={false}
-                className="max-w-lg max-h-[90vh] overflow-y-auto"
+                className="max-w-lg max-h-[90vh] overflow-y-auto bg-white"
                 onInteractOutside={(e) => e.preventDefault()}
                 onEscapeKeyDown={(e) => e.preventDefault()}
             >
@@ -83,7 +83,7 @@ export default function ShippingFormDialog({ open, shippingForm, onFormChange, o
                     </div>
 
                     <DialogFooter className="pt-2">
-                        <Button type="submit" disabled={loading} className="w-full">
+                        <Button type="submit" disabled={loading} className="w-full bg-black hover:bg-black/80 text-white">
                             {loading ? "Đang lưu..." : "Xác nhận giao hàng"}
                         </Button>
                     </DialogFooter>

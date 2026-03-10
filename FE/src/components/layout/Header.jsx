@@ -107,14 +107,16 @@ const Header = () => {
                 >
                   <ShoppingCart className="h-5 w-5" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hidden md:flex"
-                  onClick={() => navigate(getPath('wallet'))}
-                >
-                  <CreditCard className="h-5 w-5" />
-                </Button>
+                {user?.role?.toLowerCase() !== 'admin' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hidden md:flex"
+                    onClick={() => navigate(getPath('wallet'))}
+                  >
+                    <CreditCard className="h-5 w-5" />
+                  </Button>
+                )}
               </>
             )}
             {isAuthenticated ? (
