@@ -15,15 +15,18 @@ namespace Bike_Link.Application.Services
         private readonly ICartRepository _cartRepo;
         private readonly IWalletRepository _walletRepo;
         private readonly IOrderRepository _orderRepo;
+        private readonly ISystemConfigRepository _configRepo;
 
         public OrderService(
             ICartRepository cartRepo,
             IWalletRepository walletRepo,
-            IOrderRepository orderRepo)
+            IOrderRepository orderRepo,
+            ISystemConfigRepository configRepo)
         {
             _cartRepo = cartRepo;
             _walletRepo = walletRepo;
             _orderRepo = orderRepo;
+            _configRepo = configRepo;
         }
 
         public async Task<CheckoutResultDto> CheckoutAsync(
@@ -216,8 +219,9 @@ namespace Bike_Link.Application.Services
             if (vehicle.SellerId == buyerId)
                 throw new Exception("Bạn không thể đặt cọc xe do chính mình đăng bán");
 
-            // 3. Tính tiền cọc = 20% giá trị xe
-            decimal depositAmount = Math.Round(vehicle.Price * 0.20m, 0);
+            // 3. Tính tiền cọc theo config (mặc định 20%)
+            decimal depositRate = await _configRepo.GetDecimalAsync("deposit_rate", 0.20m);
+            decimal depositAmount = Math.Round(vehicle.Price * depositRate, 0);
 
             // 4. Kiểm tra ví
             Wallet wallet = await _walletRepo.GetByUserIdAsync(buyerId);
@@ -304,6 +308,7 @@ namespace Bike_Link.Application.Services
                 cart.CartId, new List<int> { vehicle.VehicleId });
 
             decimal newBalance = await _walletRepo.GetBalanceAsync(buyerId);
+            int expiryHours = await _configRepo.GetIntAsync("deposit_expiry_hours", 72);
 
             return new DepositResultDto
             {
@@ -312,8 +317,8 @@ namespace Bike_Link.Application.Services
                 VehiclePrice = vehicle.Price,
                 DepositAmount = depositAmount,
                 WalletBalance = newBalance,
-                DepositExpiry = DateTime.UtcNow.AddHours(72),
-                Message = $"Đặt cọc thành công! Đã trừ {depositAmount:N0}đ. Vui lòng thanh toán nốt trong 72h."
+                DepositExpiry = DateTime.UtcNow.AddHours(expiryHours),
+                Message = $"Đặt cọc thành công! Đã trừ {depositAmount:N0}đ. Vui lòng thanh toán nốt trong {expiryHours}h."
             };
         }
 
@@ -333,15 +338,17 @@ namespace Bike_Link.Application.Services
             if (order.Status != "deposited")
                 throw new Exception($"Đơn hàng không thể hủy (status hiện tại: {order.Status})");
 
-            // 2. Kiểm tra còn trong hạn 72h không
-            var expiry = order.CreatedAt.AddHours(72);
+            // 2. Kiểm tra còn trong hạn không
+            int expiryHours = await _configRepo.GetIntAsync("deposit_expiry_hours", 72);
+            var expiry = order.CreatedAt.AddHours(expiryHours);
             if (DateTime.UtcNow > expiry)
-                throw new Exception("Đã quá hạn 72h. Đơn cọc sẽ được xử lý tự động.");
+                throw new Exception($"Đã quá hạn {expiryHours}h. Đơn cọc sẽ được xử lý tự động.");
 
-            // 3. Tính hoàn 95% tiền cọc, 5% phạt cho seller
+            // 3. Tính hoàn tiền theo config (mặc định 95%), phạt cho seller
+            decimal cancelRefundRate = await _configRepo.GetDecimalAsync("cancel_refund_rate", 0.95m);
             decimal depositAmount = order.DepositAmount ?? 0;
-            decimal refundAmount = Math.Round(depositAmount * 0.95m, 0);
-            decimal penaltyAmount = depositAmount - refundAmount; // 5%
+            decimal refundAmount = Math.Round(depositAmount * cancelRefundRate, 0);
+            decimal penaltyAmount = depositAmount - refundAmount;
 
             // 4. Cập nhật Order → "cancelled"
             await _orderRepo.UpdateOrderStatusAsync(orderId, "cancelled");
@@ -353,7 +360,7 @@ namespace Bike_Link.Application.Services
                 systemWallet.WalletId, depositAmount,
                 $"Hoàn cọc + phạt hủy đơn #{orderId}");
 
-            // 6. Hoàn 95% vào ví buyer
+            // 6. Hoàn tiền vào ví buyer
             Wallet wallet = await _walletRepo.GetByUserIdAsync(buyerId);
             if (wallet == null)
                 throw new Exception("Không tìm thấy ví người mua");
@@ -361,16 +368,16 @@ namespace Bike_Link.Application.Services
             await _walletRepo.AddBalanceAsync(wallet.WalletId, refundAmount);
             await _walletRepo.CreatePaymentTransactionAsync(
                 wallet.WalletId, refundAmount,
-                $"Hoàn tiền cọc đơn hàng #{orderId} (95%)", "success");
+                $"Hoàn tiền cọc đơn hàng #{orderId} ({cancelRefundRate * 100:0.##}%)", "success");
 
-            // 7. Chuyển 5% phạt cho seller
+            // 7. Chuyển phạt cho seller
             Wallet sellerWallet = await _walletRepo.GetByUserIdAsync(order.SellerId);
             if (sellerWallet != null && penaltyAmount > 0)
             {
                 await _walletRepo.AddBalanceAsync(sellerWallet.WalletId, penaltyAmount);
                 await _walletRepo.CreatePaymentTransactionAsync(
                     sellerWallet.WalletId, penaltyAmount,
-                    $"Nhận phí phạt hủy cọc đơn #{orderId} (5%)", "success");
+                    $"Nhận phí phạt hủy cọc đơn #{orderId} ({(1 - cancelRefundRate) * 100:0.##}%)", "success");
             }
 
             // 8. Giải phóng xe → "active"
@@ -384,7 +391,7 @@ namespace Bike_Link.Application.Services
                 OrderId = orderId,
                 RefundAmount = refundAmount,
                 WalletBalance = newBalance,
-                Message = $"Hủy cọc thành công! Đã hoàn {refundAmount:N0}đ (95%) vào ví. Phí phạt {penaltyAmount:N0}đ (5%) đã chuyển cho seller."
+                Message = $"Hủy cọc thành công! Đã hoàn {refundAmount:N0}đ ({cancelRefundRate * 100:0.##}%) vào ví. Phí phạt {penaltyAmount:N0}đ ({(1 - cancelRefundRate) * 100:0.##}%) đã chuyển cho seller."
             };
         }
 
@@ -404,10 +411,11 @@ namespace Bike_Link.Application.Services
             if (order.Status != "deposited")
                 throw new Exception($"Đơn hàng không ở trạng thái đặt cọc (status hiện tại: {order.Status})");
 
-            // 2. Kiểm tra còn trong hạn 72h không
-            var expiry = order.CreatedAt.AddHours(72);
+            // 2. Kiểm tra còn trong hạn không
+            int expiryHours = await _configRepo.GetIntAsync("deposit_expiry_hours", 72);
+            var expiry = order.CreatedAt.AddHours(expiryHours);
             if (DateTime.UtcNow > expiry)
-                throw new Exception("Đã quá hạn 72h. Đơn cọc đã bị hủy tự động.");
+                throw new Exception($"Đã quá hạn {expiryHours}h. Đơn cọc đã bị hủy tự động.");
 
             // 3. Tính khoản còn lại = tổng giá - tiền cọc
             decimal depositAmount = order.DepositAmount ?? 0;
@@ -495,8 +503,9 @@ namespace Bike_Link.Application.Services
             foreach (var order in expiredOrders)
             {
                 decimal depositAmount = order.DepositAmount ?? 0;
-                decimal sellerShare = Math.Round(depositAmount * 0.80m, 0);  // 80% cho seller
-                decimal systemKeep = depositAmount - sellerShare;            // 20% giữ lại
+                decimal expiredSellerRate = await _configRepo.GetDecimalAsync("expired_seller_rate", 0.80m);
+                decimal sellerShare = Math.Round(depositAmount * expiredSellerRate, 0);
+                decimal systemKeep = depositAmount - sellerShare;
 
                 // 1. Cập nhật Order → "cancelled"
                 await _orderRepo.UpdateOrderStatusAsync(order.OrderId, "cancelled");
@@ -504,25 +513,25 @@ namespace Bike_Link.Application.Services
                 // 2. Trừ tiền cọc từ Ví Tổng
                 await _walletRepo.DeductBalanceAsync(systemWallet.WalletId, sellerShare);
 
-                // 3. Chuyển 80% cho seller
+                // 3. Chuyển cho seller
                 Wallet sellerWallet = await _walletRepo.GetByUserIdAsync(order.SellerId);
                 if (sellerWallet != null)
                 {
                     await _walletRepo.AddBalanceAsync(sellerWallet.WalletId, sellerShare);
                     await _walletRepo.CreatePaymentTransactionAsync(
                         sellerWallet.WalletId, sellerShare,
-                        $"Nhận 80% tiền cọc quá hạn đơn #{order.OrderId}", "success");
+                        $"Nhận {expiredSellerRate * 100:0.##}% tiền cọc quá hạn đơn #{order.OrderId}", "success");
                 }
 
-                // 4. Ghi transaction cho Ví Tổng (giữ 20%)
+                // 4. Ghi transaction cho Ví Tổng
                 await _walletRepo.CreatePaymentTransactionAsync(
                     systemWallet.WalletId, sellerShare,
-                    $"Chuyển 80% cọc đơn #{order.OrderId} cho seller #{order.SellerId}");
+                    $"Chuyển {expiredSellerRate * 100:0.##}% cọc đơn #{order.OrderId} cho seller #{order.SellerId}");
                 if (systemKeep > 0)
                 {
                     await _walletRepo.CreatePaymentTransactionAsync(
                         systemWallet.WalletId, systemKeep,
-                        $"Giữ lại 20% cọc đơn #{order.OrderId} (phí hệ thống)");
+                        $"Giữ lại {(1 - expiredSellerRate) * 100:0.##}% cọc đơn #{order.OrderId} (phí hệ thống)");
                 }
 
                 // 5. Ghi WalletTransaction cho buyer (thông báo mất cọc)
@@ -531,7 +540,7 @@ namespace Bike_Link.Application.Services
                 {
                     await _walletRepo.CreatePaymentTransactionAsync(
                         buyerWallet.WalletId, depositAmount,
-                        $"Mất tiền cọc đơn hàng #{order.OrderId} — quá hạn 72h", "failed");
+                        $"Mất tiền cọc đơn hàng #{order.OrderId} — quá hạn", "failed");
                 }
 
                 // 6. Giải phóng xe → "active"

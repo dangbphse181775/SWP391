@@ -28,9 +28,9 @@ namespace Bike_Link.Application.Services
             vnpay.Add("vnp_Amount", ((long)(amount * 100)).ToString());
             vnpay.Add("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
             vnpay.Add("vnp_CurrCode", "VND");
-            vnpay.Add("vnp_IpAddr", "127.0.0.1"); // Bạn có thể giữ fix cứng để test
+            vnpay.Add("vnp_IpAddr", "127.0.0.1"); // fix cứng
             vnpay.Add("vnp_Locale", "vn");
-            vnpay.Add("vnp_OrderInfo", "Naptien"); // Thử bỏ dấu cách để loại trừ lỗi encode
+            vnpay.Add("vnp_OrderInfo", "Naptien");
             vnpay.Add("vnp_OrderType", "other");
             vnpay.Add("vnp_ReturnUrl", _config["VNPay:ReturnUrl"]);
             vnpay.Add("vnp_IpnUrl", _config["VNPay:IpnUrl"]);
