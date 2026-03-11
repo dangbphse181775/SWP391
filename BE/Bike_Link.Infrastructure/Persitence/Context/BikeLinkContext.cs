@@ -40,6 +40,7 @@ public partial class BikeLinkContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
     public virtual DbSet<WalletTransaction> WalletTransactions { get; set; }
     public virtual DbSet<Shipping> Shippings { get; set; }
+    public virtual DbSet<SystemConfig> SystemConfigs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -244,6 +245,28 @@ public partial class BikeLinkContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<SystemConfig>(entity =>
+        {
+            entity.ToTable("SystemConfigs");
+            
+            entity.HasKey(e => e.Key);
+            entity.Property(e => e.Key)
+                .HasMaxLength(100)
+                .IsRequired();
+            entity.Property(e => e.Value)
+                .HasMaxLength(255)
+                .IsRequired();
+            entity.Property(e => e.Description)
+                .HasMaxLength(500);
+
+            // Seed data mặc định
+            entity.HasData(
+                new SystemConfig { Key = "deposit_rate", Value = "0.20", Description = "Tỉ lệ đặt cọc (20%)", UpdatedAt = null },
+                new SystemConfig { Key = "cancel_refund_rate", Value = "0.95", Description = "Tỉ lệ hoàn tiền khi hủy cọc (95%)", UpdatedAt = null },
+                new SystemConfig { Key = "expired_seller_rate", Value = "0.80", Description = "Tỉ lệ seller nhận khi cọc quá hạn (80%)", UpdatedAt = null },
+                new SystemConfig { Key = "deposit_expiry_hours", Value = "72", Description = "Thời hạn đặt cọc (giờ)", UpdatedAt = null }
+            );          
+        });
 
         base.OnModelCreating(modelBuilder);
     }
