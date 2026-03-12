@@ -1,21 +1,24 @@
+﻿using Bike_Link.Domain.IRepository;
+using Bike_Link.Domain.Models;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Bike_Link.Domain.IRepository;
-using Bike_Link.Domain.Models;
-using Npgsql;
 
 namespace Bike_Link.Infrastructure.Persitence.Repository
 {
     public class OrderRepository : IOrderRepository
     {
         private readonly NpgsqlDataSource _dataSource;
+        private readonly BikeLinkContext _context;
 
-        public OrderRepository(NpgsqlDataSource dataSource)
+        public OrderRepository(NpgsqlDataSource dataSource, BikeLinkContext context)
         {
             _dataSource = dataSource;
+            _context = context;
         }
 
         public async Task<int> CreateOrderAsync(Order order)
@@ -251,6 +254,21 @@ WHERE ""OrderId"" = @orderId
             }
 
             return ids;
+        }
+
+        // Thêm vào class OrderRepository
+
+        /// Lấy chi tiết Order bao gồm Buyer, Seller, OrderDetails (với Vehicle và VehicleMedia), Payments, Shipping
+        public async Task<Order?> GetOrderDetailByIdAsync(int orderId)
+        {
+            return await _context.Orders
+                .Include(o => o.Buyer)
+                .Include(o => o.Seller)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Vehicle)
+                        .ThenInclude(v => v.VehicleMedia)
+                .Include(o => o.Shipping)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
         }
     }
 }

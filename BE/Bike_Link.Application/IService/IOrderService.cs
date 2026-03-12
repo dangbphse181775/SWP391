@@ -40,5 +40,10 @@ namespace Bike_Link.Application.IService
         /// Xử lý các đơn cọc quá hạn 72h
         /// </summary>
         Task ProcessExpiredDepositsAsync();
+
+        /// <summary>
+        /// Lấy chi tiết đơn hàng theo OrderId
+        /// </summary>
+        Task<OrderDetailResponseDto?> GetOrderByOrderIdAsync(int orderId);
     }
 }

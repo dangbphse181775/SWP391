@@ -608,6 +608,57 @@ namespace Bike_Link.Application.Services
             }
         }
 
+
+
+
+        // ===================== LẤY CHI TIẾT ĐƠN HÀNG =====================
+
+        public async Task<OrderDetailResponseDto?> GetOrderByOrderIdAsync(int orderId)
+        {
+            var order = await _orderRepo.GetOrderDetailByIdAsync(orderId);
+            
+            if (order == null)
+                return null;
+
+            return new OrderDetailResponseDto
+            {
+                OrderId = order.OrderId,
+                
+                // Chỉ hiện FullName và Phone của Buyer
+                BuyerName = order.Buyer.FullName ?? "N/A",
+                BuyerPhone = order.Buyer.Phone,
+                
+                // Chỉ hiện FullName và Phone của Seller
+                SellerName = order.Seller.FullName ?? "N/A",
+                SellerPhone = order.Seller.Phone,
+                
+                Status = order.Status,
+                Amount = order.Amount,
+                DepositAmount = order.DepositAmount,
+                
+                CreatedAt = order.CreatedAt,
+                
+                
+                OrderItems = order.OrderDetails.Select(od => new OrderItemDto
+                {
+                    VehicleId = od.VehicleId,
+                    VehicleName = od.Vehicle?.Name ?? "N/A",
+                    ThumbnailUrl = od.Vehicle?.VehicleMedia
+                        .FirstOrDefault(m => m.Type == "image")?.Url,
+                    Quantity = od.Quantity,
+                    Price = od.Price
+                }).ToList(),
+                
+                Shipping = order.Shipping == null ? null : new OrderShippingDto
+                {
+                    RecipientName = order.Shipping.RecipientName,
+                    RecipientPhone = order.Shipping.RecipientPhone,
+                    ShippingAddress = order.Shipping.ShippingAddress,
+                    Note = order.Shipping.Note
+                }
+            };
+        }
+
         // ===================== HELPER =====================
 
         private async Task ReleaseVehicleFromOrder(int orderId)

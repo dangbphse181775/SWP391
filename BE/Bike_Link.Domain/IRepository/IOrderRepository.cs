@@ -53,5 +53,7 @@ namespace Bike_Link.Domain.IRepository
         /// Lấy danh sách VehicleId từ OrderDetails của 1 Order
         /// </summary>
         Task<List<int>> GetVehicleIdsByOrderIdAsync(int orderId);
+
+        Task<Order?> GetOrderDetailByIdAsync(int orderId);
     }
 }

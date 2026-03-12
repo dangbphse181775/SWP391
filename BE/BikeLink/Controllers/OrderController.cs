@@ -12,10 +12,12 @@ namespace BikeLink.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
+        private readonly IProfileService _profileService;
 
-        public OrderController(IOrderService orderService)
+        public OrderController(IOrderService orderService, IProfileService profileService)
         {
             _orderService = orderService;
+            _profileService = profileService;
         }
 
         /// <summary>
@@ -221,6 +223,38 @@ namespace BikeLink.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        
+        // Lấy chi tiết đơn hàng
+        [HttpGet("{orderId}")]
+        public async Task<IActionResult> GetOrderById(int orderId)
+        {
+            try
+            {
+                OrderDetailResponseDto order = await _orderService.GetOrderByOrderIdAsync(orderId);
+                
+                if (order == null)
+                    return NotFound(new { message = "Không tìm thấy đơn hàng" });
+                
+                // Optional: Kiểm tra quyền truy cập
+                int userId = User.GetUserId();
+                string userRole = User.GetRole();
+                ProfileDto userProfile = await _profileService.GetProfileAsync(userId);
+                // Admin có thể xem tất cả, buyer/seller chỉ xem được đơn của mình
+                if (userRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                    return Ok(order);
+                if (order.BuyerName!= userProfile.FullName && order.SellerName != userProfile.FullName)
+                {
+                    return Unauthorized(new { message = "Bạn chỉ có thể tìm kiếm đơn hàng của mình" }); // Chỉ buyer hoặc seller mới được xem
+                }
+                
+                return Ok(order);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
     }
