@@ -1,4 +1,4 @@
-﻿using Bike_Link.Application.DTO;
+using Bike_Link.Application.DTO;
 using Bike_Link.Application.IService;
 using BikeLink.Helper;
 using Microsoft.AspNetCore.Authorization;
@@ -25,15 +25,46 @@ namespace BikeLink.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> CreateVehicle([FromForm] CreateVehicleRequest req)
         {
-            int userId = User.GetUserId();
-
-            var id = await _sellerService.CreateVehicleAsync(req, userId);
-
-            return Ok(new
+            try
             {
-                message = "Đăng xe thành công",
-                vehicleId = id
-            });
+                int userId = User.GetUserId();
+                var result = await _sellerService.CreateVehicleAsync(req, userId);
+
+                if (!result.Success)
+                {
+                    return StatusCode(402, new
+                    {
+                        success = false,
+                        postingFee = result.PostingFee,
+                        walletBalance = result.WalletBalance,
+                        amountShort = result.AmountShort,
+                        message = result.Message
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    vehicleId = result.VehicleId,
+                    postingFee = result.PostingFee,
+                    walletBalance = result.WalletBalance,
+                    message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("fee-preview")]
+        public async Task<IActionResult> FeePreview([FromQuery] decimal price)
+        {
+            if (price <= 0)
+                return BadRequest(new { message = "Giá xe phải lớn hơn 0" });
+
+            var result = await _sellerService.GetFeePreviewAsync(price);
+            return Ok(result);
         }
 
         [Authorize]
