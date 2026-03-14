@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,11 +10,12 @@ namespace Bike_Link.Application.IService
 {
     public interface ISellerService
     {
-        Task<int> CreateVehicleAsync(CreateVehicleRequest req, int userId);
+        Task<CreateVehicleResultDto> CreateVehicleAsync(CreateVehicleRequest req, int userId);
         Task<List<VehicleListDto>> GetMyVehiclesAsync(int userId);
         Task<VehicleDetailDto?> GetDetailAsync(int id, int userId);
         Task UpdateAsync(int id, UpdateVehicleRequest req, int userId);
         Task HideAsync(int id, int userId);
         Task<RejectedVehicleDto?> GetRejectReasonAsync(int vehicleId, int userId);
+        Task<FeePreviewDto> GetFeePreviewAsync(decimal vehiclePrice);
     }
 }

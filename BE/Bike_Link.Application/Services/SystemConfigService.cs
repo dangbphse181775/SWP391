@@ -60,6 +60,7 @@ namespace Bike_Link.Application.Services
                     "deposit_rate" => $"Tỉ lệ đặt cọc ({pct})",
                     "cancel_refund_rate" => $"Tỉ lệ hoàn tiền khi hủy cọc ({pct})",
                     "expired_seller_rate" => $"Tỉ lệ seller nhận khi cọc quá hạn ({pct})",
+                    "posting_fee_rate" => $"Phí đăng bài ({pct} giá xe)",
                     _ => null
                 };
             }
