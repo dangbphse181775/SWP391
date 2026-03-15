@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -264,7 +264,8 @@ public partial class BikeLinkContext : DbContext
                 new SystemConfig { Key = "deposit_rate", Value = "0.20", Description = "Tỉ lệ đặt cọc (20%)", UpdatedAt = null },
                 new SystemConfig { Key = "cancel_refund_rate", Value = "0.95", Description = "Tỉ lệ hoàn tiền khi hủy cọc (95%)", UpdatedAt = null },
                 new SystemConfig { Key = "expired_seller_rate", Value = "0.80", Description = "Tỉ lệ seller nhận khi cọc quá hạn (80%)", UpdatedAt = null },
-                new SystemConfig { Key = "deposit_expiry_hours", Value = "72", Description = "Thời hạn đặt cọc (giờ)", UpdatedAt = null }
+                new SystemConfig { Key = "deposit_expiry_hours", Value = "72", Description = "Thời hạn đặt cọc (giờ)", UpdatedAt = null },
+                new SystemConfig { Key = "posting_fee_rate", Value = "0.01", Description = "Phí đăng bài (1% giá xe)", UpdatedAt = null }
             );          
         });
 

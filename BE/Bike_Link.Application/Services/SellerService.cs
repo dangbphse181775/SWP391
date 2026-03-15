@@ -1,5 +1,7 @@
-﻿using Bike_Link.Application.DTO;
+using System.Globalization;
+using Bike_Link.Application.DTO;
 using Bike_Link.Application.IService;
+using Bike_Link.Domain.IRepository;
 using Bike_Link.Domain.Models;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
@@ -11,15 +13,61 @@ namespace Bike_Link.Application.Services
     {
         private readonly IVehicleRepository _repo;
         private readonly Cloudinary _cloudinary;
+        private readonly IWalletRepository _walletRepo;
+        private readonly ISystemConfigRepository _configRepo;
 
-        public SellerService(IVehicleRepository repo, Cloudinary cloudinary)
+        public SellerService(
+            IVehicleRepository repo,
+            Cloudinary cloudinary,
+            IWalletRepository walletRepo,
+            ISystemConfigRepository configRepo)
         {
             _repo = repo;
             _cloudinary = cloudinary;
+            _walletRepo = walletRepo;
+            _configRepo = configRepo;
         }
 
-        public async Task<int> CreateVehicleAsync(CreateVehicleRequest req, int userId)
+        public async Task<CreateVehicleResultDto> CreateVehicleAsync(CreateVehicleRequest req, int userId)
         {
+            // 1. Đọc tỉ lệ phí đăng bài từ config (mặc định 1%)
+            decimal postingFeeRate = await _configRepo.GetDecimalAsync("posting_fee_rate", 0.01m);
+            decimal postingFee = Math.Round(req.Price * postingFeeRate, 0);
+
+            // 2. Kiểm tra ví seller
+            var wallet = await _walletRepo.GetByUserIdAsync(userId);
+            if (wallet == null)
+                throw new Exception("Bạn chưa có ví. Vui lòng liên hệ hỗ trợ.");
+
+            if (wallet.Balance < postingFee)
+            {
+                return new CreateVehicleResultDto
+                {
+                    Success = false,
+                    PostingFee = postingFee,
+                    WalletBalance = wallet.Balance,
+                    AmountShort = postingFee - wallet.Balance,
+                    Message = $"Số dư ví không đủ. Cần nạp thêm {(postingFee - wallet.Balance):N0}đ để đăng bài (phí {postingFeeRate * 100:0.##}% giá xe = {postingFee:N0}đ)."
+                };
+            }
+
+            // 3. Trừ ví seller
+            bool deducted = await _walletRepo.DeductBalanceAsync(wallet.WalletId, postingFee);
+            if (!deducted)
+                throw new Exception("Số dư ví đã thay đổi. Vui lòng thử lại.");
+
+            await _walletRepo.CreatePaymentTransactionAsync(
+                wallet.WalletId, postingFee,
+                $"Phí đăng bài xe '{req.Name}' ({postingFeeRate * 100:0.##}% giá xe)");
+
+            // 4. Cộng vào Ví Tổng
+            var systemWallet = await _walletRepo.GetSystemWalletAsync();
+            await _walletRepo.AddBalanceAsync(systemWallet.WalletId, postingFee);
+            await _walletRepo.CreatePaymentTransactionAsync(
+                systemWallet.WalletId, postingFee,
+                $"Nhận phí đăng bài từ seller #{userId} (xe: '{req.Name}')");
+
+            // 5. Tạo vehicle
             var vehicle = new Vehicle
             {
                 SellerId = userId,
@@ -70,7 +118,16 @@ namespace Bike_Link.Application.Services
                 }
             }
 
-            return vehicleId;
+            decimal newBalance = await _walletRepo.GetBalanceAsync(userId);
+
+            return new CreateVehicleResultDto
+            {
+                Success = true,
+                VehicleId = vehicleId,
+                PostingFee = postingFee,
+                WalletBalance = newBalance,
+                Message = $"Đăng bài thành công! Đã trừ phí {postingFee:N0}đ ({postingFeeRate * 100:0.##}% giá xe). Bài đăng đang chờ admin duyệt."
+            };
         }
 
         public async Task<List<VehicleListDto>> GetMyVehiclesAsync(int userId)
@@ -161,6 +218,20 @@ namespace Bike_Link.Application.Services
                 VehicleId = vehicle.VehicleId,
                 Name = vehicle.Name,
                 AdminNote = vehicle.AdminNote
+            };
+        }
+
+        public async Task<FeePreviewDto> GetFeePreviewAsync(decimal vehiclePrice)
+        {
+            decimal rate = await _configRepo.GetDecimalAsync("posting_fee_rate", 0.01m);
+            decimal fee = Math.Round(vehiclePrice * rate, 0);
+
+            return new FeePreviewDto
+            {
+                PostingFeeRate = rate,
+                PostingFeeRatePct = $"{rate * 100:0.##}%",
+                VehiclePrice = vehiclePrice,
+                EstimatedFee = fee
             };
         }
     }
