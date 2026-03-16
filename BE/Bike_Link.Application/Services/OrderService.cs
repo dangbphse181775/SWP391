@@ -669,5 +669,27 @@ namespace Bike_Link.Application.Services
                 await _orderRepo.UpdateVehicleStatusAsync(vid, "active");
             }
         }
+
+        public async Task<List<OrderListDto>> GetOrdersByUserIdAsync(int userId, string role)
+        {
+            var orders = await _orderRepo.GetOrdersByUserIdAsync(userId, role);
+
+            return orders.Select(o => new OrderListDto
+            {
+                OrderId = o.OrderId,
+                BuyerName = o.Buyer?.FullName ?? "N/A",
+                SellerName = o.Seller?.FullName ?? "N/A",
+                Status = o.Status,
+                Amount = o.Amount,
+                CreatedAt = o.CreatedAt,
+                Items = o.OrderDetails.Select(od => new OrderItemSummaryDto
+                {
+                    VehicleId = od.VehicleId,
+                    VehicleName = od.Vehicle?.Name ?? "N/A",
+                    Price = od.Price,
+                    ThumbnailUrl = od.Vehicle?.VehicleMedia?.FirstOrDefault(m => m.Type == "image")?.Url
+                }).ToList()
+            }).ToList();
+}
     }
 }

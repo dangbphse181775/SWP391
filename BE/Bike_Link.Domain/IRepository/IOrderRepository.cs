@@ -55,5 +55,6 @@ namespace Bike_Link.Domain.IRepository
         Task<List<int>> GetVehicleIdsByOrderIdAsync(int orderId);
 
         Task<Order?> GetOrderDetailByIdAsync(int orderId);
+        Task<List<Order>> GetOrdersByUserIdAsync(int userId, string role);
     }
 }

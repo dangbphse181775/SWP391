@@ -45,5 +45,7 @@ namespace Bike_Link.Application.IService
         /// Lấy chi tiết đơn hàng theo OrderId
         /// </summary>
         Task<OrderDetailResponseDto?> GetOrderByOrderIdAsync(int orderId);
+
+        Task<List<OrderListDto>> GetOrdersByUserIdAsync(int userId, string role);
     }
 }

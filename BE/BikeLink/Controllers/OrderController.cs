@@ -257,5 +257,63 @@ namespace BikeLink.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        // GET: api/order
+        /// <summary>
+        /// Lấy toàn bộ danh sách đơn hàng của chính mình (vừa là người mua, vừa là người bán)
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetMyOrders()
+        {
+            try
+            {
+                int userId = User.GetUserId();
+                
+                var orders = await _orderService.GetOrdersByUserIdAsync(userId, "All");
+
+                return Ok(new
+                {
+                    data = orders,
+                    message = "Lấy danh sách đơn hàng thành công"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/order/user/{userId}
+        /// <summary>
+        /// Lấy toàn bộ danh sách đơn hàng theo userId cụ thể
+        /// </summary>
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetOrdersByUserId(int userId)
+        {
+            try
+            {
+                // Bảo mật: Chỉ người đó HOẶC Admin mới được lấy danh sách đơn hàng của người đó
+                int currentUserId = User.GetUserId();
+                string userRole = User.GetRole();
+
+                if (currentUserId != userId && !userRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return StatusCode(403, new { message = "Bạn không có quyền lấy danh sách đơn hàng của người khác" });
+                }
+
+                
+                var orders = await _orderService.GetOrdersByUserIdAsync(userId, "All");
+
+                return Ok(new
+                {
+                    data = orders,
+                    message = "Lấy danh sách đơn hàng thành công"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

@@ -270,5 +270,31 @@ WHERE ""OrderId"" = @orderId
                 .Include(o => o.Shipping)
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
         }
+
+        public async Task<List<Order>> GetOrdersByUserIdAsync(int userId, string role)
+        {
+            var query = _context.Orders
+                .Include(o => o.Buyer)
+                .Include(o => o.Seller)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Vehicle)
+                        .ThenInclude(v => v.VehicleMedia)
+                .AsQueryable();
+
+            if (role.Equals("Buyer", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(o => o.BuyerId == userId);
+            }
+            else if (role.Equals("Seller", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(o => o.SellerId == userId);
+            }
+            else
+            {
+                query = query.Where(o => o.BuyerId == userId || o.SellerId == userId);
+            }
+
+            return await query.OrderByDescending(o => o.CreatedAt).ToListAsync();
+        }
     }
 }
