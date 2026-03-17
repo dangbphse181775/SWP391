@@ -1,5 +1,9 @@
 import axiosClient from "./axiosClient";
 
+export const getFeePreview = (price) => {
+    return axiosClient.get("/Seller/fee-preview", { params: { price } });
+};
+
 export const createVehicle = async (data, media) => {
     const formData = new FormData();
 
