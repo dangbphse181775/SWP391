@@ -315,5 +315,52 @@ namespace BikeLink.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("user/order/buyer")]
+        public async Task<IActionResult> GetOrdersByUserIdRoleBuyer()
+        {
+            try
+            {
+                // Bảo mật: Chỉ người đó HOẶC Admin mới được lấy danh sách đơn hàng của người đó
+                int currentUserId = User.GetUserId();
+                string userRole = User.GetRole();
+
+
+                var orders = await _orderService.GetOrdersByUserIdAsync(currentUserId, "Buyer");
+
+                return Ok(new
+                {
+                    data = orders,
+                    message = "Lấy danh sách đơn hàng thành công"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("user/order/seller")]
+        public async Task<IActionResult> GetOrdersByUserIdRoleSeller()
+        {
+            try
+            {
+                // Bảo mật: Chỉ người đó HOẶC Admin mới được lấy danh sách đơn hàng của người đó
+                int currentUserId = User.GetUserId();
+                string userRole = User.GetRole();
+
+                var orders = await _orderService.GetOrdersByUserIdAsync(currentUserId, "Seller");
+
+                return Ok(new
+                {
+                    data = orders,
+                    message = "Lấy danh sách đơn hàng thành công"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
