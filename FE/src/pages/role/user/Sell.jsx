@@ -1,12 +1,13 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { createVehicle } from "@/service/SellAPI";
+import { createVehicle, getFeePreview } from "@/service/SellAPI";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "sonner";
 import MediaUploadSection from "./components/MediaUploadSection";
+import { AlertTriangle, Wallet, Tag } from "lucide-react";
 
 
 export default function Sell() {
@@ -14,12 +15,37 @@ export default function Sell() {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingData, setPendingData] = useState(null);
+  const [feePreview, setFeePreview] = useState(null);
+  const [feeLoading, setFeeLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm();
+
+  const priceValue = watch("Price");
+
+  // Debounced fee preview
+  useEffect(() => {
+    const price = parseFloat(priceValue);
+    if (!price || price <= 0) { setFeePreview(null); return; }
+    const timer = setTimeout(async () => {
+      try {
+        setFeeLoading(true);
+        const res = await getFeePreview(price);
+        setFeePreview(res?.data ?? res);
+      } catch {
+        setFeePreview(null);
+      } finally {
+        setFeeLoading(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [priceValue]);
 
   // cleanup preview URL
   useEffect(() => {
@@ -65,22 +91,88 @@ export default function Sell() {
       toast.warning("Vui lòng tải ít nhất 1 ảnh hoặc video");
       return;
     }
+    setPendingData(data);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setConfirmOpen(false);
     setLoading(true);
     try {
-      await createVehicle(data, media);
-      toast.success("Đăng xe thành công");
+      await createVehicle(pendingData, media);
+      toast.success("Đăng xe thành công! Bài đăng đang chờ admin duyệt.");
       navigate("/");
     } catch (err) {
-      console.error(err);
-      toast.error("Đăng xe thất bại");
+      const status = err?.response?.status;
+      const body = err?.response?.data;
+      if (status === 402) {
+        const short = body?.amountShort ? formatVnd(body.amountShort) : "";
+        toast.error(
+          short
+            ? `Số dư ví không đủ. Cần nạp thêm ${short} để đăng bài.`
+            : (body?.message ?? "Đăng bài thất bại do số dư không đủ")
+        );
+      } else {
+        toast.error(body?.message ?? "Đăng xe thất bại");
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const formatVnd = (n) => new Intl.NumberFormat("vi-VN").format(n) + "đ";
+
   return (
     <main className="flex-1 flex justify-center py-8 text-slate-900">
       <div className="max-w-[1488px] w-full px-6 grid grid-cols-12 gap-8">
+
+        {/* Confirm modal */}
+        {confirmOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmOpen(false)} />
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900">Xác nhận đăng bài</h2>
+                {feePreview && (
+                  <div className="w-full bg-slate-50 rounded-xl p-4 text-sm space-y-2 text-left">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Giá xe</span>
+                      <span className="font-semibold">{formatVnd(feePreview.vehiclePrice)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Phí đăng bài ({feePreview.postingFeeRatePct})</span>
+                      <span className="font-semibold text-red-600">-{formatVnd(feePreview.estimatedFee)}</span>
+                    </div>
+                    <hr className="border-slate-200" />
+                    <p className="text-xs text-slate-400">
+                      Số tiền trên sẽ được trừ trực tiếp từ ví của bạn. Bài đăng sẽ chờ admin duyệt.
+                    </p>
+                  </div>
+                )}
+                {!feePreview && (
+                  <p className="text-sm text-slate-500">
+                    Một khoản phí đăng bài sẽ được trừ từ ví của bạn.
+                  </p>
+                )}
+              </div>
+              <div className="mt-5 flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setConfirmOpen(false)}>
+                  Hủy
+                </Button>
+                <Button
+                  className="flex-1 bg-black hover:bg-black/80 text-white"
+                  onClick={handleConfirmSubmit}
+                  disabled={loading}
+                >
+                  {loading ? <LoadingSpinner message="" /> : "Đăng bài"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* LEFT – MEDIA */}
         <div className="col-span-12 lg:col-span-7">
           <MediaUploadSection
@@ -187,6 +279,20 @@ export default function Sell() {
                   <option value="50%: Đã qua sử dụng – Cũ nhiều">50%: Đã qua sử dụng – Cũ nhiều</option>
                 </select>
               </div>
+
+              {/* Fee preview */}
+              {feePreview && (
+                <div className="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-lg px-4 py-2.5 text-sm">
+                  <span className="flex items-center gap-1.5 text-amber-700">
+                    <Tag className="w-4 h-4" />
+                    Phí đăng bài ({feePreview.postingFeeRatePct})
+                  </span>
+                  <span className="font-bold text-amber-800">{formatVnd(feePreview.estimatedFee)}</span>
+                </div>
+              )}
+              {feeLoading && (
+                <p className="text-xs text-slate-400">Calculating fee...</p>
+              )}
 
               <Input
                 placeholder="Kích thước khung"
