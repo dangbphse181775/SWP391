@@ -11,6 +11,46 @@ const orderApi = {
     return response;
   },
 
+  cancelDeposit: async (orderId) => {
+    const response = await axiosClient.post(`/Order/cancel-deposit/${orderId}`);
+    return response;
+  },
+
+  payRemaining: async (orderId) => {
+    const response = await axiosClient.post(`/Order/pay-remaining/${orderId}`);
+    return response;
+  },
+
+  confirmShipped: async (orderId) => {
+    const response = await axiosClient.post(`/Order/confirm-shipped/${orderId}`);
+    return response;
+  },
+
+  confirmReceived: async (orderId) => {
+    const response = await axiosClient.post(`/Order/confirm-received/${orderId}`);
+    return response;
+  },
+
+  processExpiredDeposits: async () => {
+    const response = await axiosClient.post(`/Order/process-expired-deposits`);
+    return response;
+  },
+
+  getById: async (orderId) => {
+    const response = await axiosClient.get(`/Order/${orderId}`);
+    return response;
+  },
+
+  getMyOrders: async () => {
+    const response = await axiosClient.get(`/Order`);
+    return response;
+  },
+
+  getByUserId: async (userId) => {
+    const response = await axiosClient.get(`/Order/user/${userId}`);
+    return response;
+  },
+
   createShipping: async (orderId, data) => {
     const response = await axiosClient.post(`/Shipping/order/${orderId}`, data);
     return response;

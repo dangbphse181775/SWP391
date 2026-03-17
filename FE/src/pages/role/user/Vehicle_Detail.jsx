@@ -5,39 +5,11 @@ import productsApi from '@/service/productsApi';
 import WishlistAPI from "@/service/WishlistAPI";
 import cartApi from "@/service/addCartAPI";
 import cartAPI from "@/service/cartAPI";
-import { Heart } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { toast } from 'sonner';
 import VehicleMediaGallery from "./components/VehicleMediaGallery";
 import SellerInfoCard from "./components/SellerInfoCard";
 import SimilarProducts from "./components/SimilarProducts";
-
-const BRANDS = {
-    1: "Trek",
-    2: "Specialized",
-    3: "Giant",
-    4: "Cannondale",
-    5: "Bianchi",
-    6: "Pinarello",
-    7: "Cervélo",
-    8: "Scott",
-    9: "Santa Cruz",
-    10: "Colnago",
-    11: "Khác",
-};
-const CATEGORIES = {
-    1: "Xe đạp đường trường (Road Bike)",
-    2: "Xe đạp địa hình (Mountain Bike - MTB)",
-    3: "Xe đạp đường phố (City/Hybrid Bike)",
-    4: "Xe đạp touring (Touring Bike)",
-    5: "Xe đạp đua tính giờ (Time Trial/Triathlon)",
-    6: "Xe đạp Gravel (Gravel Bike)",
-    7: "Xe đạp biểu diễn (BMX)",
-    8: "Xe đạp gấp (Folding Bike)",
-    9: "Xe đạp điện thể thao (E-Bike)",
-    10: "Khác",
-};
-
-
 
 const Vehicle_Detail = () => {
     const { id } = useParams();
@@ -57,6 +29,9 @@ const Vehicle_Detail = () => {
 
     useEffect(() => {
         if (!id) return;
+
+        // React Router keeps scroll position by default; ensure detail view starts at top.
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 
         setLoading(true);
         setVehicle(null);
@@ -90,24 +65,14 @@ const Vehicle_Detail = () => {
     const fetchSimilarProducts = async (categoryName) => {
         try {
             setSimilarLoading(true);
-
-            console.log("Starting fetchSimilarProducts with categoryName:", categoryName);
-
             const allProducts = await productsApi.getAllVehicles();
-
-            console.log("All products from API:", allProducts);
-            console.log("Looking for categoryName:", categoryName);
-            console.log("Current vehicle ID:", id);
 
             const similar = allProducts
                 .filter(p => {
                     const matches = p.categoryName === categoryName && p.vehicleId !== Number(id);
-                    console.log(`Product ${p.vehicleId} (${p.categoryName}): matches=${matches}`);
                     return matches;
                 })
                 .slice(0, 4);
-
-            console.log("Similar products after filter:", similar);
           const uniqueSimilarProducts = Array.from(
                   new Map(similar.map(product => [product.vehicleId, product])).values()
                 );
@@ -234,7 +199,43 @@ const handleBuyNow = async () => {
     }
 };
 
-    if (loading) return <p>Đang tải...</p>;
+const handleShare = async () => {
+    const url = window.location?.href;
+    if (!url) return;
+
+    try {
+        if (navigator.share) {
+            await navigator.share({
+                title: vehicle?.name || 'BikeLink',
+                url,
+            });
+            return;
+        }
+
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(url);
+            toast.success('Đã sao chép liên kết', { duration: 2000 });
+            return;
+        }
+
+        toast.error('Trình duyệt không hỗ trợ chia sẻ');
+    } catch (err) {
+        // Native share sheet can be dismissed by user.
+        if (err?.name === 'AbortError') return;
+        toast.error('Không thể chia sẻ liên kết');
+    }
+};
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center">
+                <div className="flex items-center gap-3 text-slate-600">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm font-medium">Đang tải...</span>
+                </div>
+            </div>
+        );
+    }
     if (!vehicle) {
         navigate("/", { replace: true });
         return null;
@@ -260,13 +261,13 @@ const handleBuyNow = async () => {
                                     {vehicle?.brandName || "N/A"}
                                 </span>
 
-                                <h1 className="text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
                                     {vehicle?.name || "Loading..."}
                                 </h1>
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <span className="text-4xl font-black text-red-600">
+                            <div className="flex items-center gap-4 flex-wrap">
+                                <span className="text-3xl sm:text-4xl font-black text-red-600">
                                     {vehicle?.price ? vehicle.price.toLocaleString("vi-VN") : "0"}₫
                                 </span>
                                 {vehicle?.isInspected && (
@@ -286,7 +287,7 @@ const handleBuyNow = async () => {
                                     Thông số kỹ thuật
                                 </h3>
 
-                                <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
                                     <div>
                                         <p className="text-xs text-slate-500 mb-0.5">Mẫu</p>
                                         <p className="text-sm font-semibold">
@@ -350,7 +351,10 @@ const handleBuyNow = async () => {
                                            {isInWishlist ? 'Đã thích' : 'Thêm vào danh sách yêu thích'}
                                     </button>
 
-                                    <button className="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors text-sm font-medium">
+                                    <button
+                                        onClick={handleShare}
+                                        className="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors text-sm font-medium"
+                                    >
                                         <span className="material-symbols-outlined text-lg">
                                             share
                                         </span>
@@ -363,7 +367,7 @@ const handleBuyNow = async () => {
                 </div>
 
                 <div className="mt-16 grid grid-cols-1 lg:grid-cols-12 gap-12">
-                    <div className="lg:col-span-8 space-y-12">
+                    <div className="lg:col-span-8 space-y-12 order-2 lg:order-1">
                         <section>
                             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-primary">
@@ -371,7 +375,7 @@ const handleBuyNow = async () => {
                                 </span>
                                 Mô tả
                             </h2>
-                            <p>
+                            <p className="text-slate-700 leading-relaxed whitespace-pre-line">
                                 {vehicle?.description || "No description available"}
                             </p>
                         </section>
@@ -383,13 +387,13 @@ const handleBuyNow = async () => {
                                 </span>
                                 Lịch sử sử dụng
                             </h2>
-                            <p>
+                            <p className="text-slate-700 leading-relaxed whitespace-pre-line">
                                 {vehicle?.usageHistory || "No usage history available"}
                             </p>
                         </section>
                     </div>
 
-                    <div className="lg:col-span-4">
+                    <div className="lg:col-span-4 order-1 lg:order-2">
                         <SellerInfoCard sellerName={vehicle?.sellerName} />
                     </div>
                 </div>

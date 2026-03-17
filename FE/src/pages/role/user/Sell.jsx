@@ -72,7 +72,15 @@ export default function Sell() {
       navigate("/");
     } catch (err) {
       console.error(err);
-      toast.error("Đăng xe thất bại");
+      if (err.response?.status === 402) {
+        const { message, walletBalance, amountShort } = err.response.data;
+        toast.error(
+          message ||
+            `Số dư ví không đủ. Số dư hiện tại: ${walletBalance?.toLocaleString()}đ, cần nạp thêm: ${amountShort?.toLocaleString()}đ`
+        );
+      } else {
+        toast.error("Đăng xe thất bại");
+      }
     } finally {
       setLoading(false);
     }

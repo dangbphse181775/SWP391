@@ -21,6 +21,7 @@ import InspectorDashboard from '@/pages/role/inspector/InspectorDashboard';
 import DigitalWallet from '@/pages/common/DigitalWallet';
 import TransactionsPage from '@/pages/common/TransactionsPage';
 import PaymentResult from '@/pages/common/PaymentResult';
+import OrderHistory from '@/pages/common/OrderHistory';
 
 const VehicleDetailRoute = () => {
   const { id } = useParams();
@@ -48,6 +49,11 @@ function App() {
 
           <Route element={<MainLayout />}>
             {/* Buyer Role Routes */}
+            <Route path="/orderHistory" element={
+              <RoleBasedRoute>
+                <OrderHistory />
+              </RoleBasedRoute>
+            } />
             <Route path="/buyer" element={
               <RoleBasedRoute>
                 <UserHomePage />
