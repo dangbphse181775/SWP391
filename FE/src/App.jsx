@@ -12,6 +12,7 @@ import CartPage from '@/pages/role/user/Cart';
 import Dashboard from '@/pages/role/admin/Dashboard';
 import PostApproval from '@/pages/role/admin/PostApproval';
 import PostDetail from '@/pages/role/admin/PostDetail';
+import SystemConfig from '@/pages/role/admin/SystemConfig';
 import AppToaster from "@/components/ui/Toaster";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -248,6 +249,11 @@ function App() {
           <Route path="/admin/posts/:id" element={
             <RoleBasedRoute>
               <PostDetail />
+            </RoleBasedRoute>
+          } />
+          <Route path="/admin/settings" element={
+            <RoleBasedRoute>
+              <SystemConfig />
             </RoleBasedRoute>
           } />
 

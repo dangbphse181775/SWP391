@@ -33,6 +33,16 @@ const adminApi = {
     // Get system wallet transactions (admin only)
     getSystemWalletTransactions() {
         return axiosClient.get('/Wallet/system/transactions');
+    },
+
+    // Get all system configs (admin only)
+    getSystemConfigs() {
+        return axiosClient.get('/SystemConfig');
+    },
+
+    // Update a system config by key (admin only)
+    updateSystemConfig(key, value) {
+        return axiosClient.put(`/SystemConfig/${key}`, { value });
     }
 };
 
