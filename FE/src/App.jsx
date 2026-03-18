@@ -22,6 +22,8 @@ import InspectorDashboard from '@/pages/role/inspector/InspectorDashboard';
 import DigitalWallet from '@/pages/common/DigitalWallet';
 import TransactionsPage from '@/pages/common/TransactionsPage';
 import PaymentResult from '@/pages/common/PaymentResult';
+import OrderHistory from '@/pages/common/OrderHistory';
+import SelledHistory from '@/pages/common/SelledHistory';
 
 const VehicleDetailRoute = () => {
   const { id } = useParams();
@@ -48,7 +50,6 @@ function App() {
           </Route>
 
           <Route element={<MainLayout />}>
-            {/* Buyer Role Routes */}
             <Route path="/buyer" element={
               <RoleBasedRoute>
                 <UserHomePage />
@@ -88,6 +89,16 @@ function App() {
             <Route path="/buyer/transactions" element={
               <RoleBasedRoute>
                 <TransactionsPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/orderHistory" element={
+              <RoleBasedRoute>
+                <OrderHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/selledHistory" element={
+              <RoleBasedRoute>
+                <SelledHistory />
               </RoleBasedRoute>
             } />
 
@@ -131,6 +142,16 @@ function App() {
             <Route path="/seller/transactions" element={
               <RoleBasedRoute>
                 <TransactionsPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/orderHistory" element={
+              <RoleBasedRoute>
+                <OrderHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/selledHistory" element={
+              <RoleBasedRoute>
+                <SelledHistory />
               </RoleBasedRoute>
             } />
 
@@ -181,6 +202,16 @@ function App() {
                 <TransactionsPage />
               </RoleBasedRoute>
             } />
+            <Route path="/inspector/orderHistory" element={
+              <RoleBasedRoute>
+                <OrderHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/selledHistory" element={
+              <RoleBasedRoute>
+                <SelledHistory />
+              </RoleBasedRoute>
+            } />
 
           </Route>
 
@@ -225,6 +256,16 @@ function App() {
             <Route path="/admin/transactions" element={
               <RoleBasedRoute>
                 <TransactionsPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/orderHistory" element={
+              <RoleBasedRoute>
+                <OrderHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/selledHistory" element={
+              <RoleBasedRoute>
+                <SelledHistory />
               </RoleBasedRoute>
             } />
           </Route>
