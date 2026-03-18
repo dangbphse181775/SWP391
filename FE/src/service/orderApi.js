@@ -42,7 +42,12 @@ const orderApi = {
   },
 
   getMyOrders: async () => {
-    const response = await axiosClient.get(`/Order`);
+    const response = await axiosClient.get(`/Order/user/order/buyer`);
+    return response;
+  },
+
+  getMySellerOrders: async () => {
+    const response = await axiosClient.get(`/Order/user/order/seller`);
     return response;
   },
 

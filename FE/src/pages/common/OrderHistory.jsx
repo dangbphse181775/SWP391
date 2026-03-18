@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
 
@@ -18,56 +19,50 @@ const formatDateVi = (value) => {
 const getStatusMeta = (statusRaw) => {
   const status = String(statusRaw || "").toLowerCase();
 
-  if (status.includes("complete")) {
+  if (status === "completed") {
     return {
       label: "Hoàn thành",
-      badgeClass:
-        "bg-green-100 text-green-800",
+      badgeClass: "bg-green-100 text-green-800",
       dotClass: "bg-green-700",
     };
   }
 
-  if (status.includes("cancel") || status.includes("reject")) {
+  if (status === "cancelled") {
     return {
       label: "Đã hủy",
-      badgeClass:
-        "bg-red-100 text-red-800",
+      badgeClass: "bg-red-100 text-red-800",
       dotClass: "bg-red-700",
     };
   }
 
-  if (status.includes("ship")) {
+  if (status === "shipped") {
     return {
       label: "Đang giao",
-      badgeClass:
-        "bg-amber-100 text-amber-900",
+      badgeClass: "bg-amber-100 text-amber-900",
       dotClass: "bg-amber-700",
     };
   }
 
-  if (status.includes("deposit")) {
+  if (status === "deposited") {
     return {
       label: "Đã đặt cọc",
-      badgeClass:
-        "bg-orange-100 text-orange-900",
+      badgeClass: "bg-orange-100 text-orange-900",
       dotClass: "bg-orange-700",
     };
   }
 
-  if (status.includes("paid") || status.includes("success")) {
+  if (status === "processing") {
     return {
-      label: "Đã thanh toán",
-      badgeClass:
-        "bg-emerald-100 text-emerald-900",
-      dotClass: "bg-emerald-700",
+      label: "Đang xử lý",
+      badgeClass: "bg-blue-100 text-blue-800",
+      dotClass: "bg-blue-700",
     };
   }
 
   return {
-    label: statusRaw ? String(statusRaw) : "Đang xử lý",
-    badgeClass:
-      "bg-blue-100 text-blue-800",
-    dotClass: "bg-blue-700",
+    label: statusRaw ? String(statusRaw) : "Không xác định",
+    badgeClass: "bg-slate-100 text-slate-800",
+    dotClass: "bg-slate-700",
   };
 };
 
@@ -143,8 +138,25 @@ export default function OrderHistory() {
         </div>
 
         {sortedOrders.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
-            <p className="text-slate-600 font-medium">Chưa có đơn hàng nào.</p>
+          <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 flex flex-col items-center gap-5 text-center">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-100">
+              <span className="material-symbols-outlined text-5xl text-slate-400">
+                receipt_long
+              </span>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-slate-700">Chưa có đơn hàng nào</p>
+              <p className="mt-1.5 text-sm text-slate-400 max-w-xs mx-auto">
+                Bạn chưa thực hiện đơn hàng nào. Hãy khám phá và đặt mua xe điện đầu tiên của bạn!
+              </p>
+            </div>
+            <Link
+              to="/products"
+              className="mt-1 inline-flex items-center gap-2 rounded-lg bg-black px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+            >
+              <span className="material-symbols-outlined text-[18px]">explore</span>
+              Khám phá xe ngay
+            </Link>
           </div>
         ) : (
           <div className="flex flex-col gap-6">
