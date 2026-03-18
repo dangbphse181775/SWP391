@@ -52,6 +52,7 @@ namespace Bike_Link.Application.Services
 
                 Condition = v.Condition,
                 FrameSize = v.FrameSize,
+                UsageHistory = v.UsageHistory,
                 Model = v.Model,
 
                 BrandName = v.Brand?.BrandName,

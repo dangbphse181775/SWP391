@@ -125,6 +125,7 @@ SELECT
     v.""Price"",
     v.""Condition"",
     v.""FrameSize"",
+    v.""UsageHistory"",
     v.""Model"",
     v.""IsInspected"",
     v.""CreatedAt"",
@@ -155,24 +156,25 @@ WHERE
                 Price = rd.GetDecimal(3),
                 Condition = rd.IsDBNull(4) ? null : rd.GetString(4),
                 FrameSize = rd.IsDBNull(5) ? null : rd.GetString(5),
-                Model = rd.IsDBNull(6) ? null : rd.GetString(6),
-                IsInspected = rd.IsDBNull(7) ? null : rd.GetBoolean(7),
-                CreatedAt = rd.GetDateTime(8),
-                SellerId = rd.GetInt32(9),
+                UsageHistory = rd.IsDBNull(6) ? null : rd.GetString(6),
+                Model = rd.IsDBNull(7) ? null : rd.GetString(7),
+                IsInspected = rd.IsDBNull(8) ? null : rd.GetBoolean(8),
+                CreatedAt = rd.GetDateTime(9),
+                SellerId = rd.GetInt32(10),
 
                 Seller = new User
                 {
-                    FullName = rd.IsDBNull(10) ? null : rd.GetString(10)
+                    FullName = rd.IsDBNull(11) ? null : rd.GetString(11)
                 },
 
-                Brand = rd.IsDBNull(11) ? null : new Brand
+                Brand = rd.IsDBNull(12) ? null : new Brand
                 {
-                    BrandName = rd.GetString(11)
+                    BrandName = rd.GetString(12)
                 },
 
-                Category = rd.IsDBNull(12) ? null : new Category
+                Category = rd.IsDBNull(13) ? null : new Category
                 {
-                    CategoryName = rd.GetString(12)
+                    CategoryName = rd.GetString(13)
                 }
             };
 

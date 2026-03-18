@@ -17,7 +17,7 @@ namespace Bike_Link.Application.DTO
 
         public string? Condition { get; set; }
         public string? FrameSize { get; set; }
-
+        public string? UsageHistory { get; set; }
         public string? Model { get; set; }
 
         public string? BrandName { get; set; }
