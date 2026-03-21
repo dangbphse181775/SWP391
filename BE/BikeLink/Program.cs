@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Bike_Link.Application.IService;
 using Bike_Link.Application.Services;
@@ -9,8 +9,12 @@ using System.Text;
 using Bike_Link.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Bike_Link.Domain.IRepository;
+using BikeLink.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// SignalR
+builder.Services.AddSignalR();
 
 // Add services
 builder.Services.AddControllers();
@@ -74,6 +78,24 @@ builder.Services
                 Encoding.UTF8.GetBytes(jwtKey!)
             )
         };
+
+        // SignalR gửi JWT qua query string, không phải header
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                // Chỉ áp dụng cho request đến SignalR hub
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 
@@ -136,6 +158,10 @@ builder.Services.AddScoped<ISystemConfigService, SystemConfigService>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
+//dispute
+builder.Services.AddScoped<IDisputeRepository, DisputeRepository>();
+builder.Services.AddScoped<IDisputeService, DisputeService>();
+
 // Background service: tự động xử lý cọc quá hạn 72h
 builder.Services.AddHostedService<BikeLink.BackgroundServices.DepositExpiryService>();
 
@@ -161,7 +187,8 @@ builder.Services.AddCors(options =>
             policy
                 .WithOrigins("http://localhost:5173")
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials();
         });
 });
 
@@ -186,4 +213,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<DisputeChatHub>("/hubs/dispute-chat");
 app.Run();

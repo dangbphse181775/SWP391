@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Bike_Link.Domain.Models;
@@ -37,6 +37,8 @@ public partial class User
     public virtual ICollection<Order> SellOrders { get; set; } = new List<Order>();
 
     public virtual ICollection<Dispute> Disputes { get; set; } = new List<Dispute>();
+    public virtual ICollection<Dispute> ResolvedDisputes { get; set; } = new List<Dispute>();
+    public virtual ICollection<DisputeChat> DisputeChats { get; set; } = new List<DisputeChat>();
     public virtual ICollection<InspectionReport> InspectionReports { get; set; } = new List<InspectionReport>();
 
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
