@@ -41,6 +41,7 @@ public partial class BikeLinkContext : DbContext
     public virtual DbSet<WalletTransaction> WalletTransactions { get; set; }
     public virtual DbSet<Shipping> Shippings { get; set; }
     public virtual DbSet<SystemConfig> SystemConfigs { get; set; }
+    public virtual DbSet<DisputeChat> DisputeChats { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -143,6 +144,31 @@ public partial class BikeLinkContext : DbContext
                 .WithMany(u => u.Disputes)
                 .HasForeignKey(d => d.OpenedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.ResolvedByUser)
+                .WithMany(u => u.ResolvedDisputes)
+                .HasForeignKey(d => d.ResolvedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // DisputeChat
+        modelBuilder.Entity<DisputeChat>(entity =>
+        {
+            entity.HasKey(c => c.DisputeChatId);
+
+            entity.HasOne(c => c.Dispute)
+                .WithMany(d => d.DisputeChats)
+                .HasForeignKey(c => c.DisputeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(c => c.Sender)
+                .WithMany(u => u.DisputeChats)
+                .HasForeignKey(c => c.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(c => c.Channel)
+                .HasMaxLength(10)
+                .IsRequired();
         });
 
         // Report
@@ -265,7 +291,8 @@ public partial class BikeLinkContext : DbContext
                 new SystemConfig { Key = "cancel_refund_rate", Value = "0.95", Description = "Tỉ lệ hoàn tiền khi hủy cọc (95%)", UpdatedAt = null },
                 new SystemConfig { Key = "expired_seller_rate", Value = "0.80", Description = "Tỉ lệ seller nhận khi cọc quá hạn (80%)", UpdatedAt = null },
                 new SystemConfig { Key = "deposit_expiry_hours", Value = "72", Description = "Thời hạn đặt cọc (giờ)", UpdatedAt = null },
-                new SystemConfig { Key = "posting_fee_rate", Value = "0.01", Description = "Phí đăng bài (1% giá xe)", UpdatedAt = null }
+                new SystemConfig { Key = "posting_fee_rate", Value = "0.01", Description = "Phí đăng bài (1% giá xe)", UpdatedAt = null },
+                new SystemConfig { Key = "dispute_window_days", Value = "3", Description = "Thời hạn mở tranh chấp sau khi nhận hàng (ngày)", UpdatedAt = null }
             );          
         });
 
