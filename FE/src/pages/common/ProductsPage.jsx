@@ -19,6 +19,7 @@ import {
 import productsApi from '@/service/productsApi';
 import WishlistAPI from '@/service/WishlistAPI';
 import { useDebounce } from 'use-debounce';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 
@@ -26,6 +27,7 @@ import { useDebounce } from 'use-debounce';
 const ProductsPage = () => {
   const navigate = useNavigate();
   const { role } = useRolePath();
+  const { user } = useAuth();
   const [priceRange, setPriceRange] = useState([0, 100000000]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
@@ -67,7 +69,10 @@ const ProductsPage = () => {
       try {
         const data = await productsApi.getAllVehicles();
         // Safe check if data is array
-        const products = Array.isArray(data) ? data : [];
+        let products = Array.isArray(data) ? data : [];
+        if (user?.userId) {
+          products = products.filter(product => product.sellerId !== user.userId);
+        }
         setAllProducts(products);
         setFilteredProducts(products);
       } catch (error) {
@@ -80,7 +85,7 @@ const ProductsPage = () => {
       }
     };
     fetchProducts();
-  }, []);
+  }, [user?.userId]);
 
   // Fetch wishlist
   useEffect(() => {

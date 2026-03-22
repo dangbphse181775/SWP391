@@ -26,6 +26,7 @@ import OrderHistory from '@/pages/common/OrderHistory';
 import SelledHistory from '@/pages/common/SelledHistory';
 import DisputeList from '@/pages/role/admin/DisputeList';
 import DisputeDetail from '@/pages/role/admin/DisputeDetail';
+import ManagePosts from '@/pages/role/user/ManagePosts';
 
 const VehicleDetailRoute = () => {
   const { id } = useParams();
@@ -103,6 +104,11 @@ function App() {
                 <SelledHistory />
               </RoleBasedRoute>
             } />
+            <Route path="/buyer/managePosts" element={
+              <RoleBasedRoute>
+                <ManagePosts />
+              </RoleBasedRoute>
+            } />
 
             {/* Seller Role Routes */}
             <Route path="/seller" element={
@@ -154,6 +160,11 @@ function App() {
             <Route path="/seller/selledHistory" element={
               <RoleBasedRoute>
                 <SelledHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/managePosts" element={
+              <RoleBasedRoute>
+                <ManagePosts />
               </RoleBasedRoute>
             } />
 

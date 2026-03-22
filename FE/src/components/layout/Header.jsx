@@ -169,11 +169,23 @@ const Header = () => {
   };
 
   const handleSellClick = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (isAuthenticated) {
       navigate(getPath('sell'));
     } else {
-      toast.error('Vui lòng đăng nhập để bán xe', {
+      toast.error('Vui lòng đăng nhập để đăng tin', {
+        duration: 2000,
+      });
+      navigate('/login');
+    }
+  };
+
+  const handleManagePostClick = (e) => {
+    if (e) e.preventDefault();
+    if (isAuthenticated) {
+      navigate(getPath('managePosts'));
+    } else {
+      toast.error('Vui lòng đăng nhập để quản lý tin đăng', {
         duration: 2000,
       });
       navigate('/login');
@@ -203,16 +215,21 @@ const Header = () => {
             <Link to={isAuthenticated ? getPath('products') : '/products'} className="text-sm font-semibold text-gray-900 hover:text-blue-600">
               Sản phẩm
             </Link>
-            <Link to="/community" className="text-sm font-semibold text-gray-900 hover:text-blue-600">
-              Cộng đồng
-            </Link>
-            <a
-              href="#"
-              className="text-sm font-semibold text-gray-900 hover:text-blue-600"
-              onClick={handleSellClick}
-            >
-              Bán xe
-            </a>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-sm font-semibold text-gray-900 hover:text-blue-600 outline-none">
+                Bán xe
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleSellClick} className="cursor-pointer">
+                  Đăng tin
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleManagePostClick} className="cursor-pointer">
+                  Quản lý tin đăng
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Link to="/contact" className="text-sm font-semibold text-gray-900 hover:text-blue-600">
               Liên hệ
             </Link>

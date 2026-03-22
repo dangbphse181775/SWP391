@@ -4,10 +4,12 @@ import FeaturesSection from '@/components/home/FeaturesSection';
 import ProductSection from '@/components/home/ProductSection';
 import productsApi from '@/service/productsApi';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const UserHomePage = () => {
   const [productsByCategory, setProductsByCategory] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   const categories = [
     'Xe đạp đường trường (Road Bike)',
@@ -41,7 +43,10 @@ const UserHomePage = () => {
           grouped[cat] = [];
         });
         
-        data.forEach(product => {
+        // Filter out vehicles that belong to the current user
+        const filteredData = data.filter(product => product.sellerId !== user?.userId);
+        
+        filteredData.forEach(product => {
           const category = product.categoryName || 'Khác';
           if (grouped[category]) {
             grouped[category].push(product);

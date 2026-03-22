@@ -35,3 +35,33 @@ export const createVehicle = async (data, media) => {
         },
     });
 };
+
+export const getMyVehicles = () => {
+    return axiosClient.get("/Seller/vehicles");
+};
+
+export const getVehicleDetail = (id) => {
+    return axiosClient.get(`/Seller/vehicles/${id}`);
+};
+
+export const updateVehicle = (id, data, media) => {
+    // For now update uses JSON body, backend expects UpdateVehicleRequest [FromBody]
+    // If backend changed to FromForm for update too, we'd use FormData.
+    // Based on SellerController: [HttpPut("vehicles/{id:int}")] public async Task<IActionResult> Update(int id, [FromBody] UpdateVehicleRequest req)
+    // So it's JSON body, no media upload in update for now? 
+    // Wait, UpdateVehicleRequest might not include images.
+    // Let's assume JSON body.
+    return axiosClient.put(`/Seller/vehicles/${id}`, data);
+};
+
+export const hideVehicle = (id) => {
+    return axiosClient.delete(`/Seller/vehicles/${id}`);
+};
+
+export const getRejectionReason = (id) => {
+    return axiosClient.get(`/Seller/vehicles/${id}/rejection-reason`);
+};
+
+export const getInspectionReport = (id) => {
+    return axiosClient.get(`/Seller/vehicles/${id}/inspection-report`);
+};
