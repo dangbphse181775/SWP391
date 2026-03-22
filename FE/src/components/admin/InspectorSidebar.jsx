@@ -1,27 +1,13 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  Package, 
-  BarChart3, 
-  Settings, 
-  LogOut,
-  Scale
-} from 'lucide-react';
+import { Scale, ClipboardCheck, LogOut, Home } from 'lucide-react';
 
-const AdminSidebar = ({ pendingCount = 0, disputeCount = 0 }) => {
+const InspectorSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const sidebarItems = [
-    { icon: LayoutDashboard, label: 'Tổng quan', path: '/admin/dashboard' },
-    { icon: FileText, label: 'Duyệt bài đăng', path: '/admin/posts', badge: pendingCount },
-    { icon: Scale, label: 'Khiếu nại', path: '/admin/disputes', badge: disputeCount },
-    { icon: Users, label: 'Người dùng', path: '/admin/users' },
-    { icon: Package, label: 'Sản phẩm', path: '/admin/products' },
-    { icon: BarChart3, label: 'Thống kê', path: '/admin/reports' },
-    { icon: Settings, label: 'Cài đặt', path: '/admin/settings' }
+    { icon: ClipboardCheck, label: 'Kiểm định xe', path: '/inspector/inspection' },
+    { icon: Scale, label: 'Khiếu nại', path: '/inspector/disputes' },
   ];
 
   const handleLogout = () => {
@@ -36,18 +22,18 @@ const AdminSidebar = ({ pendingCount = 0, disputeCount = 0 }) => {
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
         <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-lg">A</span>
+          <span className="text-white font-bold text-lg">I</span>
         </div>
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight">Admin Portal</h1>
+        <h1 className="text-xl font-bold text-gray-900 tracking-tight">Inspector</h1>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-4 space-y-1.5 py-4">
         {sidebarItems.map((item, index) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path || 
-                          (item.path === '/admin/posts' && location.pathname.startsWith('/admin/posts'));
-          
+          const isActive = location.pathname === item.path ||
+                          location.pathname.startsWith(item.path + '/');
+
           return (
             <button
               key={index}
@@ -60,18 +46,20 @@ const AdminSidebar = ({ pendingCount = 0, disputeCount = 0 }) => {
             >
               <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-900'}`} />
               <span>{item.label}</span>
-              {item.badge > 0 && (
-                <span className="ml-auto bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">
-                  {item.badge}
-                </span>
-              )}
             </button>
           );
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="p-4 mt-auto border-t border-gray-100">
+      {/* Home */}
+      <div className="p-4 mt-auto border-t border-gray-100 space-y-1.5">
+        <button
+          onClick={() => navigate('/inspector')}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+        >
+          <Home className="w-5 h-5" />
+          <span>Về trang chủ</span>
+        </button>
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
@@ -84,4 +72,4 @@ const AdminSidebar = ({ pendingCount = 0, disputeCount = 0 }) => {
   );
 };
 
-export default AdminSidebar;
+export default InspectorSidebar;

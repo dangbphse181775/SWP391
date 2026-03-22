@@ -7,6 +7,7 @@ import { toast, Toaster } from "sonner";
 import { Search, X, Loader2 } from "lucide-react";
 import { useDebounce } from "use-debounce";
 import * as InspectorAPI from "@/service/InspectorAPI";
+import InspectorSidebar from '@/components/admin/InspectorSidebar';
 
 export default function InspectorDashboard() {
   const [bikes, setBikes] = useState([]);
@@ -63,17 +64,19 @@ export default function InspectorDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="flex h-screen bg-gray-50 font-sans">
+      <InspectorSidebar />
       <Toaster richColors position="bottom-right" />
 
-      {/* Page header */}
-      <div className="px-6 py-4 border-b bg-white">
-        <h1 className="text-xl font-bold text-gray-900">
-          Hệ thống kiểm định xe
-        </h1>
-      </div>
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Page header */}
+        <div className="px-6 py-4 border-b bg-white">
+          <h1 className="text-xl font-bold text-gray-900">
+            Hệ thống kiểm định xe
+          </h1>
+        </div>
 
-      <main className="p-6">
+      <main className="flex-1 overflow-y-auto p-6">
         {/* Search */}
         <Card className="mb-5">
           <CardContent className="p-5">
@@ -157,6 +160,7 @@ export default function InspectorDashboard() {
           </>
         )}
       </main>
+      </div>
 
       <DetailModal
         open={showModal}

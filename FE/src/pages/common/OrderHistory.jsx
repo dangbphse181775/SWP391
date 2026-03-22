@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
+import disputeApi from "@/service/disputeApi";
 
 const formatVnd = (value) => {
   const numberValue = Number(value);
@@ -59,6 +60,14 @@ const getStatusMeta = (statusRaw) => {
     };
   }
 
+  if (status === "disputed") {
+    return {
+      label: "Đang khiếu nại",
+      badgeClass: "bg-purple-100 text-purple-800",
+      dotClass: "bg-purple-700",
+    };
+  }
+
   return {
     label: statusRaw ? String(statusRaw) : "Không xác định",
     badgeClass: "bg-slate-100 text-slate-800",
@@ -69,6 +78,85 @@ const getStatusMeta = (statusRaw) => {
 export default function OrderHistory() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [confirmingOrderId, setConfirmingOrderId] = useState(null);
+  const [expandedConfirmId, setExpandedConfirmId] = useState(null);
+  const [closingConfirmId, setClosingConfirmId] = useState(null);
+  const [disputingOrderId, setDisputingOrderId] = useState(null);
+  const [closingDisputeId, setClosingDisputeId] = useState(null);
+  const [disputeDescription, setDisputeDescription] = useState("");
+  const [disputeEvidence, setDisputeEvidence] = useState("");
+  const navigate = useNavigate();
+
+  const handleCloseConfirm = (orderId) => {
+    setClosingConfirmId(orderId);
+    setTimeout(() => {
+      setExpandedConfirmId(null);
+      setClosingConfirmId(null);
+    }, 350);
+  };
+
+  const handleToggleDispute = (orderId) => {
+    if (disputingOrderId === orderId) {
+      setClosingDisputeId(orderId);
+      setTimeout(() => {
+        setDisputingOrderId(null);
+        setClosingDisputeId(null);
+        setDisputeDescription("");
+        setDisputeEvidence("");
+      }, 300);
+    } else {
+      setDisputingOrderId(orderId);
+    }
+  };
+
+  const handleConfirmReceived = async (orderId) => {
+    setExpandedConfirmId(null);
+    try {
+      setConfirmingOrderId(orderId);
+      await orderApi.confirmReceived(orderId);
+      toast.success("Xác nhận nhận hàng thành công!");
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "completed" } : o
+        )
+      );
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message || err?.message || "Xác nhận thất bại";
+      toast.error(msg);
+    } finally {
+      setConfirmingOrderId(null);
+    }
+  };
+
+  const handleOpenDispute = async (orderId) => {
+    if (!disputeDescription.trim()) {
+      toast.error("Vui lòng nhập mô tả khiếu nại");
+      return;
+    }
+    try {
+      setConfirmingOrderId(orderId);
+      await disputeApi.openDispute(orderId, {
+        description: disputeDescription.trim(),
+        evidenceUrls: disputeEvidence.trim() || null,
+      });
+      toast.success("Khiếu nại đã được gửi thành công!");
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "disputed" } : o
+        )
+      );
+      setDisputingOrderId(null);
+      setDisputeDescription("");
+      setDisputeEvidence("");
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message || err?.message || "Gửi khiếu nại thất bại";
+      toast.error(msg);
+    } finally {
+      setConfirmingOrderId(null);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -260,12 +348,120 @@ export default function OrderHistory() {
                       </span>
                     </div>
                   </div>
+
+                  {String(order?.status || "").toLowerCase() === "shipped" && (
+                    <div className="border-t border-slate-100 px-6 py-4">
+                      <div className="flex flex-wrap items-center gap-3 justify-end">
+                        <div className="relative inline-flex items-center">
+                          {/* Nút gốc */}
+                          <button
+                            type="button"
+                            disabled={confirmingOrderId === order?.orderId || expandedConfirmId === order?.orderId}
+                            onClick={() => setExpandedConfirmId(order?.orderId)}
+                            className={`inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition-all duration-300 ${
+                              expandedConfirmId === order?.orderId ? "opacity-0 pointer-events-none" : "opacity-100"
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                            {confirmingOrderId === order?.orderId ? "Đang xử lý..." : "Xác nhận đã nhận"}
+                          </button>
+
+                          {/* Thanh expand sang phải */}
+                          {(expandedConfirmId === order?.orderId || closingConfirmId === order?.orderId) && (
+                            <div className={`absolute right-0 top-0 h-full ${
+                              closingConfirmId === order?.orderId ? "expand-right-exit" : "expand-right-enter"
+                            }`}>
+                              <div className="flex items-center gap-2.5 h-full rounded-lg bg-green-50 border border-green-300 px-4 whitespace-nowrap">
+                                <span className="material-symbols-outlined text-[18px] text-green-600">help</span>
+                                <span className="text-sm font-semibold text-green-800">Bạn chắc chắn chứ?</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCloseConfirm(order?.orderId)}
+                                  className="rounded-md border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                                >
+                                  Hủy
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleConfirmReceived(order?.orderId)}
+                                  className="rounded-md bg-green-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-green-700 transition-colors"
+                                >
+                                  Chắc chắn!
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          disabled={confirmingOrderId === order?.orderId}
+                          onClick={() => handleToggleDispute(order?.orderId)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">report</span>
+                          Khiếu nại
+                        </button>
+                      </div>
+
+                      {(disputingOrderId === order?.orderId || closingDisputeId === order?.orderId) && (
+                        <div className={`mt-4 rounded-lg border border-red-200 bg-red-50 p-4 ${
+                          closingDisputeId === order?.orderId ? "slide-down-exit" : "slide-down-enter"
+                        }`}>
+                          <h4 className="text-sm font-bold text-red-800 mb-3">Mở khiếu nại cho đơn #{order?.orderId}</h4>
+                          <div className="flex flex-col gap-3">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Mô tả khiếu nại <span className="text-red-500">*</span>
+                              </label>
+                              <textarea
+                                value={disputeDescription}
+                                onChange={(e) => setDisputeDescription(e.target.value)}
+                                placeholder="Mô tả chi tiết vấn đề bạn gặp phải..."
+                                rows={3}
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Link bằng chứng (hình ảnh/video)
+                              </label>
+                              <input
+                                type="text"
+                                value={disputeEvidence}
+                                onChange={(e) => setDisputeEvidence(e.target.value)}
+                                placeholder="https://example.com/evidence.jpg"
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none"
+                              />
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleDispute(order?.orderId)}
+                                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                              >
+                                Hủy
+                              </button>
+                              <button
+                                type="button"
+                                disabled={confirmingOrderId === order?.orderId}
+                                onClick={() => handleOpenDispute(order?.orderId)}
+                                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                              >
+                                {confirmingOrderId === order?.orderId ? "Đang gửi..." : "Gửi khiếu nại"}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         )}
       </main>
+
     </div>
   );
 }
