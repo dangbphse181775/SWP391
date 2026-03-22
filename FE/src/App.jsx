@@ -24,6 +24,8 @@ import TransactionsPage from '@/pages/common/TransactionsPage';
 import PaymentResult from '@/pages/common/PaymentResult';
 import OrderHistory from '@/pages/common/OrderHistory';
 import SelledHistory from '@/pages/common/SelledHistory';
+import DisputeList from '@/pages/role/admin/DisputeList';
+import DisputeDetail from '@/pages/role/admin/DisputeDetail';
 
 const VehicleDetailRoute = () => {
   const { id } = useParams();
@@ -161,11 +163,6 @@ function App() {
                 <UserHomePage />
               </RoleBasedRoute>
             } />
-            <Route path="/inspector/inspection" element={
-              <RoleBasedRoute>
-                <InspectorDashboard />
-              </RoleBasedRoute>
-            } />
             <Route path="/inspector/profile" element={
               <RoleBasedRoute>
                 <ProfilePage />
@@ -284,6 +281,31 @@ function App() {
           <Route path="/admin/posts/:id" element={
             <RoleBasedRoute>
               <PostDetail />
+            </RoleBasedRoute>
+          } />
+          <Route path="/admin/disputes" element={
+            <RoleBasedRoute>
+              <DisputeList />
+            </RoleBasedRoute>
+          } />
+          <Route path="/admin/disputes/:id" element={
+            <RoleBasedRoute>
+              <DisputeDetail />
+            </RoleBasedRoute>
+          } />
+          <Route path="/inspector/inspection" element={
+            <RoleBasedRoute>
+              <InspectorDashboard />
+            </RoleBasedRoute>
+          } />
+          <Route path="/inspector/disputes" element={
+            <RoleBasedRoute>
+              <DisputeList />
+            </RoleBasedRoute>
+          } />
+          <Route path="/inspector/disputes/:id" element={
+            <RoleBasedRoute>
+              <DisputeDetail />
             </RoleBasedRoute>
           } />
           <Route path="/admin/settings" element={
