@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
+import reviewApi from "@/service/reviewApi";
 
 const formatVnd = (value) => {
   const numberValue = Number(value);
@@ -17,36 +18,47 @@ const formatDateVi = (value) => {
 
 const STATUS_TABS = [
   { key: "all", label: "Tất cả" },
+  { key: "pending", label: "Chờ thanh toán cọc" },
   { key: "deposited", label: "Đã đặt cọc" },
-  { key: "processing", label: "Đang xử lý" },
+  { key: "processing", label: "Chờ giao hàng" },
   { key: "shipped", label: "Đang giao" },
   { key: "completed", label: "Đã hoàn thành" },
+  { key: "disputed", label: "Đang khiếu nại" },
   { key: "cancelled", label: "Đã hủy" },
 ];
 
 const matchesTab = (status, tabKey) => {
   if (tabKey === "all") return true;
-  return String(status || "").toLowerCase() === tabKey;
+  const normalizedStatus = String(status || "").toLowerCase();
+  
+  // Legacy "paid" status maps to "processing" (Chờ giao hàng) tab
+  if (tabKey === "processing" && normalizedStatus === "paid") {
+    return true;
+  }
+  
+  return normalizedStatus === tabKey;
 };
 
 const getStatusMeta = (statusRaw) => {
-  const status = String(statusRaw || "").toLowerCase();
+  let status = String(statusRaw || "").toLowerCase();
+  
+  // Alias legacy "paid" status to "processing" visually
+  if (status === "paid") {
+    status = "processing";
+  }
 
-  if (status === "completed") {
-    return { label: "Đã hoàn thành", badgeClass: "bg-green-100 text-green-700", dotClass: "bg-green-500" };
-  }
-  if (status === "cancelled") {
-    return { label: "Đã hủy", badgeClass: "bg-red-100 text-red-700", dotClass: "bg-red-500" };
-  }
-  if (status === "shipped") {
-    return { label: "Đang giao", badgeClass: "bg-amber-100 text-amber-700", dotClass: "bg-amber-500" };
-  }
-  if (status === "deposited") {
-    return { label: "Đã đặt cọc", badgeClass: "bg-orange-100 text-orange-700", dotClass: "bg-orange-500" };
-  }
-  if (status === "processing") {
-    return { label: "Đang xử lý", badgeClass: "bg-blue-100 text-blue-700", dotClass: "bg-blue-500" };
-  }
+  const statusMap = {
+    completed: { label: "Đã hoàn thành", badgeClass: "bg-green-100 text-green-700", dotClass: "bg-green-500" },
+    cancelled: { label: "Đã hủy", badgeClass: "bg-red-100 text-red-700", dotClass: "bg-red-500" },
+    shipped: { label: "Đang giao", badgeClass: "bg-amber-100 text-amber-700", dotClass: "bg-amber-500" },
+    deposited: { label: "Đã đặt cọc", badgeClass: "bg-orange-100 text-orange-700", dotClass: "bg-orange-500" },
+    processing: { label: "Chờ giao hàng", badgeClass: "bg-blue-100 text-blue-700", dotClass: "bg-blue-500" },
+    pending: { label: "Chờ thanh toán cọc", badgeClass: "bg-yellow-100 text-yellow-700", dotClass: "bg-yellow-500" },
+    disputed: { label: "Đang khiếu nại", badgeClass: "bg-purple-100 text-purple-700", dotClass: "bg-purple-500" },
+  };
+
+  if (statusMap[status]) return statusMap[status];
+
   return {
     label: statusRaw ? String(statusRaw) : "Không xác định",
     badgeClass: "bg-slate-100 text-slate-700",
@@ -60,6 +72,36 @@ export default function SelledHistory() {
   const [activeTab, setActiveTab] = useState("all");
   const tabsRef = useRef({});
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+  const [reviewingOrderId, setReviewingOrderId] = useState(null);
+  const [closingReviewId, setClosingReviewId] = useState(null);
+  const [fetchingReview, setFetchingReview] = useState(false);
+  const [existingReview, setExistingReview] = useState(null);
+
+  const handleToggleReview = async (orderId) => {
+    if (reviewingOrderId === orderId) {
+      setClosingReviewId(orderId);
+      setTimeout(() => {
+        setReviewingOrderId(null);
+        setClosingReviewId(null);
+        setExistingReview(null);
+      }, 300);
+    } else {
+      setReviewingOrderId(orderId);
+      setExistingReview(null);
+      setFetchingReview(true);
+      try {
+        const res = await reviewApi.getByOrder(orderId);
+        if (res && res.reviewId) {
+          setExistingReview(res);
+        }
+      } catch (err) {
+        // Ignored
+      } finally {
+        setFetchingReview(false);
+      }
+    }
+  };
 
   const updateIndicator = useCallback((key) => {
     const el = tabsRef.current[key];
@@ -78,34 +120,42 @@ export default function SelledHistory() {
     return () => window.removeEventListener("resize", handleResize);
   }, [activeTab, updateIndicator]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const res = await orderApi.getMySellerOrders();
-        const list = Array.isArray(res?.data)
-          ? res.data
-          : Array.isArray(res)
-            ? res
-            : [];
-        if (isMounted) setOrders(list);
-      } catch (err) {
-        const msg =
-          err?.response?.data?.message ||
-          err?.message ||
-          "Không thể tải lịch sử bán hàng";
-        toast.error(msg);
-        if (isMounted) setOrders([]);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    fetchOrders();
-    return () => { isMounted = false; };
+  const fetchOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await orderApi.getMySellerOrders();
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res)
+          ? res
+          : [];
+      setOrders(list);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Không thể tải lịch sử bán hàng";
+      toast.error(msg);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const handleConfirmShipped = async (orderId) => {
+    try {
+      await orderApi.confirmShipped(orderId);
+      toast.success("Xác nhận giao hàng thành công!");
+      fetchOrders();
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Lỗi khi xác nhận giao hàng";
+      toast.error(msg);
+    }
+  };
 
   const sortedOrders = useMemo(() => {
     return [...orders].sort((a, b) => {
@@ -301,20 +351,90 @@ export default function SelledHistory() {
                   </div>
 
                   {/* Footer */}
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-slate-200 bg-slate-50/30 px-6 py-4">
-                    <p className="text-sm font-medium text-slate-500">
-                      Người mua: {order?.buyerName || "N/A"}
-                    </p>
-                    <div className="text-right">
-                      <span className="text-sm text-slate-500">Tổng doanh thu:</span>
-                      <span
-                        className={`ml-2 text-xl font-extrabold tracking-tight ${
-                          cancelled ? "text-slate-400" : "text-primary"
-                        }`}
-                      >
-                        {cancelled ? "0 VNĐ" : formatVnd(order?.amount)}
-                      </span>
+                  <div className="flex flex-col gap-4 border-t border-slate-200 bg-slate-50/30 px-6 py-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-sm font-medium text-slate-500">
+                        Người mua: {order?.buyerName || "N/A"}
+                      </p>
+                      <div className="text-right">
+                        <span className="text-sm text-slate-500">Tổng doanh thu:</span>
+                        <span
+                          className={`ml-2 text-xl font-extrabold tracking-tight ${
+                            cancelled ? "text-slate-400" : "text-primary"
+                          }`}
+                        >
+                          {cancelled ? "0 VNĐ" : formatVnd(order?.amount)}
+                        </span>
+                      </div>
                     </div>
+                    
+                    {["processing", "paid"].includes(String(order?.status).toLowerCase()) && (
+                      <div className="flex justify-end pt-2">
+                        <button
+                          onClick={() => handleConfirmShipped(order?.orderId)}
+                          className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
+                        >
+                          Xác nhận giao hàng
+                        </button>
+                      </div>
+                    )}
+
+                    {String(order?.status || "").toLowerCase() === "completed" && (
+                      <div className="flex flex-col gap-4 mt-2 pt-4 border-t border-slate-200">
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleReview(order?.orderId)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">rate_review</span>
+                            Xem đánh giá từ người mua
+                          </button>
+                        </div>
+
+                        {(reviewingOrderId === order?.orderId || closingReviewId === order?.orderId) && (
+                          <div className={`mt-2 rounded-lg border border-blue-200 bg-blue-50 p-4 ${closingReviewId === order?.orderId ? "slide-down-exit" : "slide-down-enter"}`}>
+                            <h4 className="text-sm font-bold text-blue-800 mb-4">Đánh giá của người mua cho đơn #{order?.orderId}</h4>
+                            
+                            {fetchingReview ? (
+                              <div className="flex items-center justify-center p-4">
+                                <span className="material-symbols-outlined animate-spin text-blue-500">sync</span>
+                                <span className="ml-2 text-sm text-blue-600">Đang tải thông tin đánh giá...</span>
+                              </div>
+                            ) : existingReview && existingReview.reviewId ? (
+                              <div className="flex flex-col gap-4">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="font-bold text-sm text-slate-800">{existingReview.reviewerName || 'Khách hàng'}</span>
+                                    <div className="flex items-center gap-1">
+                                      {[1, 2, 3, 4, 5].map((star) => (
+                                        <span key={star} className={`material-symbols-outlined text-xl ${star <= existingReview.rating ? 'text-amber-400' : 'text-slate-300'}`} style={{ fontVariationSettings: star <= existingReview.rating ? "'FILL' 1" : "'FILL' 0" }}>star</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  {existingReview.comment && (
+                                    <div className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 mt-2 whitespace-pre-line">{existingReview.comment}</div>
+                                  )}
+                                  {existingReview.createdAt && (
+                                    <div className="text-xs text-slate-400 mt-2 flex justify-end">
+                                      {new Date(existingReview.createdAt).toLocaleDateString('vi-VN')}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex gap-2 justify-end">
+                                  <button type="button" onClick={() => handleToggleReview(order?.orderId)} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Đóng</button>
+                                </div>
+                              </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-6 text-slate-500">
+                                  <span className="material-symbols-outlined text-4xl mb-2 text-slate-300">chat_bubble</span>
+                                  <p className="text-sm">Người mua hiện chưa để lại đánh giá cho chuyên mua này.</p>
+                                </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

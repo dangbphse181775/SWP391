@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
@@ -212,5 +212,62 @@ ORDER BY ""MediaId""
             return list;
         }
 
+        public async Task<List<Vehicle>> GetBySellerIdAsync(int sellerId)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT v.""VehicleId"",
+       v.""Name"",
+       v.""Price"",
+       v.""Status"",
+       v.""Condition"",
+       v.""FrameSize"",
+       v.""Model"",
+       v.""IsInspected"",
+       v.""CreatedAt"",
+       b.""BrandName"",
+       c.""CategoryName"",
+       (
+           SELECT m.""Url""
+           FROM ""VehicleMedia"" m
+           WHERE m.""VehicleId"" = v.""VehicleId"" AND m.""Type"" = 'image'
+           ORDER BY m.""MediaId""
+           LIMIT 1
+       ) AS thumbnail
+FROM ""Vehicles"" v
+LEFT JOIN ""Brands"" b ON v.""BrandId"" = b.""BrandId""
+LEFT JOIN ""Categories"" c ON v.""CategoryId"" = c.""CategoryId""
+WHERE v.""SellerId"" = @sellerId
+  AND v.""Status"" IN ('active', 'sold')
+ORDER BY v.""CreatedAt"" DESC
+", conn);
+
+            cmd.Parameters.AddWithValue("sellerId", sellerId);
+
+            var list = new List<Vehicle>();
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            while (await rd.ReadAsync())
+            {
+                list.Add(new Vehicle
+                {
+                    VehicleId = rd.GetInt32(0),
+                    Name = rd.GetString(1),
+                    Price = rd.GetDecimal(2),
+                    Status = rd.IsDBNull(3) ? null : rd.GetString(3),
+                    Condition = rd.IsDBNull(4) ? null : rd.GetString(4),
+                    FrameSize = rd.IsDBNull(5) ? null : rd.GetString(5),
+                    Model = rd.IsDBNull(6) ? null : rd.GetString(6),
+                    IsInspected = rd.IsDBNull(7) ? null : rd.GetBoolean(7),
+                    CreatedAt = rd.IsDBNull(8) ? null : rd.GetDateTime(8),
+                    BrandName = rd.IsDBNull(9) ? null : rd.GetString(9),
+                    CategoryName = rd.IsDBNull(10) ? null : rd.GetString(10),
+                    ThumbnailUrl = rd.IsDBNull(11) ? null : rd.GetString(11)
+                });
+            }
+
+            return list;
+        }
     }
 }

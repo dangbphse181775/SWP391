@@ -3,6 +3,7 @@ import HeroSection from '@/components/home/HeroSection';
 import FeaturesSection from '@/components/home/FeaturesSection';
 import ProductSection from '@/components/home/ProductSection';
 import productsApi from '@/service/productsApi';
+import { getMyVehicles } from '@/service/SellAPI';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -30,9 +31,26 @@ const UserHomePage = () => {
       try {
         const data = await productsApi.getAllVehicles();
         
+        let sellerVehicleIds = [];
+        if (user) {
+          try {
+            // Fetch user's own vehicles to exclude them
+            const myVehicles = await getMyVehicles();
+            const vehiclesList = myVehicles?.data || myVehicles; // handle axios wrapper
+            if (Array.isArray(vehiclesList)) {
+              // The property is `vehicleId`, not `id`
+              sellerVehicleIds = vehiclesList.map(v => v.vehicleId);
+            }
+          } catch (err) {
+            // User might not be a seller or API failed, safe to ignore
+            console.warn('Could not fetch user vehicles for filtering:', err);
+          }
+        }
+        
+        let normalizedData = data?.data || data; // handle axios wrapper
         // Safe check if data is array
-        if (!Array.isArray(data)) {
-          console.error('Invalid data format:', data);
+        if (!Array.isArray(normalizedData)) {
+          console.error('Invalid data format:', normalizedData);
           setProductsByCategory({});
           return;
         }
@@ -43,8 +61,8 @@ const UserHomePage = () => {
           grouped[cat] = [];
         });
         
-        // Filter out vehicles that belong to the current user
-        const filteredData = data.filter(product => product.sellerId !== user?.userId);
+        // Filter out vehicles that belong to the current user (the property is vehicleId)
+        const filteredData = normalizedData.filter(product => !sellerVehicleIds.includes(product.vehicleId));
         
         filteredData.forEach(product => {
           const category = product.categoryName || 'Khác';
@@ -64,7 +82,7 @@ const UserHomePage = () => {
       }
     };
     fetchProducts();
-  }, []);
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-white">

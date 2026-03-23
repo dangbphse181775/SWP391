@@ -13,5 +13,16 @@ namespace Bike_Link.Domain.IRepository
         Task<Vehicle?> GetByIdForAdminAsync(int id);
         Task ApproveAsync(int id);
         Task RejectAsync(int id, string note);
+
+        Task<(int totalUsers,
+              int totalOrders,
+              int totalCompletedOrders,
+              int totalProcessingOrders,
+              int totalSoldVehicles,
+              int totalActiveVehicles,
+              int totalPendingVehicles,
+              int totalPendingInspectionVehicles,
+              int totalRejectedVehicles,
+              decimal totalRevenueCompletedOrders)> GetDashboardStatsAsync();
     }
 }

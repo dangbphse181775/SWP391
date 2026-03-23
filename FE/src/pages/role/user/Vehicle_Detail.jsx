@@ -394,7 +394,7 @@ const handleShare = async () => {
                     </div>
 
                     <div className="lg:col-span-4 order-1 lg:order-2">
-                        <SellerInfoCard sellerName={vehicle?.sellerName} />
+                          <SellerInfoCard sellerId={vehicle?.sellerId} sellerName={vehicle?.sellerName} />
                     </div>
                 </div>
 

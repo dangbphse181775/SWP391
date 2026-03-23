@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import vehicleDetailApi from "@/service/VehicleDetailAPI";
 import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
 import disputeApi from "@/service/disputeApi";
+import reviewApi from "@/service/reviewApi";
+import { useRolePath } from "@/hooks/useRolePath";
 
 const formatVnd = (value) => {
   const numberValue = Number(value);
@@ -15,6 +18,26 @@ const formatDateVi = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "N/A";
   return date.toLocaleDateString("vi-VN");
+};
+
+const STATUS_TABS = [
+  { key: "all", label: "Tất cả" },
+  { key: "pending", label: "Chờ thanh toán cọc" },
+  { key: "deposited", label: "Đã đặt cọc" },
+  { key: "processing", label: "Chờ giao hàng" },
+  { key: "shipped", label: "Đang giao" },
+  { key: "completed", label: "Đã hoàn thành" },
+  { key: "disputed", label: "Đang khiếu nại" },
+  { key: "cancelled", label: "Đã hủy" },
+];
+
+const matchesTab = (status, tabKey) => {
+  if (tabKey === "all") return true;
+  const normalizedStatus = String(status || "").toLowerCase();
+  if (tabKey === "processing" && normalizedStatus === "paid") {
+    return true;
+  }
+  return normalizedStatus === tabKey;
 };
 
 const getStatusMeta = (statusRaw) => {
@@ -76,23 +99,98 @@ const getStatusMeta = (statusRaw) => {
 };
 
 export default function OrderHistory() {
+  const { getPath } = useRolePath();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("all");
   const [confirmingOrderId, setConfirmingOrderId] = useState(null);
-  const [expandedConfirmId, setExpandedConfirmId] = useState(null);
-  const [closingConfirmId, setClosingConfirmId] = useState(null);
+  
+
+
+  // States for pay remaining
+  const [expandedPayConfirmId, setExpandedPayConfirmId] = useState(null);
+  const [closingPayConfirmId, setClosingPayConfirmId] = useState(null);
+  
   const [disputingOrderId, setDisputingOrderId] = useState(null);
   const [closingDisputeId, setClosingDisputeId] = useState(null);
   const [disputeDescription, setDisputeDescription] = useState("");
   const [disputeEvidence, setDisputeEvidence] = useState("");
-  const navigate = useNavigate();
 
-  const handleCloseConfirm = (orderId) => {
-    setClosingConfirmId(orderId);
+  const [reviewingOrderId, setReviewingOrderId] = useState(null);
+  const [closingReviewId, setClosingReviewId] = useState(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [fetchingReview, setFetchingReview] = useState(false);
+  const [existingReview, setExistingReview] = useState(null);
+
+  const handleGoToSeller = async (order) => {
+    const directSellerId = order?.sellerId;
+    if (directSellerId) {
+      navigate(getPath(`products?sellerId=${directSellerId}`));
+      return;
+    }
+
+    const fallbackVehicleId = order?.items?.[0]?.vehicleId;
+    if (!fallbackVehicleId) {
+      toast.warning("Không tìm thấy người bán để mở cửa hàng (thiếu sellerId và vehicleId)");
+      return;
+    }
+
+    let detail = null;
+
+    // Try public detail first (may 404 for sold items)
+    try {
+      detail = await vehicleDetailApi.getVehicleById(fallbackVehicleId);
+    } catch (err) {
+      console.warn("Public vehicle detail failed, try seller scope", err?.response?.status);
+    }
+
+    // If still missing sellerId, retry with seller scope (requires seller auth)
+    if (!detail || !detail.sellerId) {
+      try {
+        detail = await vehicleDetailApi.getVehicleByIdSellerScope(fallbackVehicleId);
+      } catch (err) {
+        console.error("Seller-scope vehicle detail failed", err);
+        toast.error("Không thể lấy thông tin người bán từ sản phẩm (có thể cần quyền người bán)");
+        return;
+      }
+    }
+
+    const sellerId = detail?.sellerId;
+    if (sellerId) {
+      navigate(getPath(`products?sellerId=${sellerId}`));
+    } else {
+      toast.warning("Không tìm thấy người bán để mở cửa hàng");
+    }
+  };
+
+  const handleClosePayConfirm = (orderId) => {
+    setClosingPayConfirmId(orderId);
     setTimeout(() => {
-      setExpandedConfirmId(null);
-      setClosingConfirmId(null);
+      setExpandedPayConfirmId(null);
+      setClosingPayConfirmId(null);
     }, 350);
+  };
+
+  const handlePayRemaining = async (orderId) => {
+    setExpandedPayConfirmId(null);
+    try {
+      setConfirmingOrderId(orderId);
+      await orderApi.payRemaining(orderId);
+      toast.success("Thanh toán khoản còn lại thành công!");
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "processing" } : o
+        )
+      );
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Lỗi thanh toán khoản còn lại";
+      toast.error(msg);
+    } finally {
+      setConfirmingOrderId(null);
+    }
   };
 
   const handleToggleDispute = (orderId) => {
@@ -109,8 +207,65 @@ export default function OrderHistory() {
     }
   };
 
+  const handleToggleReview = async (orderId) => {
+    if (reviewingOrderId === orderId) {
+      setClosingReviewId(orderId);
+      setTimeout(() => {
+        setReviewingOrderId(null);
+        setClosingReviewId(null);
+        setReviewRating(5);
+        setReviewComment("");
+        setExistingReview(null);
+      }, 300);
+    } else {
+      setReviewingOrderId(orderId);
+      setReviewRating(5);
+      setReviewComment("");
+      setExistingReview(null);
+      
+      setFetchingReview(true);
+      try {
+        const res = await reviewApi.getByOrder(orderId);
+        if (res && res.reviewId) {
+          setExistingReview(res);
+          setReviewRating(res.rating);
+          setReviewComment(res.comment || "");
+        }
+      } catch (err) {
+        // Ignored if 404
+      } finally {
+        setFetchingReview(false);
+      }
+    }
+  };
+
+  const handleSubmitReview = async (orderId) => {
+    if (!reviewRating) {
+      toast.error("Vui lòng chọn số sao đánh giá");
+      return;
+    }
+    
+    try {
+      setSubmittingReview(true);
+      await reviewApi.create({
+        orderId: orderId,
+        rating: reviewRating,
+        comment: reviewComment.trim() || null
+      });
+      toast.success("Gửi đánh giá thành công!");
+      
+      // Close review panel
+      handleToggleReview(orderId);
+    } catch (error) {
+      const errData = error?.response?.data;
+      const errMsg = typeof errData?.message === 'string' ? errData.message : "Lỗi hệ thống: Bạn đã đánh giá đơn hàng này rồi hoặc có lỗi xảy ra.";
+      toast.error(errMsg);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const handleConfirmReceived = async (orderId) => {
-    setExpandedConfirmId(null);
     try {
       setConfirmingOrderId(orderId);
       await orderApi.confirmReceived(orderId);
@@ -202,6 +357,18 @@ export default function OrderHistory() {
     });
   }, [orders]);
 
+  const filteredOrders = useMemo(() => {
+    return sortedOrders.filter((order) => matchesTab(order?.status, activeTab));
+  }, [sortedOrders, activeTab]);
+
+  const tabCounts = useMemo(() => {
+    const counts = {};
+    for (const tab of STATUS_TABS) {
+      counts[tab.key] = sortedOrders.filter((o) => matchesTab(o?.status, tab.key)).length;
+    }
+    return counts;
+  }, [sortedOrders]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center">
@@ -225,7 +392,26 @@ export default function OrderHistory() {
           </p>
         </div>
 
-        {sortedOrders.length === 0 ? (
+        {/* Filter Tabs */}
+        <div className="relative mb-8">
+          <div className="flex overflow-x-auto whitespace-nowrap scrollbar-hide border-b border-slate-200">
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`relative px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+                  activeTab === tab.key
+                    ? "text-blue-600 font-bold border-b-2 border-blue-600"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                {tab.label} ({tabCounts[tab.key] ?? 0})
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filteredOrders.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 flex flex-col items-center gap-5 text-center">
             <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-100">
               <span className="material-symbols-outlined text-5xl text-slate-400">
@@ -233,9 +419,11 @@ export default function OrderHistory() {
               </span>
             </div>
             <div>
-              <p className="text-xl font-bold text-slate-700">Chưa có đơn hàng nào</p>
+              <p className="text-xl font-bold text-slate-700">Không có đơn hàng nào</p>
               <p className="mt-1.5 text-sm text-slate-400 max-w-xs mx-auto">
-                Bạn chưa thực hiện đơn hàng nào. Hãy khám phá và đặt mua xe điện đầu tiên của bạn!
+                {activeTab === "all"
+                  ? "Bạn chưa thực hiện đơn hàng nào. Hãy khám phá và đặt mua xe điện đầu tiên của bạn!"
+                  : "Không có đơn hàng nào ở trạng thái này."}
               </p>
             </div>
             <Link
@@ -248,7 +436,7 @@ export default function OrderHistory() {
           </div>
         ) : (
           <div className="flex flex-col gap-6">
-            {sortedOrders.map((order) => {
+            {filteredOrders.map((order) => {
               const statusMeta = getStatusMeta(order?.status);
               const items = Array.isArray(order?.items) ? order.items : [];
 
@@ -339,7 +527,14 @@ export default function OrderHistory() {
 
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 bg-slate-50/30 px-6 py-4">
                     <p className="text-sm font-medium text-slate-500">
-                      Người bán: {order?.sellerName || "N/A"}
+                        Người bán:{" "}
+                        <button
+                          type="button"
+                          onClick={() => handleGoToSeller(order)}
+                          className="font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                        >
+                          {order?.sellerName || "N/A"}
+                        </button>
                     </p>
                     <div className="text-right">
                       <span className="text-sm text-slate-500">Tổng thanh toán:</span>
@@ -349,42 +544,40 @@ export default function OrderHistory() {
                     </div>
                   </div>
 
-                  {String(order?.status || "").toLowerCase() === "shipped" && (
+                  {String(order?.status || "").toLowerCase() === "deposited" && (
                     <div className="border-t border-slate-100 px-6 py-4">
-                      <div className="flex flex-wrap items-center gap-3 justify-end">
+                      <div className="flex justify-end">
                         <div className="relative inline-flex items-center">
-                          {/* Nút gốc */}
                           <button
                             type="button"
-                            disabled={confirmingOrderId === order?.orderId || expandedConfirmId === order?.orderId}
-                            onClick={() => setExpandedConfirmId(order?.orderId)}
-                            className={`inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition-all duration-300 ${
-                              expandedConfirmId === order?.orderId ? "opacity-0 pointer-events-none" : "opacity-100"
+                            disabled={confirmingOrderId === order?.orderId || expandedPayConfirmId === order?.orderId}
+                            onClick={() => setExpandedPayConfirmId(order?.orderId)}
+                            className={`inline-flex items-center gap-2 rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 transition-all duration-300 ${
+                              expandedPayConfirmId === order?.orderId ? "opacity-0 pointer-events-none" : "opacity-100"
                             }`}
                           >
-                            <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                            {confirmingOrderId === order?.orderId ? "Đang xử lý..." : "Xác nhận đã nhận"}
+                            <span className="material-symbols-outlined text-[18px]">payment</span>
+                            {confirmingOrderId === order?.orderId ? "Đang xử lý..." : "Thanh toán khoản còn lại"}
                           </button>
 
-                          {/* Thanh expand sang phải */}
-                          {(expandedConfirmId === order?.orderId || closingConfirmId === order?.orderId) && (
+                          {(expandedPayConfirmId === order?.orderId || closingPayConfirmId === order?.orderId) && (
                             <div className={`absolute right-0 top-0 h-full ${
-                              closingConfirmId === order?.orderId ? "expand-right-exit" : "expand-right-enter"
+                              closingPayConfirmId === order?.orderId ? "expand-right-exit" : "expand-right-enter"
                             }`}>
-                              <div className="flex items-center gap-2.5 h-full rounded-lg bg-green-50 border border-green-300 px-4 whitespace-nowrap">
-                                <span className="material-symbols-outlined text-[18px] text-green-600">help</span>
-                                <span className="text-sm font-semibold text-green-800">Bạn chắc chắn chứ?</span>
+                              <div className="flex items-center gap-2.5 h-full rounded-lg bg-orange-50 border border-orange-300 px-4 whitespace-nowrap">
+                                <span className="material-symbols-outlined text-[18px] text-orange-600">help</span>
+                                <span className="text-sm font-semibold text-orange-800">Xác nhận thanh toán?</span>
                                 <button
                                   type="button"
-                                  onClick={() => handleCloseConfirm(order?.orderId)}
+                                  onClick={() => handleClosePayConfirm(order?.orderId)}
                                   className="rounded-md border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
                                 >
                                   Hủy
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleConfirmReceived(order?.orderId)}
-                                  className="rounded-md bg-green-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-green-700 transition-colors"
+                                  onClick={() => handlePayRemaining(order?.orderId)}
+                                  className="rounded-md bg-orange-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-orange-700 transition-colors"
                                 >
                                   Chắc chắn!
                                 </button>
@@ -392,6 +585,22 @@ export default function OrderHistory() {
                             </div>
                           )}
                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {String(order?.status || "").toLowerCase() === "shipped" && (
+                    <div className="border-t border-slate-100 px-6 py-4">
+                      <div className="flex flex-wrap items-center gap-3 justify-end">
+                        <button
+                          type="button"
+                          disabled={confirmingOrderId === order?.orderId}
+                          onClick={() => handleConfirmReceived(order?.orderId)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition-all duration-300"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                          {confirmingOrderId === order?.orderId ? "Đang xử lý..." : "Xác nhận đã nhận"}
+                        </button>
                         <button
                           type="button"
                           disabled={confirmingOrderId === order?.orderId}
@@ -448,6 +657,88 @@ export default function OrderHistory() {
                                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
                               >
                                 {confirmingOrderId === order?.orderId ? "Đang gửi..." : "Gửi khiếu nại"}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {String(order?.status || "").toLowerCase() === "completed" && (
+                    <div className="border-t border-slate-100 px-6 py-4">
+                      <div className="flex flex-wrap items-center justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleGoToSeller(order)}
+                          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">storefront</span>
+                          Xem sản phẩm
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleReview(order?.orderId)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">rate_review</span>
+                          Đánh giá người bán
+                        </button>
+                      </div>
+
+                      {(reviewingOrderId === order?.orderId || closingReviewId === order?.orderId) && (
+                        <div className={`mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 ${
+                          closingReviewId === order?.orderId ? "slide-down-exit" : "slide-down-enter"
+                        }`}>
+                          <h4 className="text-sm font-bold text-blue-800 mb-3">Đánh giá quá trình mua hàng cho đơn #{order?.orderId}</h4>
+                          <div className="flex flex-col gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-2">
+                                Đánh giá điểm <span className="text-red-500">*</span>
+                              </label>
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <button
+                                    key={star}
+                                    type="button"
+                                    onClick={() => setReviewRating(star)}
+                                    className={`material-symbols-outlined text-3xl transition-colors ${
+                                      star <= reviewRating ? "text-amber-400" : "text-slate-300"
+                                    }`}
+                                    style={{ fontVariationSettings: star <= reviewRating ? "'FILL' 1" : "'FILL' 0" }}
+                                  >
+                                    star
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Nội dung đánh giá
+                              </label>
+                              <textarea
+                                value={reviewComment}
+                                onChange={(e) => setReviewComment(e.target.value)}
+                                placeholder="Hãy chia sẻ trải nghiệm của bạn về người bán và sản phẩm..."
+                                rows={3}
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                              />
+                            </div>
+                            <div className="flex gap-2 justify-end mt-2">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleReview(order?.orderId)}
+                                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                Hủy bỏ
+                              </button>
+                              <button
+                                type="button"
+                                disabled={submittingReview}
+                                onClick={() => handleSubmitReview(order?.orderId)}
+                                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                              >
+                                {submittingReview ? "Đang gửi..." : "Hoàn tất đánh giá"}
                               </button>
                             </div>
                           </div>

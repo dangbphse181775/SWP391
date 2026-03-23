@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +11,7 @@ namespace Bike_Link.Domain.IRepository
     {
         Task<List<Vehicle>> SearchAsync(VehicleSearchOptions options);
         Task<Vehicle?> GetPublicByIdAsync(int id);
+        Task<List<Vehicle>> GetBySellerIdAsync(int sellerId);
     }
 
 

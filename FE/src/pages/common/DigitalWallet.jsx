@@ -123,13 +123,32 @@ export default function DigitalWallet() {
     };
   };
 
-  const totalSuccessfulTopUp = transactions
-    .filter((item) => String(item?.type || "").toLowerCase() === "deposit")
+  const checkIsExpense = (item) => {
+    const type = String(item?.type || "").toLowerCase();
+    const amount = Number(item?.amount || 0);
+    const desc = String(item?.description || "").toLowerCase();
+    
+    if (amount < 0) return true;
+    if (type === "deposit") return false;
+    
+    // Check keywords in description since BE uses 'payment' type for both income and expense in User Wallet
+    if (desc.includes("nhận ") || desc.includes("hoàn ") || desc.startsWith("nhận")) {
+      return false; // Tiền nhận vào
+    }
+    
+    // All other payments (phí đăng bài, thanh toán, đặt cọc, mất tiền...) are expenses
+    if (type === "payment") return true; 
+
+    return false;
+  };
+
+  const totalIncome = transactions
+    .filter((item) => !checkIsExpense(item))
     .filter((item) => String(item?.status || "").toLowerCase() === "success")
-    .reduce((sum, item) => sum + Number(item?.amount || 0), 0);
+    .reduce((sum, item) => sum + Math.abs(Number(item?.amount || 0)), 0);
 
   const totalSpent = transactions
-    .filter((item) => String(item?.type || "").toLowerCase() === "payment")
+    .filter((item) => checkIsExpense(item))
     .filter((item) => String(item?.status || "").toLowerCase() === "success")
     .reduce((sum, item) => sum + Math.abs(Number(item?.amount || 0)), 0);
 
@@ -420,11 +439,10 @@ export default function DigitalWallet() {
 
                     {!isLoadingTransactions && recentTransactions.map((item, index) => {
                       const isDeposit = String(item?.type || "").toLowerCase() === "deposit";
-                      const isPayment = String(item?.type || "").toLowerCase() === "payment";
                       const status = getStatusMeta(item?.status);
                       const amountValue = Number(item?.amount || 0);
                       const isPending = String(item?.status || "").toLowerCase() !== "success" && String(item?.status || "").toLowerCase() !== "failed";
-                      const isExpense = isPayment || amountValue < 0;
+                      const isExpense = checkIsExpense(item);
                       const amountClass = isPending ? "text-slate-900" : isExpense ? "text-rose-500" : "text-emerald-500";
                       const signedAmount = isPending ? formatCurrency(Math.abs(amountValue)) : `${isExpense ? "-" : "+"} ${formatCurrency(Math.abs(amountValue))}`;
 
@@ -486,11 +504,11 @@ export default function DigitalWallet() {
                 <div>
 
                   <p className="text-xs font-bold text-slate-500 uppercase">
-                    Tổng nạp thành công
+                    Tổng tiền nhận vào
                   </p>
 
                   <p className="text-xl font-extrabold text-primary">
-                    {formatCurrency(totalSuccessfulTopUp)}
+                    {formatCurrency(totalIncome)}
                   </p>
 
                 </div>

@@ -222,6 +222,11 @@ function App() {
             } />
 
           </Route>
+            <Route path="/inspector/managePosts" element={
+              <RoleBasedRoute>
+                <ManagePosts />
+              </RoleBasedRoute>
+            } />
 
           {/* Admin Home Route - With MainLayout */}
           <Route element={<MainLayout />}>
@@ -277,6 +282,11 @@ function App() {
               </RoleBasedRoute>
             } />
           </Route>
+            <Route path="/admin/managePosts" element={
+              <RoleBasedRoute>
+                <ManagePosts />
+              </RoleBasedRoute>
+            } />
 
           {/* Admin Dashboard Routes - Without MainLayout (has its own sidebar) */}
           <Route path="/admin/dashboard" element={

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRolePath } from '@/hooks/useRolePath';
 import { ChevronLeft, ChevronRight, ShoppingCart, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import productsApi from '@/service/productsApi';
 import WishlistAPI from '@/service/WishlistAPI';
+import { getMyVehicles } from '@/service/SellAPI';
 import { useDebounce } from 'use-debounce';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -39,6 +40,17 @@ const ProductsPage = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [wishlist, setWishlist] = useState([]);
+  const [searchParams] = useSearchParams();
+  const sellerIdStr = searchParams.get('sellerId');
+  const parsedSellerId = sellerIdStr ? Number(sellerIdStr) : null;
+  const querySellerId = Number.isFinite(parsedSellerId) && parsedSellerId > 0 ? parsedSellerId : null;
+
+  // Warn when sellerId is present but invalid to avoid silent empty results
+  useEffect(() => {
+    if (sellerIdStr && !querySellerId) {
+      toast.warning('sellerId không hợp lệ, tải tất cả sản phẩm.');
+    }
+  }, [sellerIdStr, querySellerId]);
   // Debounce search query
   const [debouncedSearchQuery] = useDebounce(searchQuery, 1000);
 
@@ -67,12 +79,29 @@ const ProductsPage = () => {
     const fetchProducts = async () => {
       setIsLoading(true);
       try {
-        const data = await productsApi.getAllVehicles();
-        // Safe check if data is array
-        let products = Array.isArray(data) ? data : [];
-        if (user?.userId) {
-          products = products.filter(product => product.sellerId !== user.userId);
+        let data;
+        if (querySellerId) {
+          data = await productsApi.getVehiclesBySeller(querySellerId);
+        } else {
+          data = await productsApi.getAllVehicles();
         }
+        let normalizedData = data?.data || data; // handle axios wrapper
+        
+        let products = Array.isArray(normalizedData) ? normalizedData : [];
+        
+        if (user && !querySellerId) {
+          try {
+            const myVehicles = await getMyVehicles();
+            const vehiclesList = myVehicles?.data || myVehicles;
+            if (Array.isArray(vehiclesList)) {
+              const myVehicleIds = vehiclesList.map(v => v.vehicleId);
+              products = products.filter(product => !myVehicleIds.includes(product.vehicleId));
+            }
+          } catch (err) {
+            console.warn('Could not fetch user vehicles for filtering:', err);
+          }
+        }
+        
         setAllProducts(products);
         setFilteredProducts(products);
       } catch (error) {
@@ -85,7 +114,7 @@ const ProductsPage = () => {
       }
     };
     fetchProducts();
-  }, [user?.userId]);
+  }, [user, querySellerId]);
 
   // Fetch wishlist
   useEffect(() => {
@@ -103,6 +132,22 @@ const ProductsPage = () => {
 
   // Filter products
   useEffect(() => {
+    // When viewing a seller's shop, show everything from the API without sidebar filters
+    // so sold items (often missing price/metadata) are not accidentally removed.
+    if (querySellerId) {
+      let sellerFiltered = [...allProducts];
+      if (debouncedSearchQuery) {
+        sellerFiltered = sellerFiltered.filter(product =>
+          product.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+          product.brandName?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+          product.model?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+        );
+      }
+      setFilteredProducts(sellerFiltered);
+      setCurrentPage(1);
+      return;
+    }
+
     let filtered = [...allProducts];
 
     if (debouncedSearchQuery) {
@@ -131,9 +176,11 @@ const ProductsPage = () => {
       );
     }
 
-    filtered = filtered.filter(product =>
-      product.price >= priceRange[0] && product.price <= priceRange[1]
-    );
+    filtered = filtered.filter(product => {
+      const price = Number(product.price);
+      if (Number.isNaN(price)) return true; // keep items with missing price (e.g., sold items)
+      return price >= priceRange[0] && price <= priceRange[1];
+    });
 
     if (sortBy === 'price-asc') {
       filtered.sort((a, b) => a.price - b.price);
@@ -143,7 +190,7 @@ const ProductsPage = () => {
 
     setFilteredProducts(filtered);
     setCurrentPage(1);
-  }, [debouncedSearchQuery, selectedCategories, selectedBrands, selectedConditions, priceRange, sortBy, allProducts]);
+  }, [debouncedSearchQuery, selectedCategories, selectedBrands, selectedConditions, priceRange, sortBy, allProducts, querySellerId]);
 
 
   const handleCategoryToggle = (category) => {
@@ -477,7 +524,9 @@ const ProductCardDetailed = ({ product, wishlist, onToggleWishlist, onProductCli
     name,
     price,
     thumbnailUrl,
+    status
   } = product;
+  const isSold = status?.toLowerCase() === 'sold';
 
   const formatPrice = (value) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -489,38 +538,49 @@ const ProductCardDetailed = ({ product, wishlist, onToggleWishlist, onProductCli
   return (
     <div
       onClick={onProductClick}
-      className="group cursor-pointer flex flex-col h-full bg-gray-50 rounded-lg border border-transparent hover:border-black hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+      className={`group flex flex-col h-full bg-gray-50 rounded-lg border border-transparent 
+        ${!isSold ? 'cursor-pointer hover:border-black hover:shadow-2xl hover:-translate-y-1' : 'cursor-pointer opacity-80'} 
+        transition-all duration-300 overflow-hidden relative`}
     >
       <div className="relative aspect-square w-full bg-white overflow-hidden">
         {/* Wishlist button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleWishlist(product);
-          }}
-          className="absolute top-3 right-3 z-20 bg-white rounded-full p-2 shadow hover:scale-110 transition"
-        >
-          <Heart
-            className={`h-5 w-5 ${wishlist.some(p => p.vehicleId === product.vehicleId)
-              ? "fill-red-500 text-red-500"
-              : "text-gray-400"
-              }`}
-          />
-        </button>
+        {!isSold && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleWishlist(product);
+            }}
+            className="absolute top-3 right-3 z-20 bg-white rounded-full p-2 shadow hover:scale-110 transition"
+          >
+            <Heart
+              className={`h-5 w-5 ${wishlist.some(p => p.vehicleId === product.vehicleId)
+                ? "fill-red-500 text-red-500"
+                : "text-gray-400"
+                }`}
+            />
+          </button>
+        )}
 
         <img
           src={thumbnailUrl || '/placeholder-bike.jpg'}
           alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+          className={`w-full h-full object-cover transition-transform duration-700 ease-out ${!isSold ? 'group-hover:scale-105' : 'grayscale-[50%]'}`}
           onError={(e) => { e.target.src = '/placeholder-bike.jpg'; }}
         />
+        {isSold && (
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-black/70 flex items-center justify-center z-10 py-2 transform -rotate-12">
+            <span className="text-white text-lg font-black tracking-widest uppercase">
+              Đã bán
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col flex-1 gap-2 p-5 items-center justify-center text-center bg-gray-50 relative z-10">
-        <h3 className="text-base font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-black transition-colors">
+        <h3 className={`text-base font-bold leading-tight line-clamp-2 transition-colors ${!isSold ? 'text-gray-900 group-hover:text-black' : 'text-gray-500'}`}>
           {name}
         </h3>
-        <span className="text-lg font-bold text-red-600">
+        <span className={`text-lg font-bold ${!isSold ? 'text-red-600' : 'text-gray-500'}`}>
           {formatPrice(price)}
         </span>
       </div>

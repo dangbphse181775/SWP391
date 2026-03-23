@@ -25,6 +25,11 @@ const adminApi = {
         return axiosClient.post(url, { adminNote });
     },
 
+    // Get dashboard overview stats
+    getDashboardOverview() {
+        return axiosClient.get('/Admin/dashboard/overview');
+    },
+
     // Get system wallet balance (admin only)
     getSystemWalletBalance() {
         return axiosClient.get('/Wallet/system/balance');

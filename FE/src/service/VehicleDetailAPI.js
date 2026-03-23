@@ -24,6 +24,12 @@ const vehicleDetailApi = {
         const res = await axiosClient.get(endpoint);
         return res;
     },
+
+    // Fallback for sold vehicles when public endpoint returns 404
+    getVehicleByIdSellerScope: async (vehicleId) => {
+        const res = await axiosClient.get(`/Seller/vehicles/${vehicleId}`);
+        return res;
+    },
 };
 
 export default vehicleDetailApi;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -71,6 +71,27 @@ namespace Bike_Link.Application.Services
                     Url = m.Url
                 }).ToList()
             };
+        }
+
+        public async Task<List<SellerVehicleDto>> GetVehiclesBySellerIdAsync(int sellerId)
+        {
+            var vehicles = await _repo.GetBySellerIdAsync(sellerId);
+
+            return vehicles.Select(v => new SellerVehicleDto
+            {
+                VehicleId = v.VehicleId,
+                Name = v.Name,
+                Price = v.Price,
+                Status = v.Status,
+                Condition = v.Condition,
+                FrameSize = v.FrameSize,
+                Model = v.Model,
+                IsInspected = v.IsInspected ?? false,
+                CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
+                ThumbnailUrl = v.ThumbnailUrl,
+                BrandName = v.BrandName,
+                CategoryName = v.CategoryName
+            }).ToList();
         }
     }
 }

@@ -207,36 +207,39 @@ const ManagePosts = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Xem chi tiết"
-                        onClick={() => navigate(getPath(`Vehicle_Detail/${vehicle.vehicleId}`))}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      
-                      {/* Only allow edit/hide if not sold? Or dependent on logic. Allowing hide always seemed fine. */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Ẩn tin"
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleHide(vehicle.vehicleId)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-
-                      {vehicle.status?.toLowerCase() === "rejected" && (
-                        <Button
+                      {vehicle.status?.toLowerCase() !== "sold" && (
+                        <>
+                          <Button
                             variant="ghost"
                             size="icon"
-                            title="Xem lý do từ chối"
-                            className="text-orange-500 hover:text-orange-700 hover:bg-orange-50"
-                            onClick={() => handleViewRejectReason(vehicle.vehicleId)}
-                        >
-                            <AlertCircle className="w-4 h-4" />
-                        </Button>
+                            title="Xem chi tiết"
+                            onClick={() => navigate(getPath(`Vehicle_Detail/${vehicle.vehicleId}`))}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Ẩn tin"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleHide(vehicle.vehicleId)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+
+                          {vehicle.status?.toLowerCase() === "rejected" && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Xem lý do từ chối"
+                                className="text-orange-500 hover:text-orange-700 hover:bg-orange-50"
+                                onClick={() => handleViewRejectReason(vehicle.vehicleId)}
+                            >
+                                <AlertCircle className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </>
                       )}
 
                       {vehicle.isInspected && (
