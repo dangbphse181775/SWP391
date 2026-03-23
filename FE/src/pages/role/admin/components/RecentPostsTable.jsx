@@ -1,3 +1,4 @@
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,39 +26,39 @@ export default function RecentPostsTable({ posts, loading, onViewPost, onViewAll
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="border-b border-gray-200">
-            <tr className="text-left">
-              <th className="px-6 py-3 text-sm font-medium text-gray-600">Tên sản phẩm</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-600">Người bán</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-600">Giá</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-600">Trạng thái</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-600">Ngày đăng</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-600">Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="w-full">
+          <TableHeader className="border-b border-gray-200">
+            <TableRow className="text-left">
+              <TableHead className="px-6 py-3 text-sm font-medium text-gray-600">Tên sản phẩm</TableHead>
+              <TableHead className="px-6 py-3 text-sm font-medium text-gray-600">Người bán</TableHead>
+              <TableHead className="px-6 py-3 text-sm font-medium text-gray-600">Giá</TableHead>
+              <TableHead className="px-6 py-3 text-sm font-medium text-gray-600">Trạng thái</TableHead>
+              <TableHead className="px-6 py-3 text-sm font-medium text-gray-600">Ngày đăng</TableHead>
+              <TableHead className="px-6 py-3 text-sm font-medium text-gray-600">Hành động</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading ? (
-              <tr>
-                <td colSpan="6" className="px-6 py-12 text-center text-gray-500">Đang tải dữ liệu...</td>
-              </tr>
+              <TableRow>
+                <TableCell colSpan="6" className="px-6 py-12 text-center text-gray-500">Đang tải dữ liệu...</TableCell>
+              </TableRow>
             ) : posts.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="px-6 py-12 text-center text-gray-500">Không có bài đăng nào</td>
-              </tr>
+              <TableRow>
+                <TableCell colSpan="6" className="px-6 py-12 text-center text-gray-500">Không có bài đăng nào</TableCell>
+              </TableRow>
             ) : (
               posts.map((post, index) => (
-                <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900">{post.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{post.sellerName}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">{formatPrice(post.price)}</td>
-                  <td className="px-6 py-4">
+                <TableRow key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                  <TableCell className="px-6 py-4 text-sm text-gray-900">{post.name}</TableCell>
+                  <TableCell className="px-6 py-4 text-sm text-gray-900">{post.sellerName}</TableCell>
+                  <TableCell className="px-6 py-4 text-sm font-semibold text-gray-900">{formatPrice(post.price)}</TableCell>
+                  <TableCell className="px-6 py-4">
                     <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
                       Chờ duyệt
                     </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{formatDate(post.createdAt)}</td>
-                  <td className="px-6 py-4">
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-sm text-gray-600">{formatDate(post.createdAt)}</TableCell>
+                  <TableCell className="px-6 py-4">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -67,12 +68,12 @@ export default function RecentPostsTable({ posts, loading, onViewPost, onViewAll
                       <Eye className="w-4 h-4 mr-2" />
                       Xem
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </Card>
   );

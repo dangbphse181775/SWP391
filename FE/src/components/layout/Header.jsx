@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Heart, User, Search, Menu, LogOut, LayoutDashboard, ClipboardCheck, CreditCard, Scale, MessageCircle } from 'lucide-react';
+import { ShoppingCart, Heart, User, Search, Menu, LogOut, LayoutDashboard, ClipboardCheck, CreditCard, Scale, MessageCircle, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRolePath } from '@/hooks/useRolePath';
@@ -111,10 +111,18 @@ const Header = () => {
 
     connection.onreconnected(() => joinAll());
 
-    connection.start().then(() => joinAll()).catch(() => {});
+    let isMounted = true;
+    connection.start().then(() => {
+      if (isMounted) joinAll();
+    }).catch((err) => {
+      console.warn("SignalR connection error:", err);
+    });
 
     return () => {
-      connection.stop();
+      isMounted = false;
+      if (connection.state !== 'Disconnected') {
+        connection.stop().catch(() => {});
+      }
       signalRRef.current = null;
     };
   }, [isBuyerOrSeller, user?.userId, fetchDisputes]);
@@ -169,11 +177,35 @@ const Header = () => {
   };
 
   const handleSellClick = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (isAuthenticated) {
       navigate(getPath('sell'));
     } else {
-      toast.error('Vui lòng đăng nhập để bán xe', {
+      toast.error('Vui lòng đăng nhập để đăng tin', {
+        duration: 2000,
+      });
+      navigate('/login');
+    }
+  };
+
+  const handleManagePostClick = (e) => {
+    if (e) e.preventDefault();
+    if (isAuthenticated) {
+      navigate(getPath('managePosts'));
+    } else {
+      toast.error('Vui lòng đăng nhập để quản lý tin đăng', {
+        duration: 2000,
+      });
+      navigate('/login');
+    }
+  };
+
+  const handleSelledHistoryClick = (e) => {
+    if (e) e.preventDefault();
+    if (isAuthenticated) {
+      navigate(getPath('selledHistory'));
+    } else {
+      toast.error('Vui lòng đăng nhập để xem đơn hàng đã bán', {
         duration: 2000,
       });
       navigate('/login');
@@ -203,16 +235,24 @@ const Header = () => {
             <Link to={isAuthenticated ? getPath('products') : '/products'} className="text-sm font-semibold text-gray-900 hover:text-blue-600">
               Sản phẩm
             </Link>
-            <Link to="/community" className="text-sm font-semibold text-gray-900 hover:text-blue-600">
-              Cộng đồng
-            </Link>
-            <a
-              href="#"
-              className="text-sm font-semibold text-gray-900 hover:text-blue-600"
-              onClick={handleSellClick}
-            >
-              Bán xe
-            </a>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-sm font-semibold text-gray-900 hover:text-blue-600 outline-none">
+                Bán xe
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleSellClick} className="cursor-pointer">
+                  Đăng tin
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleManagePostClick} className="cursor-pointer">
+                  Quản lý tin đăng
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSelledHistoryClick} className="cursor-pointer">
+                  Quản lý đơn hàng đã bán
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Link to="/contact" className="text-sm font-semibold text-gray-900 hover:text-blue-600">
               Liên hệ
             </Link>
@@ -349,6 +389,10 @@ const Header = () => {
                   <DropdownMenuItem onClick={() => navigate(getPath('profile'))}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Hồ sơ</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate(getPath('orderHistory'))}>
+                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    <span>Lịch sử mua hàng</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate(getPath('wishlist'))}>
                     <Heart className="mr-2 h-4 w-4" />

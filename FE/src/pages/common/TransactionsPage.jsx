@@ -128,6 +128,23 @@ export default function TransactionsPage() {
     };
   };
 
+  const checkIsExpense = (item) => {
+    const type = String(item?.type || "").toLowerCase();
+    const amount = Number(item?.amount || 0);
+    const desc = String(item?.description || "").toLowerCase();
+    
+    if (amount < 0) return true;
+    if (type === "deposit") return false;
+    
+    if (desc.includes("nhận ") || desc.includes("hoàn ") || desc.startsWith("nhận")) {
+      return false; 
+    }
+    
+    if (type === "payment") return true; 
+
+    return false;
+  };
+  
   const getTypeIcon = (type) => {
     const t = String(type || "").toLowerCase();
     if (t === "deposit") return { icon: "account_balance_wallet", bg: "bg-green-50 text-green-600" };
@@ -274,12 +291,11 @@ export default function TransactionsPage() {
                 {!isLoading &&
                   paginated.map((item, index) => {
                     const isDeposit = String(item?.type || "").toLowerCase() === "deposit";
-                    const isPayment = String(item?.type || "").toLowerCase() === "payment";
-                    const status = getStatusMeta(item?.status);
-                    const typeIcon = getTypeIcon(item?.type);
-                    const amountValue = Number(item?.amount || 0);
-                    const isPending = String(item?.status || "").toLowerCase() !== "success" && String(item?.status || "").toLowerCase() !== "failed";
-                    const isExpense = isPayment || amountValue < 0;
+                      const status = getStatusMeta(item?.status);
+                      const typeIcon = getTypeIcon(item?.type);
+                      const amountValue = Number(item?.amount || 0);
+                      const isPending = String(item?.status || "").toLowerCase() !== "success" && String(item?.status || "").toLowerCase() !== "failed";
+                      const isExpense = checkIsExpense(item);
 
                     return (
                       <tr

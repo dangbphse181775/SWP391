@@ -23,7 +23,7 @@ const PostApproval = () => {
       setLoading(true);
       const response = await adminApi.getPendingVehicles();
       
-      // Xá»­ lÃ½ dá»¯ liá»‡u tráº£ vá» an toÃ n
+      
       let data = Array.isArray(response) ? response : (response.data || []);
       
       data = data.map(vehicle => ({
@@ -34,7 +34,7 @@ const PostApproval = () => {
       setAllVehicles(data);
     } catch (error) {
       console.error('Error fetching pending vehicles:', error);
-      toast.error('KhÃ´ng thá»ƒ táº£i danh sÃ¡ch bÃ i Ä‘Äƒng');
+      toast.error('Không thể tải danh sách bài đăng');
     } finally {
       setLoading(false);
     }
@@ -56,8 +56,8 @@ const PostApproval = () => {
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-5 sticky top-0 z-10 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Quáº£n lÃ½ bÃ i Ä‘Äƒng</h2>
-            <p className="text-sm text-gray-500 mt-1">Kiá»ƒm duyá»‡t vÃ  quáº£n lÃ½ danh sÃ¡ch xe Ä‘ang bÃ¡n trÃªn há»‡ thá»‘ng</p>
+            <h2 className="text-2xl font-bold text-gray-900">Quản lý bài đăng</h2>
+            <p className="text-sm text-gray-500 mt-1">Kiểm duyệt và quản lý danh sách xe đang bán trên hệ thống</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" className="rounded-full h-10 w-10 p-0 border-gray-200">
@@ -77,15 +77,15 @@ const PostApproval = () => {
               {loading ? (
                 <div className="flex flex-col items-center justify-center h-64 space-y-4">
                   <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-gray-200 border-t-black" />
-                  <p className="text-gray-400 font-medium text-sm">Äang táº£i dá»¯ liá»‡u...</p>
+                  <p className="text-gray-400 font-medium text-sm">Đang tải dữ liệu...</p>
                 </div>
               ) : vehicles.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
                   <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                     <FileText className="w-8 h-8 text-gray-300" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Danh sÃ¡ch trá»‘ng</h3>
-                  <p className="text-gray-500 text-sm mt-1">Hiá»‡n khÃ´ng cÃ³ xe nÃ o á»Ÿ tráº¡ng thÃ¡i nÃ y</p>
+                  <h3 className="text-lg font-semibold text-gray-900">Danh sách trống</h3>
+                  <p className="text-gray-500 text-sm mt-1">Hiện không có xe nào ở trạng thái này</p>
                 </div>
               ) : (
                 vehicles.map((vehicle) => (
