@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,5 +37,26 @@ namespace Bike_Link.Domain.IRepository
         /// Lấy Ví Tổng (System Wallet) — UserId = 1 (Admin)
         /// </summary>
         Task<Wallet> GetSystemWalletAsync();
+
+        /// <summary>
+        /// Tạo yêu cầu rút tiền (withdrawal) — status = pending
+        /// </summary>
+        Task<int> CreateWithdrawalAsync(int walletId, decimal amount,
+            string bankName, string bankAccountNumber, string bankAccountName);
+
+        /// <summary>
+        /// Lấy 1 bản ghi withdrawal theo ID
+        /// </summary>
+        Task<WalletTransaction?> GetWithdrawalByIdAsync(int transactionId);
+
+        /// <summary>
+        /// Cập nhật trạng thái transaction theo WalletTransactionId
+        /// </summary>
+        Task UpdateStatusByIdAsync(int transactionId, string status);
+
+        /// <summary>
+        /// Lấy danh sách yêu cầu rút tiền đang chờ duyệt (Admin)
+        /// </summary>
+        Task<List<WalletTransaction>> GetPendingWithdrawalsAsync();
     }
 }

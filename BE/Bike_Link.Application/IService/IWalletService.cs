@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,5 +20,11 @@ namespace Bike_Link.Application.IService
         Task<WalletBalanceDto> GetBalanceAsync(int userId);
 
         Task<List<WalletTransactionDto>> GetTransactionsAsync(int userId);
+
+        // ===== Withdrawal =====
+        Task<WithdrawalResultDto> CreateWithdrawalAsync(int userId, WithdrawalRequest request);
+        Task<WithdrawalResultDto> ApproveWithdrawalAsync(int transactionId);
+        Task<WithdrawalResultDto> RejectWithdrawalAsync(int transactionId);
+        Task<List<object>> GetPendingWithdrawalsAsync();
     }
 }

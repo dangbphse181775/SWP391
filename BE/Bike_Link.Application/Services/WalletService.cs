@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -132,6 +132,149 @@ namespace Bike_Link.Application.Services
                 Status = t.Status,
                 Description = t.Description,
                 CreatedAt = (DateTime)t.CreatedAt
+            }).ToList();
+        }
+
+        // ===================== WITHDRAWAL =====================
+
+        private const decimal MIN_WITHDRAWAL = 50_000;
+
+        public async Task<WithdrawalResultDto> CreateWithdrawalAsync(
+            int userId, WithdrawalRequest request)
+        {
+            // Validate số tiền tối thiểu
+            if (request.Amount < MIN_WITHDRAWAL)
+                return new WithdrawalResultDto
+                {
+                    Success = false,
+                    Message = $"Số tiền rút tối thiểu là {MIN_WITHDRAWAL:N0}đ"
+                };
+
+            // Validate thông tin ngân hàng
+            if (string.IsNullOrWhiteSpace(request.BankName) ||
+                string.IsNullOrWhiteSpace(request.BankAccountNumber) ||
+                string.IsNullOrWhiteSpace(request.BankAccountName))
+                return new WithdrawalResultDto
+                {
+                    Success = false,
+                    Message = "Vui lòng nhập đầy đủ thông tin ngân hàng"
+                };
+
+            var wallet = await _walletRepo.GetByUserIdAsync(userId);
+            if (wallet == null)
+                return new WithdrawalResultDto
+                {
+                    Success = false,
+                    Message = "Wallet not found"
+                };
+
+            // Kiểm tra và trừ balance ngay (khóa tiền)
+            bool deducted = await _walletRepo.DeductBalanceAsync(
+                wallet.WalletId, request.Amount);
+
+            if (!deducted)
+                return new WithdrawalResultDto
+                {
+                    Success = false,
+                    Message = "Số dư không đủ để rút tiền"
+                };
+
+            // Tạo bản ghi withdrawal pending
+            int txnId = await _walletRepo.CreateWithdrawalAsync(
+                wallet.WalletId,
+                request.Amount,
+                request.BankName.Trim(),
+                request.BankAccountNumber.Trim(),
+                request.BankAccountName.Trim());
+
+            var newBalance = await _walletRepo.GetBalanceAsync(userId);
+
+            return new WithdrawalResultDto
+            {
+                Success = true,
+                Message = "Yêu cầu rút tiền đã được tạo, đang chờ Admin duyệt",
+                TransactionId = txnId,
+                RemainingBalance = newBalance
+            };
+        }
+
+        public async Task<WithdrawalResultDto> ApproveWithdrawalAsync(int transactionId)
+        {
+            var txn = await _walletRepo.GetWithdrawalByIdAsync(transactionId);
+
+            if (txn == null)
+                return new WithdrawalResultDto
+                {
+                    Success = false,
+                    Message = "Không tìm thấy yêu cầu rút tiền"
+                };
+
+            if (txn.Type != "withdrawal" || txn.Status != "pending")
+                return new WithdrawalResultDto
+                {
+                    Success = false,
+                    Message = "Yêu cầu này không hợp lệ hoặc đã được xử lý"
+                };
+
+            // Cập nhật status = success
+            await _walletRepo.UpdateStatusByIdAsync(
+                txn.WalletTransactionId, "success");
+
+            return new WithdrawalResultDto
+            {
+                Success = true,
+                Message = "Đã duyệt yêu cầu rút tiền thành công",
+                TransactionId = transactionId
+            };
+        }
+
+        public async Task<WithdrawalResultDto> RejectWithdrawalAsync(int transactionId)
+        {
+            var txn = await _walletRepo.GetWithdrawalByIdAsync(transactionId);
+
+            if (txn == null)
+                return new WithdrawalResultDto
+                {
+                    Success = false,
+                    Message = "Không tìm thấy yêu cầu rút tiền"
+                };
+
+            if (txn.Type != "withdrawal" || txn.Status != "pending")
+                return new WithdrawalResultDto
+                {
+                    Success = false,
+                    Message = "Yêu cầu này không hợp lệ hoặc đã được xử lý"
+                };
+
+            // Hoàn trả balance cho user
+            await _walletRepo.AddBalanceAsync(txn.WalletId, txn.Amount);
+
+            // Cập nhật status = rejected
+            await _walletRepo.UpdateStatusByIdAsync(
+                txn.WalletTransactionId, "rejected");
+
+            return new WithdrawalResultDto
+            {
+                Success = true,
+                Message = "Đã từ chối yêu cầu rút tiền, hoàn trả số dư cho người dùng",
+                TransactionId = transactionId
+            };
+        }
+
+        public async Task<List<object>> GetPendingWithdrawalsAsync()
+        {
+            var list = await _walletRepo.GetPendingWithdrawalsAsync();
+
+            return list.Select(t => (object)new
+            {
+                t.WalletTransactionId,
+                t.Amount,
+                t.BankName,
+                t.BankAccountNumber,
+                t.BankAccountName,
+                t.Status,
+                t.CreatedAt,
+                UserId = t.Wallet?.UserId
             }).ToList();
         }
     }
