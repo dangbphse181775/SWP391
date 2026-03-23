@@ -112,6 +112,32 @@ namespace Bike_Link.Application.Services
             // 4. Cập nhật status → rejected + ghi AdminNote
             await _repo.RejectAsync(id, note);
         }
+
+        public async Task<AdminDashboardStatsDto> GetDashboardStatsAsync()
+        {
+            var stats = await _repo.GetDashboardStatsAsync();
+            Wallet systemWallet = await _walletRepo.GetSystemWalletAsync();
+
+            return new AdminDashboardStatsDto
+            {
+                TotalUsers = stats.totalUsers,
+
+                TotalOrders = stats.totalOrders,
+                TotalCompletedOrders = stats.totalCompletedOrders,
+                TotalProcessingOrders = stats.totalProcessingOrders,
+
+                TotalSoldVehicles = stats.totalSoldVehicles,
+                TotalActiveVehicles = stats.totalActiveVehicles,
+                TotalPendingVehicles = stats.totalPendingVehicles,
+                TotalPendingInspectionVehicles = stats.totalPendingInspectionVehicles,
+                TotalRejectedVehicles = stats.totalRejectedVehicles,
+
+                TotalRevenueCompletedOrders = stats.totalRevenueCompletedOrders,
+                SystemWalletBalance = systemWallet.Balance,
+
+                GeneratedAt = DateTime.UtcNow
+            };
+        }
     }
 }
 

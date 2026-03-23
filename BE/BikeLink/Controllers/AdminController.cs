@@ -52,5 +52,12 @@ namespace BikeLink.Controllers
 
             return Ok(new { message = "Đã từ chối bài đăng" });
         }
+
+        [HttpGet("dashboard/overview")]
+        public async Task<IActionResult> DashboardOverview()
+        {
+            AdminDashboardStatsDto stats = await _service.GetDashboardStatsAsync();
+            return Ok(stats);
+        }
     }
 }

@@ -14,5 +14,6 @@ namespace Bike_Link.Application.IService
         Task<AdminVehicleDetailDto?> GetDetailAsync(int id);
         Task ApproveAsync(int id);
         Task RejectAsync(int id, string note);
+        Task<AdminDashboardStatsDto> GetDashboardStatsAsync();
     }
 }
