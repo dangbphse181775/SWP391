@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -293,6 +293,154 @@ RETURNING ""WalletId"", ""UserId"", ""Balance""
 
             // Fallback: đọc lại (trường hợp ON CONFLICT)
             return (await GetByUserIdAsync(1))!;
+        }
+
+        // ===================== WITHDRAWAL =====================
+
+        public async Task UpdateStatusByIdAsync(int transactionId, string status)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+UPDATE ""WalletTransactions""
+SET ""Status"" = @status
+WHERE ""WalletTransactionId"" = @id
+", conn);
+
+            cmd.Parameters.AddWithValue("status", status);
+            cmd.Parameters.AddWithValue("id", transactionId);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<int> CreateWithdrawalAsync(
+            int walletId, decimal amount,
+            string bankName, string bankAccountNumber, string bankAccountName)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+INSERT INTO ""WalletTransactions""
+(
+    ""WalletId"",
+    ""Amount"",
+    ""Type"",
+    ""Status"",
+    ""Description"",
+    ""BankName"",
+    ""BankAccountNumber"",
+    ""BankAccountName"",
+    ""CreatedAt""
+)
+VALUES
+(
+    @walletId,
+    @amount,
+    'withdrawal',
+    'pending',
+    'Yêu cầu rút tiền',
+    @bankName,
+    @bankAccountNumber,
+    @bankAccountName,
+    NOW()
+)
+RETURNING ""WalletTransactionId""
+", conn);
+
+            cmd.Parameters.AddWithValue("walletId", walletId);
+            cmd.Parameters.AddWithValue("amount", amount);
+            cmd.Parameters.AddWithValue("bankName", bankName);
+            cmd.Parameters.AddWithValue("bankAccountNumber", bankAccountNumber);
+            cmd.Parameters.AddWithValue("bankAccountName", bankAccountName);
+
+            var result = await cmd.ExecuteScalarAsync();
+            return (int)result!;
+        }
+
+        public async Task<WalletTransaction?> GetWithdrawalByIdAsync(int transactionId)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT
+    t.""WalletTransactionId"",
+    t.""WalletId"",
+    t.""Amount"",
+    t.""Type"",
+    t.""Status"",
+    t.""Description"",
+    t.""BankName"",
+    t.""BankAccountNumber"",
+    t.""BankAccountName"",
+    t.""CreatedAt""
+FROM ""WalletTransactions"" t
+WHERE t.""WalletTransactionId"" = @id
+", conn);
+
+            cmd.Parameters.AddWithValue("id", transactionId);
+
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            if (!await rd.ReadAsync()) return null;
+
+            return new WalletTransaction
+            {
+                WalletTransactionId = rd.GetInt32(0),
+                WalletId = rd.GetInt32(1),
+                Amount = rd.GetDecimal(2),
+                Type = rd.GetString(3),
+                Status = rd.GetString(4),
+                Description = rd.IsDBNull(5) ? null : rd.GetString(5),
+                BankName = rd.IsDBNull(6) ? null : rd.GetString(6),
+                BankAccountNumber = rd.IsDBNull(7) ? null : rd.GetString(7),
+                BankAccountName = rd.IsDBNull(8) ? null : rd.GetString(8),
+                CreatedAt = rd.GetDateTime(9)
+            };
+        }
+
+        public async Task<List<WalletTransaction>> GetPendingWithdrawalsAsync()
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+SELECT
+    t.""WalletTransactionId"",
+    t.""WalletId"",
+    t.""Amount"",
+    t.""Status"",
+    t.""BankName"",
+    t.""BankAccountNumber"",
+    t.""BankAccountName"",
+    t.""CreatedAt"",
+    w.""UserId""
+FROM ""WalletTransactions"" t
+JOIN ""Wallets"" w ON t.""WalletId"" = w.""WalletId""
+WHERE t.""Type"" = 'withdrawal'
+  AND t.""Status"" = 'pending'
+ORDER BY t.""CreatedAt"" ASC
+", conn);
+
+            var list = new List<WalletTransaction>();
+
+            await using var rd = await cmd.ExecuteReaderAsync();
+
+            while (await rd.ReadAsync())
+            {
+                list.Add(new WalletTransaction
+                {
+                    WalletTransactionId = rd.GetInt32(0),
+                    WalletId = rd.GetInt32(1),
+                    Amount = rd.GetDecimal(2),
+                    Status = rd.GetString(3),
+                    BankName = rd.IsDBNull(4) ? null : rd.GetString(4),
+                    BankAccountNumber = rd.IsDBNull(5) ? null : rd.GetString(5),
+                    BankAccountName = rd.IsDBNull(6) ? null : rd.GetString(6),
+                    CreatedAt = rd.GetDateTime(7),
+                    Wallet = new Wallet { UserId = rd.GetInt32(8) }
+                });
+            }
+
+            return list;
         }
     }
 }

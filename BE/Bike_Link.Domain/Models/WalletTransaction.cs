@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,6 +20,11 @@ namespace Bike_Link.Domain.Models
         public string Status { get; set; } = null!; // pending / success / failed
         public string? TxnRef { get; set; }
         public string? Description { get; set; }
+
+        // Bank info — dùng cho withdrawal
+        public string? BankName { get; set; }
+        public string? BankAccountNumber { get; set; }
+        public string? BankAccountName { get; set; }
 
         public DateTime? CreatedAt { get; set; }
 
