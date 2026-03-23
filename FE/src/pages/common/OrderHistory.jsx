@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import vehicleDetailApi from "@/service/VehicleDetailAPI";
 import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
 import disputeApi from "@/service/disputeApi";
@@ -132,37 +131,18 @@ export default function OrderHistory() {
       return;
     }
 
-    const fallbackVehicleId = order?.items?.[0]?.vehicleId;
-    if (!fallbackVehicleId) {
-      toast.warning("Không tìm thấy người bán để mở cửa hàng (thiếu sellerId và vehicleId)");
-      return;
-    }
-
-    let detail = null;
-
-    // Try public detail first (may 404 for sold items)
+    // Fallback: call order detail which already returns sellerId
     try {
-      detail = await vehicleDetailApi.getVehicleById(fallbackVehicleId);
-    } catch (err) {
-      console.warn("Public vehicle detail failed, try seller scope", err?.response?.status);
-    }
-
-    // If still missing sellerId, retry with seller scope (requires seller auth)
-    if (!detail || !detail.sellerId) {
-      try {
-        detail = await vehicleDetailApi.getVehicleByIdSellerScope(fallbackVehicleId);
-      } catch (err) {
-        console.error("Seller-scope vehicle detail failed", err);
-        toast.error("Không thể lấy thông tin người bán từ sản phẩm (có thể cần quyền người bán)");
-        return;
+      const detail = await orderApi.getById(order?.orderId);
+      const sellerId = detail?.sellerId;
+      if (sellerId) {
+        navigate(getPath(`products?sellerId=${sellerId}`));
+      } else {
+        toast.warning("Không tìm thấy người bán để mở cửa hàng");
       }
-    }
-
-    const sellerId = detail?.sellerId;
-    if (sellerId) {
-      navigate(getPath(`products?sellerId=${sellerId}`));
-    } else {
-      toast.warning("Không tìm thấy người bán để mở cửa hàng");
+    } catch (err) {
+      console.error("Fetch order detail failed", err);
+      toast.error("Không thể lấy thông tin người bán từ đơn hàng");
     }
   };
 
