@@ -628,7 +628,7 @@ namespace Bike_Link.Application.Services
                 BuyerName = order.Buyer.FullName ?? "N/A",
                 BuyerPhone = order.Buyer.Phone,
                 
-                // Chỉ hiện FullName và Phone của Seller
+                SellerId = order.SellerId.ToString(),
                 SellerName = order.Seller.FullName ?? "N/A",
                 SellerPhone = order.Seller.Phone,
                 

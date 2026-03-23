@@ -11,7 +11,8 @@ namespace Bike_Link.Application.DTO
         public string BuyerName { get; set; } = string.Empty;
         public string? BuyerPhone { get; set; }
 
-        // Seller Info - Chỉ hiện FullName và Phone
+        // Seller Info
+        public string SellerId { get; set; } = string.Empty;
         public string SellerName { get; set; } = string.Empty;
         public string? SellerPhone { get; set; }
 
