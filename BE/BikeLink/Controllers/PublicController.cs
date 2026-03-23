@@ -1,4 +1,4 @@
-﻿using Bike_Link.Application.IService;
+using Bike_Link.Application.IService;
 using Bike_Link.Domain.IRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -34,6 +34,13 @@ namespace BikeLink.Controllers
             if (v == null) return NotFound();
 
             return Ok(v);
+        }
+
+        [HttpGet("sellers/{sellerId}/vehicles")]
+        public async Task<IActionResult> GetVehiclesBySeller(int sellerId)
+        {
+            var list = await _service.GetVehiclesBySellerIdAsync(sellerId);
+            return Ok(list);
         }
     }
 }

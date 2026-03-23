@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,5 +12,6 @@ namespace Bike_Link.Application.IService
     {
         Task<List<HomeVehicleDto>> SearchAsync(VehicleSearchOptions options);
         Task<PublicVehicleDetailDto?> GetDetailAsync(int id);
+        Task<List<SellerVehicleDto>> GetVehiclesBySellerIdAsync(int sellerId);
     }
 }
