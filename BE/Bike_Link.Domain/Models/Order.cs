@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Bike_Link.Domain.Models;
@@ -19,6 +19,7 @@ public partial class Order
 
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? ShippingProofUrl { get; set; }
 
     // Navigation
     public virtual User Buyer { get; set; } = null!;

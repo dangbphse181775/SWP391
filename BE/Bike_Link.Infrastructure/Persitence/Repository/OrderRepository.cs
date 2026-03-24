@@ -1,4 +1,4 @@
-﻿using Bike_Link.Domain.IRepository;
+using Bike_Link.Domain.IRepository;
 using Bike_Link.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -161,7 +161,7 @@ WHERE ""CartId"" = @cartId
             await using var conn = await _dataSource.OpenConnectionAsync();
 
             await using var cmd = new NpgsqlCommand(@"
-SELECT ""OrderId"", ""BuyerId"", ""SellerId"", ""Status"", ""Amount"", ""DepositAmount"", ""CreatedAt"", ""UpdatedAt""
+SELECT ""OrderId"", ""BuyerId"", ""SellerId"", ""Status"", ""Amount"", ""DepositAmount"", ""CreatedAt"", ""UpdatedAt"", ""ShippingProofUrl""
 FROM ""Orders""
 WHERE ""OrderId"" = @orderId
 ", conn);
@@ -181,7 +181,8 @@ WHERE ""OrderId"" = @orderId
                 Amount = rd.GetDecimal(4),
                 DepositAmount = rd.IsDBNull(5) ? null : rd.GetDecimal(5),
                 CreatedAt = rd.GetDateTime(6),
-                UpdatedAt = rd.IsDBNull(7) ? null : rd.GetDateTime(7)
+                UpdatedAt = rd.IsDBNull(7) ? null : rd.GetDateTime(7),
+                ShippingProofUrl = rd.IsDBNull(8) ? null : rd.GetString(8)
             };
         }
 
@@ -296,6 +297,24 @@ WHERE ""OrderId"" = @orderId
 
 
             return await query.OrderByDescending(o => o.CreatedAt).ToListAsync();
+        }
+
+        public async Task UpdateOrderShippingProofAsync(int orderId, string shippingProofUrl)
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+
+            await using var cmd = new NpgsqlCommand(@"
+UPDATE ""Orders""
+SET ""Status"" = 'shipped',
+    ""ShippingProofUrl"" = @url,
+    ""UpdatedAt"" = NOW()
+WHERE ""OrderId"" = @orderId
+", conn);
+
+            cmd.Parameters.AddWithValue("orderId", orderId);
+            cmd.Parameters.AddWithValue("url", shippingProofUrl);
+
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 }

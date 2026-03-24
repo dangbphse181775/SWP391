@@ -161,15 +161,16 @@ namespace BikeLink.Controllers
         }
 
         /// <summary>
-        /// Seller xác nhận đã giao xe → order "shipped"
+        /// Seller xác nhận đã giao xe + upload ảnh bằng chứng → order "shipped"
         /// </summary>
         [HttpPost("confirm-shipped/{orderId}")]
-        public async Task<IActionResult> ConfirmShipped(int orderId)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ConfirmShipped(int orderId, IFormFile shippingProof)
         {
             try
             {
                 int sellerId = User.GetUserId();
-                await _orderService.SellerConfirmShippedAsync(sellerId, orderId);
+                await _orderService.SellerConfirmShippedAsync(sellerId, orderId, shippingProof);
 
                 return Ok(new
                 {

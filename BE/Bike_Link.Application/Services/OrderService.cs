@@ -7,6 +7,9 @@ using Bike_Link.Application.DTO;
 using Bike_Link.Application.IService;
 using Bike_Link.Domain.IRepository;
 using Bike_Link.Domain.Models;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http;
 
 namespace Bike_Link.Application.Services
 {
@@ -16,17 +19,20 @@ namespace Bike_Link.Application.Services
         private readonly IWalletRepository _walletRepo;
         private readonly IOrderRepository _orderRepo;
         private readonly ISystemConfigRepository _configRepo;
+        private readonly Cloudinary _cloudinary;
 
         public OrderService(
             ICartRepository cartRepo,
             IWalletRepository walletRepo,
             IOrderRepository orderRepo,
-            ISystemConfigRepository configRepo)
+            ISystemConfigRepository configRepo,
+            Cloudinary cloudinary)
         {
             _cartRepo = cartRepo;
             _walletRepo = walletRepo;
             _orderRepo = orderRepo;
             _configRepo = configRepo;
+            _cloudinary = cloudinary;
         }
 
         public async Task<CheckoutResultDto> CheckoutAsync(
@@ -550,7 +556,7 @@ namespace Bike_Link.Application.Services
 
         // ===================== SELLER XÁC NHẬN GIAO HÀNG =====================
 
-        public async Task SellerConfirmShippedAsync(int sellerId, int orderId)
+        public async Task SellerConfirmShippedAsync(int sellerId, int orderId, IFormFile shippingProof)
         {
             var order = await _orderRepo.GetOrderByIdAsync(orderId);
             if (order == null)
@@ -562,7 +568,27 @@ namespace Bike_Link.Application.Services
             if (order.Status != "processing")
                 throw new Exception($"Đơn hàng không ở trạng thái chờ giao (status: {order.Status})");
 
-            await _orderRepo.UpdateOrderStatusAsync(orderId, "shipped");
+            if (shippingProof == null || shippingProof.Length == 0)
+                throw new Exception("Vui lòng cung cấp hình ảnh bằng chứng giao hàng");
+
+            // Upload ảnh lên Cloudinary
+            using var stream = shippingProof.OpenReadStream();
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription(shippingProof.FileName, stream),
+                Folder = "orders/shipping-proof"
+            };
+
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            if (uploadResult.Error != null)
+            {
+                throw new Exception($"Lỗi khi upload ảnh bằng chứng: {uploadResult.Error.Message}");
+            }
+
+            string proofUrl = uploadResult.SecureUrl.ToString();
+
+            // Cập nhật status và url
+            await _orderRepo.UpdateOrderShippingProofAsync(orderId, proofUrl);
         }
 
         // ===================== BUYER XÁC NHẬN NHẬN HÀNG =====================
@@ -635,6 +661,7 @@ namespace Bike_Link.Application.Services
                 Status = order.Status,
                 Amount = order.Amount,
                 DepositAmount = order.DepositAmount,
+                ShippingProofUrl = order.ShippingProofUrl,
                 
                 CreatedAt = order.CreatedAt,
                 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Bike_Link.Application.DTO
@@ -21,6 +21,7 @@ namespace Bike_Link.Application.DTO
         public decimal? DepositAmount { get; set; }
 
         public DateTime CreatedAt { get; set; }
+        public string? ShippingProofUrl { get; set; }
 
         // Order Items
         public List<OrderItemDto> OrderItems { get; set; } = new List<OrderItemDto>();
