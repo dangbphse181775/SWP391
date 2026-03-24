@@ -1,7 +1,10 @@
+using System.Text.Json;
 using Bike_Link.Application.DTO;
 using Bike_Link.Application.IService;
 using Bike_Link.Domain.IRepository;
 using Bike_Link.Domain.Models;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 
 namespace Bike_Link.Application.Services
 {
@@ -11,17 +14,20 @@ namespace Bike_Link.Application.Services
         private readonly IOrderRepository _orderRepo;
         private readonly IWalletRepository _walletRepo;
         private readonly ISystemConfigRepository _configRepo;
+        private readonly Cloudinary _cloudinary;
 
         public DisputeService(
             IDisputeRepository disputeRepo,
             IOrderRepository orderRepo,
             IWalletRepository walletRepo,
-            ISystemConfigRepository configRepo)
+            ISystemConfigRepository configRepo,
+            Cloudinary cloudinary)
         {
             _disputeRepo = disputeRepo;
             _orderRepo = orderRepo;
             _walletRepo = walletRepo;
             _configRepo = configRepo;
+            _cloudinary = cloudinary;
         }
 
         // ===================== BUYER MỞ KHIẾU NẠI =====================
@@ -52,13 +58,46 @@ namespace Bike_Link.Application.Services
             if (existingDispute != null)
                 throw new Exception("Đơn hàng này đã có khiếu nại đang xử lý");
 
-            // 4. Tạo Dispute
+            // 4. Upload ảnh/video lên Cloudinary
+            var evidenceUrls = new List<string>();
+
+            if (request.Images != null)
+            {
+                foreach (var file in request.Images)
+                {
+                    using var stream = file.OpenReadStream();
+                    var upload = await _cloudinary.UploadAsync(new ImageUploadParams
+                    {
+                        File = new FileDescription(file.FileName, stream),
+                        Folder = "disputes/images"
+                    });
+                    evidenceUrls.Add(upload.SecureUrl.ToString());
+                }
+            }
+
+            if (request.Videos != null)
+            {
+                foreach (var file in request.Videos)
+                {
+                    using var stream = file.OpenReadStream();
+                    var upload = await _cloudinary.UploadAsync(new VideoUploadParams
+                    {
+                        File = new FileDescription(file.FileName, stream),
+                        Folder = "disputes/videos"
+                    });
+                    evidenceUrls.Add(upload.SecureUrl.ToString());
+                }
+            }
+
+            // 5. Tạo Dispute
             var dispute = new Dispute
             {
                 OrderId = orderId,
                 OpenedByUserId = buyerId,
                 Description = request.Description,
-                EvidenceUrls = request.EvidenceUrls,
+                EvidenceUrls = evidenceUrls.Count > 0
+                    ? JsonSerializer.Serialize(evidenceUrls)
+                    : null,
                 Status = "open",
                 CreatedAt = DateTime.UtcNow
             };

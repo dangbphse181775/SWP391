@@ -22,9 +22,10 @@ namespace BikeLink.Controllers
         /// Buyer mở khiếu nại — order phải ở trạng thái "shipped"
         /// </summary>
         [HttpPost("{orderId}")]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> OpenDispute(
             int orderId,
-            [FromBody] OpenDisputeRequest request)
+            [FromForm] OpenDisputeRequest request)
         {
             try
             {
