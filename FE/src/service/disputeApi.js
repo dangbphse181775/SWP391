@@ -41,6 +41,12 @@ const disputeApi = {
     // Get dispute by order ID
     getDisputeByOrder(orderId) {
         return axiosClient.get(`/Dispute/order/${orderId}`);
+    },
+
+    // Seller responds to a dispute
+    // body: { response: string }
+    sellerResponse(orderId, data) {
+        return axiosClient.put(`/Dispute/${orderId}/seller-response`, data);
     }
 };
 
