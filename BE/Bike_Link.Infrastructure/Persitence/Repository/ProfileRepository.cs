@@ -51,5 +51,17 @@ namespace Bike_Link.Infrastructure.Persitence.Repository
             // Lưu thay đổi vào cơ sở dữ liệu
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<bool> UpdateStatusAsync(int userId, string status)
+        {
+            // Tìm người dùng theo userId
+            User user = await _context.Users.FindAsync(userId);
+            if (user == null) return false; // Nếu không tìm thấy người dùng, trả về false
+            // Cập nhật status và thời gian cập nhật
+            user.Status = status;
+            user.UpdatedAt = DateTime.UtcNow;
+            // Lưu thay đổi vào cơ sở dữ liệu
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

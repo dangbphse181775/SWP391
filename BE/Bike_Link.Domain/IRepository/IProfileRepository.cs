@@ -8,5 +8,7 @@ namespace Bike_Link.Domain.IRepository
         Task<bool> UpdateUserAsync(User user);
         Task<bool> UpdateAvatarAsync(int userId, string avatarUrl);
         Task<List<User>> GetAllUsersAsync();
+        Task<bool> UpdateStatusAsync(int userId, string status);
+        
     }
 }
