@@ -27,7 +27,7 @@ import SelledHistory from '@/pages/common/SelledHistory';
 import DisputeList from '@/pages/role/admin/DisputeList';
 import DisputeDetail from '@/pages/role/admin/DisputeDetail';
 import ManagePosts from '@/pages/role/user/ManagePosts';
-
+import SellerDisputeResponse from '@/pages/common/SellerDisputeResponse';
 const VehicleDetailRoute = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -165,6 +165,11 @@ function App() {
             <Route path="/seller/selledHistory" element={
               <RoleBasedRoute>
                 <SelledHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/dispute/:orderId" element={
+              <RoleBasedRoute>
+                <SellerDisputeResponse />
               </RoleBasedRoute>
             } />
             <Route path="/seller/managePosts" element={

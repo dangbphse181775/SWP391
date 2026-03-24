@@ -46,7 +46,7 @@ const resolutionOptions = [
   {
     key: 'refund_full',
     label: 'Hoàn tiền 100%',
-    description: 'Đồng ý hoàn toàn bộ tiền cho người mua. Đơn hàng sẽ chuyển trạng thái "Đã hoàn tiền".',
+    description: 'Đồng ý hoàn hoàn toàn bộ tiền cho người mua. Đơn hàng sẽ chuyển trạng thái "Đã hoàn tiền".',
     icon: RotateCcw,
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50',
@@ -97,7 +97,6 @@ export default function SellerDisputeResponse() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [selectedResolution, setSelectedResolution] = useState(null);
-  const [sellerNote, setSellerNote] = useState('');
   const [refundPercentage, setRefundPercentage] = useState(50);
   const [submitted, setSubmitted] = useState(false);
 
@@ -139,15 +138,10 @@ export default function SellerDisputeResponse() {
       toast.error('Vui lòng chọn phương án giải quyết');
       return;
     }
-    if (!sellerNote.trim()) {
-      toast.error('Vui lòng nhập ghi chú phản hồi');
-      return;
-    }
     try {
       setProcessing(true);
       const body = {
-        resolution: selectedResolution,
-        sellerNote: sellerNote.trim(),
+        response: selectedResolution,
       };
       if (selectedResolution === 'partial_refund') {
         body.refundPercentage = refundPercentage;
@@ -411,8 +405,8 @@ export default function SellerDisputeResponse() {
                     <span>95%</span>
                   </div>
                   {dispute.orderAmount > 0 && (
-                    <div className="bg-white rounded-lg p-3 border border-blue-100">
-                      <div className="flex justify-between text-sm">
+                    <div className="bg-white rounded-lg p-3 border border-blue-100 mt-2">
+                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Số tiền hoàn cho Buyer:</span>
                         <span className="font-bold text-blue-700">
                           {new Intl.NumberFormat('vi-VN').format(refundAmount)}đ
@@ -429,20 +423,6 @@ export default function SellerDisputeResponse() {
                 </div>
               )}
 
-              {/* Seller Note */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">
-                  Ghi chú phản hồi <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={sellerNote}
-                  onChange={(e) => setSellerNote(e.target.value)}
-                  placeholder="Nhập lý do và giải thích của bạn về khiếu nại này..."
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-all resize-none"
-                />
-              </div>
-
               {/* Submit button */}
               <div className="flex justify-end gap-3 pt-2">
                 <button
@@ -453,7 +433,7 @@ export default function SellerDisputeResponse() {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={processing || !selectedResolution || !sellerNote.trim()}
+                  disabled={processing || !selectedResolution}
                   className="px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {processing ? (
