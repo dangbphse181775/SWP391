@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace Bike_Link.Application.DTO
 {
     public class OpenDisputeRequest
@@ -5,8 +7,13 @@ namespace Bike_Link.Application.DTO
         public string Description { get; set; } = null!;
 
         /// <summary>
-        /// JSON array các URL ảnh/video bằng chứng (optional)
+        /// Ảnh bằng chứng (upload lên Cloudinary)
         /// </summary>
-        public string? EvidenceUrls { get; set; }
+        public List<IFormFile>? Images { get; set; }
+
+        /// <summary>
+        /// Video bằng chứng (upload lên Cloudinary)
+        /// </summary>
+        public List<IFormFile>? Videos { get; set; }
     }
 }

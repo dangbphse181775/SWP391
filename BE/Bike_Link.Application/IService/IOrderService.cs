@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Bike_Link.Application.DTO;
+using Microsoft.AspNetCore.Http;
 
 namespace Bike_Link.Application.IService
 {
@@ -27,9 +28,9 @@ namespace Bike_Link.Application.IService
         Task<PayRemainingResultDto> PayRemainingAsync(int buyerId, int orderId);
 
         /// <summary>
-        /// Seller xác nhận đã giao xe → order "shipped"
+        /// Seller xác nhận đã giao xe + upload ảnh bằng chứng → order "shipped"
         /// </summary>
-        Task SellerConfirmShippedAsync(int sellerId, int orderId);
+        Task SellerConfirmShippedAsync(int sellerId, int orderId, IFormFile shippingProof);
 
         /// <summary>
         /// Buyer xác nhận đã nhận hàng → order "completed", tiền Ví Tổng → Ví Seller

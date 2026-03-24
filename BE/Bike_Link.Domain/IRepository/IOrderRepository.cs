@@ -56,5 +56,10 @@ namespace Bike_Link.Domain.IRepository
 
         Task<Order?> GetOrderDetailByIdAsync(int orderId);
         Task<List<Order>> GetOrdersByUserIdAsync(int userId, string role);
+
+        /// <summary>
+        /// Cập nhật trạng thái Order → "shipped" + lưu URL ảnh bằng chứng giao hàng
+        /// </summary>
+        Task UpdateOrderShippingProofAsync(int orderId, string shippingProofUrl);
     }
 }
