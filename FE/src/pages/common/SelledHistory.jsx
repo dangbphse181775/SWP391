@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
 
@@ -20,6 +21,7 @@ const STATUS_TABS = [
   { key: "deposited", label: "Đã đặt cọc" },
   { key: "processing", label: "Đang xử lý" },
   { key: "shipped", label: "Đang giao" },
+  { key: "disputed", label: "Đang khiếu nại" },
   { key: "completed", label: "Đã hoàn thành" },
   { key: "cancelled", label: "Đã hủy" },
 ];
@@ -47,6 +49,9 @@ const getStatusMeta = (statusRaw) => {
   if (status === "processing") {
     return { label: "Đang xử lý", badgeClass: "bg-blue-100 text-blue-700", dotClass: "bg-blue-500" };
   }
+  if (status === "disputed") {
+    return { label: "Đang khiếu nại", badgeClass: "bg-purple-100 text-purple-700", dotClass: "bg-purple-500" };
+  }
   return {
     label: statusRaw ? String(statusRaw) : "Không xác định",
     badgeClass: "bg-slate-100 text-slate-700",
@@ -55,6 +60,7 @@ const getStatusMeta = (statusRaw) => {
 };
 
 export default function SelledHistory() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
@@ -305,15 +311,27 @@ export default function SelledHistory() {
                     <p className="text-sm font-medium text-slate-500">
                       Người mua: {order?.buyerName || "N/A"}
                     </p>
-                    <div className="text-right">
-                      <span className="text-sm text-slate-500">Tổng doanh thu:</span>
-                      <span
-                        className={`ml-2 text-xl font-extrabold tracking-tight ${
-                          cancelled ? "text-slate-400" : "text-primary"
-                        }`}
-                      >
-                        {cancelled ? "0 VNĐ" : formatVnd(order?.amount)}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      {String(order?.status || "").toLowerCase() === "disputed" && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/seller/dispute/${order?.orderId}`); }}
+                          className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">gavel</span>
+                          Phản hồi khiếu nại
+                        </button>
+                      )}
+                      <div className="text-right">
+                        <span className="text-sm text-slate-500">Tổng doanh thu:</span>
+                        <span
+                          className={`ml-2 text-xl font-extrabold tracking-tight ${
+                            cancelled ? "text-slate-400" : "text-primary"
+                          }`}
+                        >
+                          {cancelled ? "0 VNĐ" : formatVnd(order?.amount)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -26,6 +26,7 @@ import OrderHistory from '@/pages/common/OrderHistory';
 import SelledHistory from '@/pages/common/SelledHistory';
 import DisputeList from '@/pages/role/admin/DisputeList';
 import DisputeDetail from '@/pages/role/admin/DisputeDetail';
+import SellerDisputeResponse from '@/pages/common/SellerDisputeResponse';
 
 const VehicleDetailRoute = () => {
   const { id } = useParams();
@@ -98,6 +99,11 @@ function App() {
                 <OrderHistory />
               </RoleBasedRoute>
             } />
+            <Route path="/buyer/dispute/:orderId" element={
+              <RoleBasedRoute>
+                <SellerDisputeResponse />
+              </RoleBasedRoute>
+            } />
             <Route path="/buyer/selledHistory" element={
               <RoleBasedRoute>
                 <SelledHistory />
@@ -154,6 +160,11 @@ function App() {
             <Route path="/seller/selledHistory" element={
               <RoleBasedRoute>
                 <SelledHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/dispute/:orderId" element={
+              <RoleBasedRoute>
+                <SellerDisputeResponse />
               </RoleBasedRoute>
             } />
 

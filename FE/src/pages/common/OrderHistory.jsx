@@ -341,11 +341,23 @@ export default function OrderHistory() {
                     <p className="text-sm font-medium text-slate-500">
                       Người bán: {order?.sellerName || "N/A"}
                     </p>
-                    <div className="text-right">
-                      <span className="text-sm text-slate-500">Tổng thanh toán:</span>
-                      <span className="ml-2 text-xl font-extrabold text-primary">
-                        {formatVnd(order?.amount)}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      {String(order?.status || "").toLowerCase() === "disputed" && (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/buyer/dispute/${order?.orderId}`)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">gavel</span>
+                          Xem khiếu nại
+                        </button>
+                      )}
+                      <div className="text-right">
+                        <span className="text-sm text-slate-500">Tổng thanh toán:</span>
+                        <span className="ml-2 text-xl font-extrabold text-primary">
+                          {formatVnd(order?.amount)}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
