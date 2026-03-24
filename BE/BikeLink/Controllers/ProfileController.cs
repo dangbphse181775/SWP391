@@ -128,7 +128,7 @@ namespace BikeLink.Controllers
         {
             try
             {
-                
+
                 int userID = CurrentUserId;
                 // Cập nhật avatar thông qua service
                 ProfileDto profile = await _profileService.UpdateAvatarAsync(userID, request);
@@ -165,6 +165,26 @@ namespace BikeLink.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách người dùng", error = ex.Message });
+            }
+        }
+
+        // Cập nhật status của người dùng (Admin only)
+        [HttpPatch("users/{userId}/status")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUserStatus(int userId, [FromBody] UpdateStatusRequest request)
+        {
+            try
+            {
+                ProfileDto profile = await _profileService.UpdateStatusAsync(userId, request);
+                return Ok(new
+                {
+                    data = profile,
+                    message = "Cập nhật trạng thái người dùng thành công"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi cập nhật trạng thái người dùng", error = ex.Message });
             }
         }
     }

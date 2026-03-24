@@ -32,4 +32,11 @@ namespace Bike_Link.Application.DTO
         [Url(ErrorMessage = "Phải là URL hợp lệ")]
         public string AvatarUrl { get; set; } = null!;
     }
+
+    public class UpdateStatusRequest
+    {
+        [Required(ErrorMessage = "Status là bắt buộc")]
+        [RegularExpression(@"^(active|ban)$", ErrorMessage = "Status phải là 'active' hoặc 'ban'")]
+        public string Status { get; set; } = null!;
+    }
 }

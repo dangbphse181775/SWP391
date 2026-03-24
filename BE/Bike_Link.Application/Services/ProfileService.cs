@@ -78,7 +78,9 @@ namespace Bike_Link.Application.Services
                     throw new ArgumentException("Tên không được vượt quá 100 ký tự");
 
                 user.FullName = request.FullName.Trim();
-            } else             {
+            }
+            else
+            {
                 user.FullName = user.FullName; // giữ nguyên giá trị hiện tại nếu không có cập nhật
             }
 
@@ -91,7 +93,8 @@ namespace Bike_Link.Application.Services
                     throw new ArgumentException("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0");
 
                 user.Phone = request.Phone;
-            } else
+            }
+            else
             {
                 user.Phone = user.Phone; // giữ nguyên giá trị hiện tại nếu không có cập nhật
             }
@@ -105,6 +108,16 @@ namespace Bike_Link.Application.Services
         {
             // Cập nhật avatar người dùng trong kho lưu trữ
             bool success = await _profileRepository.UpdateAvatarAsync(userId, request.AvatarUrl);
+            if (!success) // Nếu không thành công, trả về thông báo lỗi
+                throw new KeyNotFoundException("Không tìm thấy người dùng");
+            // Trả về thông tin hồ sơ đã cập nhật
+            return await GetProfileAsync(userId);
+        }
+
+        public async Task<ProfileDto> UpdateStatusAsync(int userId, UpdateStatusRequest request)
+        {
+            // Cập nhật status người dùng trong kho lưu trữ
+            bool success = await _profileRepository.UpdateStatusAsync(userId, request.Status);
             if (!success) // Nếu không thành công, trả về thông báo lỗi
                 throw new KeyNotFoundException("Không tìm thấy người dùng");
             // Trả về thông tin hồ sơ đã cập nhật
