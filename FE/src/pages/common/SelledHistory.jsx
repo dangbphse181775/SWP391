@@ -75,6 +75,12 @@ export default function SelledHistory() {
   const tabsRef = useRef({});
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
+  const [shippingConfirmId, setShippingConfirmId] = useState(null);
+  const [closingShippingConfirmId, setClosingShippingConfirmId] = useState(null);
+  const [shippingImageFile, setShippingImageFile] = useState(null);
+  const [shippingImagePreview, setShippingImagePreview] = useState("");
+  const [isSubmittingShipping, setIsSubmittingShipping] = useState(false);
+
   const [reviewingOrderId, setReviewingOrderId] = useState(null);
   const [closingReviewId, setClosingReviewId] = useState(null);
   const [fetchingReview, setFetchingReview] = useState(false);
@@ -102,6 +108,22 @@ export default function SelledHistory() {
       } finally {
         setFetchingReview(false);
       }
+    }
+  };
+
+  const handleToggleConfirmShipping = (orderId) => {
+    if (shippingConfirmId === orderId) {
+      setClosingShippingConfirmId(orderId);
+      setTimeout(() => {
+        setShippingConfirmId(null);
+        setClosingShippingConfirmId(null);
+        setShippingImageFile(null);
+        setShippingImagePreview("");
+      }, 300);
+    } else {
+      setShippingConfirmId(orderId);
+      setShippingImageFile(null);
+      setShippingImagePreview("");
     }
   };
 
@@ -149,13 +171,24 @@ export default function SelledHistory() {
   }, [fetchOrders]);
 
   const handleConfirmShipped = async (orderId) => {
+    if (!shippingImageFile) {
+      toast.error("Vui lòng tải lên ảnh minh chứng giao hàng!");
+      return;
+    }
     try {
-      await orderApi.confirmShipped(orderId);
+      setIsSubmittingShipping(true);
+      const formData = new FormData();
+      formData.append("shippingProof", shippingImageFile);
+
+      await orderApi.confirmShipped(orderId, formData);
       toast.success("Xác nhận giao hàng thành công!");
+      handleToggleConfirmShipping(orderId);
       fetchOrders();
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || "Lỗi khi xác nhận giao hàng";
       toast.error(msg);
+    } finally {
+      setIsSubmittingShipping(false);
     }
   };
 
@@ -384,13 +417,66 @@ export default function SelledHistory() {
 
                       {["processing", "paid"].includes(String(order?.status).toLowerCase()) && (
                         <button
-                          onClick={() => handleConfirmShipped(order?.orderId)}
+                          onClick={() => handleToggleConfirmShipping(order?.orderId)}
                           className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
                         >
                           Xác nhận giao hàng
                         </button>
                       )}
                     </div>
+
+                    {["processing", "paid"].includes(String(order?.status).toLowerCase()) && (shippingConfirmId === order?.orderId || closingShippingConfirmId === order?.orderId) && (
+                      <div className={`mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 ${
+                        closingShippingConfirmId === order?.orderId ? "slide-down-exit" : "slide-down-enter"
+                      }`}>
+                        <h4 className="text-sm font-bold text-blue-800 mb-3">Xác nhận giao hàng đơn #{order?.orderId}</h4>
+                        <div className="flex flex-col gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                              Ảnh minh chứng giao hàng <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  setShippingImageFile(file);
+                                  setShippingImagePreview(URL.createObjectURL(file));
+                                } else {
+                                  setShippingImageFile(null);
+                                  setShippingImagePreview("");
+                                }
+                              }}
+                              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition-colors"
+                            />
+                            {shippingImagePreview && (
+                              <div className="mt-3 h-32 w-32 rounded-lg border border-slate-200 overflow-hidden bg-white">
+                                <img src={shippingImagePreview} alt="Preview" className="h-full w-full object-cover" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              type="button"
+                              disabled={isSubmittingShipping}
+                              onClick={() => handleToggleConfirmShipping(order?.orderId)}
+                              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              Hủy
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isSubmittingShipping}
+                              onClick={() => handleConfirmShipped(order?.orderId)}
+                              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {isSubmittingShipping ? "Đang tải lên..." : "Xác nhận giao hàng"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {String(order?.status || "").toLowerCase() === "completed" && (
                       <div className="flex flex-col gap-4 mt-2 pt-4 border-t border-slate-200">

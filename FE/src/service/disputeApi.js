@@ -30,7 +30,11 @@ const disputeApi = {
     // Buyer opens a dispute on an order
     // body: { description, evidenceUrls? }
     openDispute(orderId, data) {
-        return axiosClient.post(`/Dispute/${orderId}`, data);
+        return axiosClient.post(`/Dispute/${orderId}`, data, {
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        });
     },
 
     // Get chat history for a dispute channel
