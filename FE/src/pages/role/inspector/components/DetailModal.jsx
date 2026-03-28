@@ -17,14 +17,14 @@ import * as InspectorAPI from "@/service/InspectorAPI";
 
 /* ─── Constants ─────────────────────────────────────────── */
 const CONDITION_OPTIONS = [
-  { value: "good",  label: "Tốt" },
-  { value: "fair",  label: "Trung bình" },
-  { value: "poor",  label: "Kém" },
+  { value: "good", label: "Tốt" },
+  { value: "fair", label: "Trung bình" },
+  { value: "poor", label: "Kém" },
 ];
 
 const fmt = {
   price: (v) => Number(v || 0).toLocaleString("vi-VN") + " ₫",
-  date:  (iso) => iso ? new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—",
+  date: (iso) => iso ? new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—",
 };
 
 /* ─── Small sub-components ───────────────────────────────── */
@@ -72,10 +72,10 @@ function SelectRow({ label, value, onChange, disabled, error }) {
 
 /* ─── Main Modal ─────────────────────────────────────────── */
 export default function DetailModal({ open, onClose, bike, onSuccess }) {
-  const [detail, setDetail]       = useState(null);
-  const [loading, setLoading]     = useState(false);
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
-  const [form, setForm]           = useState({ frameStatus: "", brakeStatus: "", drivetrainStatus: "", description: "" });
+  const [form, setForm] = useState({ frameStatus: "", brakeStatus: "", drivetrainStatus: "", description: "" });
   const [submitting, setSubmitting] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
 
@@ -207,9 +207,8 @@ export default function DetailModal({ open, onClose, bike, onSuccess }) {
                         src={url}
                         alt=""
                         onClick={() => setActiveImg(i)}
-                        className={`h-16 w-16 shrink-0 object-cover rounded-lg cursor-pointer border-2 transition-all ${
-                          i === activeImg ? "border-black opacity-100" : "border-gray-200 opacity-60 hover:opacity-90"
-                        }`}
+                        className={`h-16 w-16 shrink-0 object-cover rounded-lg cursor-pointer border-2 transition-all ${i === activeImg ? "border-black opacity-100" : "border-gray-200 opacity-60 hover:opacity-90"
+                          }`}
                       />
                     ))}
                   </div>
@@ -220,22 +219,22 @@ export default function DetailModal({ open, onClose, bike, onSuccess }) {
                   <div className="col-span-2">
                     <InfoItem icon={Bike} label="Tên xe" value={d?.name || bike?.name} />
                   </div>
-                  <InfoItem icon={Tag}          label="Giá bán"        value={fmt.price(d?.price ?? bike?.price)} highlight />
-                  <InfoItem icon={CalendarDays}  label="Ngày đăng"      value={fmt.date(d?.createdAt)} />
-                  <InfoItem icon={ShieldCheck}   label="Thương hiệu"    value={d?.brandName} />
-                  <InfoItem icon={FileText}      label="Danh mục"       value={d?.categoryName} />
-                  <InfoItem icon={History}       label="Năm / Model"    value={d?.model} />
-                  <InfoItem icon={Ruler}         label="Kích cỡ khung"  value={d?.frameSize} />
-                  <InfoItem icon={ShieldCheck}   label="Tình trạng"     value={d?.condition} />
-                  <InfoItem icon={History}       label="Lịch sử SD"     value={d?.usageHistory} />
+                  <InfoItem icon={Tag} label="Giá bán" value={fmt.price(d?.price ?? bike?.price)} highlight />
+                  <InfoItem icon={CalendarDays} label="Ngày đăng" value={fmt.date(d?.createdAt)} />
+                  <InfoItem icon={ShieldCheck} label="Thương hiệu" value={d?.brandName} />
+                  <InfoItem icon={FileText} label="Danh mục" value={d?.categoryName} />
+                  <InfoItem icon={History} label="Năm / Model" value={d?.model} />
+                  <InfoItem icon={Ruler} label="Kích cỡ khung" value={d?.frameSize} />
+                  <InfoItem icon={ShieldCheck} label="Tình trạng" value={d?.condition} />
+                  <InfoItem icon={History} label="Lịch sử SD" value={d?.usageHistory} />
                 </div>
 
                 {/* Seller block */}
                 <div className="rounded-xl border border-black/10 bg-gray-50 p-4 space-y-3 mt-4">
                   <SectionTitle>Thông tin người bán</SectionTitle>
                   <div className="grid grid-cols-2 gap-4">
-                    <InfoItem icon={User}  label="Họ và tên" value={d?.sellerName} />
-                    <InfoItem icon={Mail}  label="Email"     value={d?.sellerEmail} />
+                    <InfoItem icon={User} label="Họ và tên" value={d?.sellerName} />
+                    <InfoItem icon={Mail} label="Email" value={d?.sellerEmail} />
                   </div>
                 </div>
 
@@ -300,11 +299,10 @@ export default function DetailModal({ open, onClose, bike, onSuccess }) {
                       placeholder="Nhập nhận xét chi tiết về tình trạng xe sau khi kiểm tra..."
                       disabled={submitting}
                       rows={8}
-                      className={`resize-none bg-white ${
-                        showErrors && !form.description.trim()
+                      className={`resize-none bg-white ${showErrors && !form.description.trim()
                           ? "border-red-400 focus:ring-red-500 focus:border-red-500"
                           : "focus:ring-black focus:border-black"
-                      }`}
+                        }`}
                     />
                     {showErrors && !form.description.trim() && (
                       <p className="text-xs text-red-500 mt-1">Vui lòng nhập nhận xét kiểm định.</p>

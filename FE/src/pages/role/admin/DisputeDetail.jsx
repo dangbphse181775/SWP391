@@ -71,7 +71,18 @@ const DisputeDetail = () => {
     try {
       setLoading(true);
       const response = await disputeApi.getDisputeDetail(id);
-      const data = response?.data || response;
+      let data = response?.data || response;
+
+      if (data.status === 'open') {
+        try {
+          await disputeApi.investigateDispute(id);
+          const updatedResponse = await disputeApi.getDisputeDetail(id);
+          data = updatedResponse?.data || updatedResponse;
+        } catch (investigateError) {
+          console.error('Error auto-investigating dispute:', investigateError);
+        }
+      }
+
       setDispute(data);
     } catch (error) {
       console.error('Error fetching dispute detail:', error);
@@ -79,20 +90,6 @@ const DisputeDetail = () => {
       navigate(`${basePath}/disputes`);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleInvestigate = async () => {
-    try {
-      setProcessing(true);
-      await disputeApi.investigateDispute(id);
-      toast.success('Đã chuyển sang trạng thái đang điều tra');
-      fetchDetail();
-    } catch (error) {
-      console.error('Error investigating dispute:', error);
-      toast.error('Có lỗi xảy ra khi bắt đầu điều tra');
-    } finally {
-      setProcessing(false);
     }
   };
 
@@ -162,17 +159,7 @@ const DisputeDetail = () => {
 
             {/* Action buttons */}
             <div className="flex items-center gap-3">
-              {isOpen && (
-                <Button
-                  onClick={handleInvestigate}
-                  disabled={processing}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl gap-2 px-5"
-                >
-                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <SearchIcon className="w-4 h-4" />}
-                  Bắt đầu điều tra
-                </Button>
-              )}
-              {isInvestigating && (
+              {(isOpen || isInvestigating) && (
                 <Button
                   onClick={() => setShowResolveDialog(true)}
                   disabled={processing}
@@ -212,16 +199,25 @@ const DisputeDetail = () => {
                   {dispute.evidenceUrls && (
                     <div>
                       <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Bằng chứng</label>
-                      <div className="mt-2">
-                        <a
-                          href={dispute.evidenceUrls}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100 hover:border-blue-200 transition-all font-medium"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Xem bằng chứng
-                        </a>
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        {dispute.evidenceUrls.split(',').map((url, index) => (
+                          <a
+                            key={index}
+                            href={url.trim()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group relative w-32 h-32 rounded-xl border border-gray-200 overflow-hidden hover:border-blue-400 transition-all bg-gray-50 flex-shrink-0 block"
+                          >
+                            <img
+                              src={url.trim()}
+                              alt={`Bằng chứng ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <ExternalLink className="w-6 h-6 text-white" />
+                            </div>
+                          </a>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -260,7 +256,7 @@ const DisputeDetail = () => {
                           <Badge className={`text-xs ${v.isInspected
                             ? (v.inspectionResult === 'passed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200')
                             : 'bg-gray-50 text-gray-600 border-gray-200'
-                          } border`}>
+                            } border`}>
                             {v.isInspected ? (v.inspectionResult === 'passed' ? '✓ Đã kiểm định' : '✗ Không đạt') : 'Chưa kiểm định'}
                           </Badge>
                           <span className="font-bold text-gray-900">{formatCurrency(v.price)}</span>

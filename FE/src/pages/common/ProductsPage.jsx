@@ -86,9 +86,9 @@ const ProductsPage = () => {
           data = await productsApi.getAllVehicles();
         }
         let normalizedData = data?.data || data; // handle axios wrapper
-        
+
         let products = Array.isArray(normalizedData) ? normalizedData : [];
-        
+
         if (user && !querySellerId) {
           try {
             const myVehicles = await getMyVehicles();
@@ -101,7 +101,7 @@ const ProductsPage = () => {
             console.warn('Could not fetch user vehicles for filtering:', err);
           }
         }
-        
+
         setAllProducts(products);
         setFilteredProducts(products);
       } catch (error) {
@@ -232,37 +232,37 @@ const ProductsPage = () => {
       const exists = wishlist.find(p => p.vehicleId === product.vehicleId);
 
       if (exists) {
-        
+
         await WishlistAPI.removeWishlist(product.vehicleId);
         setWishlist(prev => prev.filter(p => p.vehicleId !== product.vehicleId));
         toast.warning('Đã xóa khỏi danh sách yêu thích!', {
           description: product.name,
           duration: 2000,
-          className: 'bg-red-600 border-red-700',      
-          descriptionClassName: 'text-white',          
+          className: 'bg-red-600 border-red-700',
+          descriptionClassName: 'text-white',
         });
       } else {
-        
+
         await WishlistAPI.addWishlist(product.vehicleId);
         setWishlist(prev => [...prev, product]);
         toast.success('Đã thêm vào danh sách yêu thích!', {
           description: product.name,
           duration: 2000,
-          className: 'bg-green-50 border-green-200',  
+          className: 'bg-green-50 border-green-200',
           descriptionClassName: 'text-green-700',
         });
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
-      const errorMessage = error?.response?.data?.message || 
-                          error?.message || 
-                          'Lỗi khi cập nhật danh sách yêu thích!';
-      
+      const errorMessage = error?.response?.data?.message ||
+        error?.message ||
+        'Lỗi khi cập nhật danh sách yêu thích!';
+
       toast.error('Lỗi!', {
         description: errorMessage,
         duration: 3000,
-        className: 'bg-red-600 border-red-700',      
-        descriptionClassName: 'text-white',          
+        className: 'bg-red-600 border-red-700',
+        descriptionClassName: 'text-white',
       });
     }
   };

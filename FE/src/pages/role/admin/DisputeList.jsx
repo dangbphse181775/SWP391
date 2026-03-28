@@ -102,7 +102,6 @@ const DisputeList = () => {
     { key: 'all', label: 'Tất cả', count: disputes.length },
     { key: 'open', label: 'Chờ xử lý', count: disputes.filter(d => d.status === 'open').length },
     { key: 'investigating', label: 'Đang điều tra', count: disputes.filter(d => d.status === 'investigating').length },
-    { key: 'resolved', label: 'Đã giải quyết', count: disputes.filter(d => isResolved(d.status)).length },
   ];
 
   const handleViewDetail = (disputeId) => {
@@ -151,18 +150,16 @@ const DisputeList = () => {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                    activeTab === tab.key
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${activeTab === tab.key
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
                 >
                   {tab.label}
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    activeTab === tab.key
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === tab.key
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-gray-200 text-gray-600'
+                    }`}>
                     {tab.count}
                   </span>
                 </button>

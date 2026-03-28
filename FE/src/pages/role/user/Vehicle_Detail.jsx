@@ -21,10 +21,10 @@ const Vehicle_Detail = () => {
     const [similarProducts, setSimilarProducts] = useState([]);
     const [similarLoading, setSimilarLoading] = useState(false);
     const [buyNowLoading, setBuyNowLoading] = useState(false);
-// Wishlist states
+    // Wishlist states
     const [isInWishlist, setIsInWishlist] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
-// Cart states
+    // Cart states
     const [isInCart, setIsInCart] = useState(false);
 
     useEffect(() => {
@@ -73,9 +73,9 @@ const Vehicle_Detail = () => {
                     return matches;
                 })
                 .slice(0, 4);
-          const uniqueSimilarProducts = Array.from(
-                  new Map(similar.map(product => [product.vehicleId, product])).values()
-                );
+            const uniqueSimilarProducts = Array.from(
+                new Map(similar.map(product => [product.vehicleId, product])).values()
+            );
 
             setSimilarProducts(uniqueSimilarProducts);
         } catch (err) {
@@ -85,159 +85,184 @@ const Vehicle_Detail = () => {
             setSimilarLoading(false);
         }
     };
-const checkCartStatus = async (vehicleId) => {
-    try {
-        const token = localStorage.getItem('access_token');
-        if (!token) return;
-        const cartData = await cartAPI.getCart();
-        const items = Array.isArray(cartData) ? cartData : Array.isArray(cartData?.data) ? cartData.data : [];
-        setIsInCart(items.some(item => item.vehicleId === Number(vehicleId)));
-    } catch (err) {
-        setIsInCart(false);
-    }
-};
-
-const checkWishlistStatus = async (vehicleId) => {
-    try {
-        const wishlistData = await WishlistAPI.getWishlist();
-        const isInList = wishlistData.some(item => item.vehicleId === Number(vehicleId));
-        setIsInWishlist(isInList);
-    } catch (err) {
-        console.error("Check wishlist status failed:", err);
-        setIsInWishlist(false);
-    }
-};
-
-const handleAddToWishlist = async () => {
-    try {
-        setWishlistLoading(true);
-        const vehicleId = vehicle?.vehicleId || id;
-        
-        if (isInWishlist) {
-            await WishlistAPI.removeWishlist(vehicleId);
-            setIsInWishlist(false);
-           toast.success('Đã xóa khỏi danh sách yêu thích!', {
-                description: vehicle?.name || 'Sản phẩm',
-                duration: 2000,
-                className: 'bg-red-600 border-red-700',      
-                descriptionClassName: 'text-white',   
-            });
-        } else {
-            await WishlistAPI.addWishlist(vehicleId);
-            setIsInWishlist(true);
-            toast.success('Đã thêm vào danh sách yêu thích!', {
-                description: vehicle?.name || 'Sản phẩm',
-                duration: 2000,
-                className: 'bg-green-50 border-green-200',  
-                descriptionClassName: 'text-green-700',
-            });
+    const checkCartStatus = async (vehicleId) => {
+        try {
+            const token = localStorage.getItem('access_token');
+            if (!token) return;
+            const cartResponse = await cartAPI.getCart();
+            
+            // Expected structure: API returns cartResponse.data.cartItems
+            const cartItemRows = cartResponse?.data?.cartItems || [];
+            
+            setIsInCart(cartItemRows.some(item => item.vehicleId === Number(vehicleId)));
+        } catch (err) {
+            setIsInCart(false);
         }
-    } catch (err) {
-        console.error('Wishlist error:', err);
-         const errorMessage = err?.response?.data?.message || 
-                            err?.message || 
-                            'Lỗi khi cập nhật danh sách yêu thích!';
-        
-        toast.error('Lỗi!', {
-            description: errorMessage,
-            duration: 3000,
-            className: 'bg-red-50 border-red-300',  
-            descriptionClassName: 'text-red-800',
-        });
-    } finally {
-        setWishlistLoading(false);
-    }
-};
+    };
 
-const handleBuyNow = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-        toast.error('Bạn phải đăng nhập trước', {
-            duration: 2500,
-        });
-        navigate('/login');
-        return;
-    }
+    const checkWishlistStatus = async (vehicleId) => {
+        try {
+            const wishlistData = await WishlistAPI.getWishlist();
+            const isInList = wishlistData.some(item => item.vehicleId === Number(vehicleId));
+            setIsInWishlist(isInList);
+        } catch (err) {
+            console.error("Check wishlist status failed:", err);
+            setIsInWishlist(false);
+        }
+    };
 
-    const vehicleId = vehicle?.vehicleId || Number(id);
+    const handleAddToWishlist = async () => {
+        try {
+            setWishlistLoading(true);
+            const vehicleId = vehicle?.vehicleId || id;
 
-    if (!vehicleId) {
-        toast.error('Không xác định được sản phẩm để thêm vào giỏ hàng');
-        return;
-    }
+            if (isInWishlist) {
+                await WishlistAPI.removeWishlist(vehicleId);
+                setIsInWishlist(false);
+                toast.success('Đã xóa khỏi danh sách yêu thích!', {
+                    description: vehicle?.name || 'Sản phẩm',
+                    duration: 2000,
+                    className: 'bg-red-600 border-red-700',
+                    descriptionClassName: 'text-white',
+                });
+            } else {
+                await WishlistAPI.addWishlist(vehicleId);
+                setIsInWishlist(true);
+                toast.success('Đã thêm vào danh sách yêu thích!', {
+                    description: vehicle?.name || 'Sản phẩm',
+                    duration: 2000,
+                    className: 'bg-green-50 border-green-200',
+                    descriptionClassName: 'text-green-700',
+                });
+            }
+        } catch (err) {
+            console.error('Wishlist error:', err);
+            const errorMessage = err?.response?.data?.message ||
+                err?.message ||
+                'Lỗi khi cập nhật danh sách yêu thích!';
 
-    try {
-        setBuyNowLoading(true);
+            toast.error('Lỗi!', {
+                description: errorMessage,
+                duration: 3000,
+                className: 'bg-red-50 border-red-300',
+                descriptionClassName: 'text-red-800',
+            });
+        } finally {
+            setWishlistLoading(false);
+        }
+    };
 
-        if (isInCart) {
-            toast.warning('Xe đã có trong giỏ hàng!', {
+    const handleBuyNow = async () => {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            toast.error('Bạn phải đăng nhập trước', {
                 duration: 2500,
             });
+            navigate('/login');
             return;
         }
 
-        await cartApi.addToCart(vehicleId);
-        setIsInCart(true);
+        const vehicleId = vehicle?.vehicleId || Number(id);
 
-        toast.success('Đã thêm vào giỏ hàng!', {
-            duration: 2000,
-        });
-    } catch (err) {
-        console.error('Add to cart error:', err);
+        if (!vehicleId) {
+            toast.error('Không xác định được sản phẩm để thêm vào giỏ hàng');
+            return;
+        }
 
-        const errorMessage =
-            err?.response?.data?.message ||
-            err?.message ||
-            'Lỗi khi thêm sản phẩm vào giỏ hàng!';
+        try {
+            setBuyNowLoading(true);
 
-        toast.error('Lỗi!', {
-            description: errorMessage,
-            duration: 3000,
-        });
-    } finally {
-        setBuyNowLoading(false);
-    }
-};
+            if (isInCart) {
+                toast.warning('Xe đã có trong giỏ hàng!', {
+                    duration: 2500,
+                });
+                return;
+            }
 
-const handleShare = async () => {
-    const url = window.location?.href;
-    if (!url) return;
+            await cartApi.addToCart(vehicleId);
+            setIsInCart(true);
 
-    try {
-        if (navigator.share) {
-            await navigator.share({
-                title: vehicle?.name || 'BikeLink',
-                url,
+            toast.success('Đã thêm vào giỏ hàng!', {
+                duration: 2000,
             });
-            return;
-        }
+        } catch (err) {
+            console.error('Add to cart error:', err);
 
-        if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(url);
-            toast.success('Đã sao chép liên kết', { duration: 2000 });
-            return;
-        }
+            const errorMessage =
+                err?.response?.data?.message ||
+                err?.message ||
+                'Lỗi khi thêm sản phẩm vào giỏ hàng!';
 
-        toast.error('Trình duyệt không hỗ trợ chia sẻ');
-    } catch (err) {
-        // Native share sheet can be dismissed by user.
-        if (err?.name === 'AbortError') return;
-        toast.error('Không thể chia sẻ liên kết');
-    }
-};
+            toast.error('Lỗi!', {
+                description: errorMessage,
+                duration: 3000,
+            });
+        } finally {
+            setBuyNowLoading(false);
+        }
+    };
+
+    const handleShare = async () => {
+        const url = window.location?.href;
+        if (!url) return;
+
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: vehicle?.name || 'BikeLink',
+                    url,
+                });
+                return;
+            }
+
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(url);
+                toast.success('Đã sao chép liên kết', { duration: 2000 });
+                return;
+            }
+
+            toast.error('Trình duyệt không hỗ trợ chia sẻ');
+        } catch (err) {
+            // Native share sheet can be dismissed by user.
+            if (err?.name === 'AbortError') return;
+            toast.error('Không thể chia sẻ liên kết');
+        }
+    };
+
+    useEffect(() => {
+        if (!loading && !vehicle) {
+            toast.error("Không tìm thấy thông tin xe", { duration: 2000 });
+            navigate("/", { replace: true });
+        }
+    }, [loading, vehicle, navigate]);
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center">
-                <div className="flex items-center gap-3 text-slate-600">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span className="text-sm font-medium">Đang tải...</span>
-                </div>
+            <div className="bg-white min-h-screen">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                        <div className="lg:col-span-7 space-y-4">
+                            <div className="aspect-[4/3] w-full bg-slate-100 rounded-2xl"></div>
+                            <div className="flex gap-4">
+                                <div className="w-24 h-24 bg-slate-100 rounded-xl"></div>
+                                <div className="w-24 h-24 bg-slate-100 rounded-xl"></div>
+                                <div className="w-24 h-24 bg-slate-100 rounded-xl"></div>
+                            </div>
+                        </div>
+                        <div className="lg:col-span-5 flex flex-col space-y-6">
+                            <div className="w-24 h-6 bg-slate-100 rounded-full"></div>
+                            <div className="h-10 w-3/4 bg-slate-200 rounded-lg"></div>
+                            <div className="h-12 w-1/3 bg-slate-200 rounded-lg"></div>
+                            <div className="h-48 bg-slate-50 rounded-2xl border border-slate-100"></div>
+                            <div className="h-14 w-full bg-slate-200 rounded-xl mt-6"></div>
+                        </div>
+                    </div>
+                </main>
             </div>
         );
     }
+    
     if (!vehicle) {
-        navigate("/", { replace: true });
         return null;
     }
 
@@ -336,19 +361,18 @@ const handleShare = async () => {
                                 </div>
 
                                 <div className="flex items-center justify-between px-2">
-                                    <button 
-                                      onClick={handleAddToWishlist} 
-                                      disabled={wishlistLoading}
-                                      className="flex items-center gap-2 text-slate-500 hover:text-red-600 transition-colors text-sm font-medium disabled:opacity-50"
+                                    <button
+                                        onClick={handleAddToWishlist}
+                                        disabled={wishlistLoading}
+                                        className="flex items-center gap-2 text-slate-500 hover:text-red-600 transition-colors text-sm font-medium disabled:opacity-50"
                                     >
                                         <Heart
-                                        size={20} className={`transition-all ${
-                                            isInWishlist
-                                            ? 'fill-red-600 text-red-600' 
-                                          : 'text-slate-500'
-                                          }`}
-                                           />
-                                           {isInWishlist ? 'Đã thích' : 'Thêm vào danh sách yêu thích'}
+                                            size={20} className={`transition-all ${isInWishlist
+                                                    ? 'fill-red-600 text-red-600'
+                                                    : 'text-slate-500'
+                                                }`}
+                                        />
+                                        {isInWishlist ? 'Đã thích' : 'Thêm vào danh sách yêu thích'}
                                     </button>
 
                                     <button
@@ -394,7 +418,7 @@ const handleShare = async () => {
                     </div>
 
                     <div className="lg:col-span-4 order-1 lg:order-2">
-                          <SellerInfoCard sellerId={vehicle?.sellerId} sellerName={vehicle?.sellerName} />
+                        <SellerInfoCard sellerId={vehicle?.sellerId} sellerName={vehicle?.sellerName} />
                     </div>
                 </div>
 

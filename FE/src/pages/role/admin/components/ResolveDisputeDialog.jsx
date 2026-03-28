@@ -84,7 +84,7 @@ const ResolveDisputeDialog = ({ open, onOpenChange, onConfirm, processing, order
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[560px] p-0 rounded-2xl overflow-hidden">
+      <DialogContent className="bg-white sm:max-w-[560px] p-0 rounded-2xl overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100 bg-gray-50/50">
           <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-amber-500" />

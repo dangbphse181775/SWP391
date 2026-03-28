@@ -121,7 +121,7 @@ const Header = () => {
     return () => {
       isMounted = false;
       if (connection.state !== 'Disconnected') {
-        connection.stop().catch(() => {});
+        connection.stop().catch(() => { });
       }
       signalRRef.current = null;
     };
@@ -132,7 +132,7 @@ const Header = () => {
     const conn = signalRRef.current;
     if (!conn || conn.state !== signalR.HubConnectionState.Connected) return;
     disputes.forEach((d) => {
-      conn.invoke('JoinDisputeChannel', d.disputeId, d._role).catch(() => {});
+      conn.invoke('JoinDisputeChannel', d.disputeId, d._role).catch(() => { });
     });
   }, [disputes]);
 
@@ -214,221 +214,221 @@ const Header = () => {
 
   return (
     <>
-    <header className="sticky top-0 z-50 w-full border-b bg-white">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <a href="#" onClick={handleHomeClick} className="flex items-center gap-2">
-            <img
-              src="/Cycling-race-silhouette-logo-vector-icon-Graphics-5229446-1 (1).jpg"
-              alt="Dap House Logo"
-              className="w-12 h-10 object-contain"
-            />
-            <span className="text-lg font-semibold italic">Đạp House</span>
-          </a>
-
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="#" onClick={handleHomeClick} className="text-sm font-semibold text-gray-900 hover:text-blue-600">
-              Trang chủ
+      <header className="sticky top-0 z-50 w-full border-b bg-white">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
+            {/* Logo */}
+            <a href="#" onClick={handleHomeClick} className="flex items-center gap-2">
+              <img
+                src="/Cycling-race-silhouette-logo-vector-icon-Graphics-5229446-1 (1).jpg"
+                alt="Dap House Logo"
+                className="w-12 h-10 object-contain"
+              />
+              <span className="text-lg font-semibold italic">Đạp House</span>
             </a>
-            <Link to={isAuthenticated ? getPath('products') : '/products'} className="text-sm font-semibold text-gray-900 hover:text-blue-600">
-              Sản phẩm
-            </Link>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger className="text-sm font-semibold text-gray-900 hover:text-blue-600 outline-none">
-                Bán xe
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleSellClick} className="cursor-pointer">
-                  Đăng tin
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleManagePostClick} className="cursor-pointer">
-                  Quản lý tin đăng
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSelledHistoryClick} className="cursor-pointer">
-                  Quản lý đơn hàng đã bán
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
-            <Link to="/contact" className="text-sm font-semibold text-gray-900 hover:text-blue-600">
-              Liên hệ
-            </Link>
-          </nav>
+            {/* Navigation */}
+            <nav className="hidden md:flex items-center gap-6">
+              <a href="#" onClick={handleHomeClick} className="text-sm font-semibold text-gray-900 hover:text-blue-600">
+                Trang chủ
+              </a>
+              <Link to={isAuthenticated ? getPath('products') : '/products'} className="text-sm font-semibold text-gray-900 hover:text-blue-600">
+                Sản phẩm
+              </Link>
 
-          {/* Actions */}
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <Search className="h-5 w-5" />
-            </Button>
-            {isAuthenticated && (
-              <>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="hidden md:flex"
-                  onClick={() => navigate(getPath('wishlist'))}
-                >
-                  <Heart className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hidden md:flex"
-                  onClick={() => navigate(getPath('Cart'))}
-                >
-                  <ShoppingCart className="h-5 w-5" />
-                </Button>
-                {user?.role?.toLowerCase() !== 'admin' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-sm font-semibold text-gray-900 hover:text-blue-600 outline-none">
+                  Bán xe
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleSellClick} className="cursor-pointer">
+                    Đăng tin
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleManagePostClick} className="cursor-pointer">
+                    Quản lý tin đăng
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSelledHistoryClick} className="cursor-pointer">
+                    Quản lý đơn hàng đã bán
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Link to="/contact" className="text-sm font-semibold text-gray-900 hover:text-blue-600">
+                Liên hệ
+              </Link>
+            </nav>
+
+            {/* Actions */}
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" className="hidden md:flex">
+                <Search className="h-5 w-5" />
+              </Button>
+              {isAuthenticated && (
+                <>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="hidden md:flex"
-                    onClick={() => navigate(getPath('wallet'))}
+                    onClick={() => navigate(getPath('wishlist'))}
                   >
-                    <CreditCard className="h-5 w-5" />
+                    <Heart className="h-5 w-5" />
                   </Button>
-                )}
-                {/* Dispute Chat Icon */}
-                {isBuyerOrSeller && disputes.length > 0 && (
-                  <div className="relative hidden md:flex" ref={dropdownRef}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowDisputeDropdown((v) => !v)}
-                    >
-                      <MessageCircle className="h-5 w-5" />
-                      {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </Button>
-                    {showDisputeDropdown && (
-                      <div className="absolute right-0 top-full mt-2 w-72 bg-white border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
-                        <div className="px-3 py-2 border-b font-semibold text-sm text-gray-700">
-                          Tin nhắn khiếu nại
-                        </div>
-                        {disputes.map((d) => {
-                          const last = getLastMessage(d);
-                          const isUnread = last && last.senderId !== user?.userId;
-                          return (
-                            <button
-                              key={d.disputeId}
-                              className={`w-full text-left px-3 py-2 hover:bg-gray-50 border-b last:border-b-0 flex flex-col gap-0.5 ${isUnread ? 'bg-blue-50' : ''}`}
-                              onClick={() => {
-                                setActiveChat({ disputeId: d.disputeId, channel: d._role });
-                                setShowDisputeDropdown(false);
-                              }}
-                            >
-                              <span className="text-sm font-medium flex items-center gap-1">
-                                {isUnread && <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />}
-                                Đơn #{d.orderId} — {d.vehicles?.[0]?.vehicleName || 'Xe'}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                Trạng thái: {d.status} • Vai trò: {d._role === 'buyer' ? 'Người mua' : 'Người bán'}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-            {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-full bg-gray-200 hover:bg-gray-300"
+                    className="hidden md:flex"
+                    onClick={() => navigate(getPath('Cart'))}
                   >
-                    <User className="h-5 w-5" />
+                    <ShoppingCart className="h-5 w-5" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user?.fullName || 'Tài khoản'}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email || 'user@example.com'}
-                      </p>
+                  {user?.role?.toLowerCase() !== 'admin' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="hidden md:flex"
+                      onClick={() => navigate(getPath('wallet'))}
+                    >
+                      <CreditCard className="h-5 w-5" />
+                    </Button>
+                  )}
+                  {/* Dispute Chat Icon */}
+                  {isBuyerOrSeller && disputes.length > 0 && (
+                    <div className="relative hidden md:flex" ref={dropdownRef}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowDisputeDropdown((v) => !v)}
+                      >
+                        <MessageCircle className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </Button>
+                      {showDisputeDropdown && (
+                        <div className="absolute right-0 top-full mt-2 w-72 bg-white border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                          <div className="px-3 py-2 border-b font-semibold text-sm text-gray-700">
+                            Tin nhắn khiếu nại
+                          </div>
+                          {disputes.map((d) => {
+                            const last = getLastMessage(d);
+                            const isUnread = last && last.senderId !== user?.userId;
+                            return (
+                              <button
+                                key={d.disputeId}
+                                className={`w-full text-left px-3 py-2 hover:bg-gray-50 border-b last:border-b-0 flex flex-col gap-0.5 ${isUnread ? 'bg-blue-50' : ''}`}
+                                onClick={() => {
+                                  setActiveChat({ disputeId: d.disputeId, channel: d._role });
+                                  setShowDisputeDropdown(false);
+                                }}
+                              >
+                                <span className="text-sm font-medium flex items-center gap-1">
+                                  {isUnread && <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />}
+                                  Đơn #{d.orderId} — {d.vehicles?.[0]?.vehicleName || 'Xe'}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  Trạng thái: {d.status} • Vai trò: {d._role === 'buyer' ? 'Người mua' : 'Người bán'}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {user?.role?.toLowerCase() === 'admin' && (
-                    <>
-                      <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        <span>Dashboard</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/disputes')}>
-                        <Scale className="mr-2 h-4 w-4" />
-                        <span>Khiếu nại</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
                   )}
-                  {user?.role?.toLowerCase() === 'inspector' && (
-                    <>
-                      <DropdownMenuItem onClick={() => navigate('/inspector/inspection')}>
-                        <ClipboardCheck className="mr-2 h-4 w-4" />
-                        <span>Kiểm định xe</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/inspector/disputes')}>
-                        <Scale className="mr-2 h-4 w-4" />
-                        <span>Khiếu nại</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuItem onClick={() => navigate(getPath('profile'))}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Hồ sơ</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate(getPath('orderHistory'))}>
-                    <ShoppingBag className="mr-2 h-4 w-4" />
-                    <span>Lịch sử mua hàng</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate(getPath('wishlist'))}>
-                    <Heart className="mr-2 h-4 w-4" />
-                    <span>Yêu thích</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Đăng xuất</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link to="/login">
-                <Button size="sm" className="bg-black text-white hover:bg-gray-800">
-                  Đăng nhập
-                </Button>
-              </Link>
-            )}
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
-            </Button>
+                </>
+              )}
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full bg-gray-200 hover:bg-gray-300"
+                    >
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user?.fullName || 'Tài khoản'}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user?.email || 'user@example.com'}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {user?.role?.toLowerCase() === 'admin' && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          <span>Dashboard</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/admin/disputes')}>
+                          <Scale className="mr-2 h-4 w-4" />
+                          <span>Khiếu nại</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    {user?.role?.toLowerCase() === 'inspector' && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/inspector/inspection')}>
+                          <ClipboardCheck className="mr-2 h-4 w-4" />
+                          <span>Kiểm định xe</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/inspector/disputes')}>
+                          <Scale className="mr-2 h-4 w-4" />
+                          <span>Khiếu nại</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    <DropdownMenuItem onClick={() => navigate(getPath('profile'))}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Hồ sơ</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(getPath('orderHistory'))}>
+                      <ShoppingBag className="mr-2 h-4 w-4" />
+                      <span>Lịch sử mua hàng</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(getPath('wishlist'))}>
+                      <Heart className="mr-2 h-4 w-4" />
+                      <span>Yêu thích</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Đăng xuất</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/login">
+                  <Button size="sm" className="bg-black text-white hover:bg-gray-800">
+                    Đăng nhập
+                  </Button>
+                </Link>
+              )}
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    {/* WindowChat for active dispute */}
-    {activeChat && (
-      <WindowChat
-        disputeId={activeChat.disputeId}
-        channel={activeChat.channel}
-        onClose={() => { setActiveChat(null); fetchDisputes(); }}
-        onMessageSent={fetchDisputes}
-      />
-    )}
+      {/* WindowChat for active dispute */}
+      {activeChat && (
+        <WindowChat
+          disputeId={activeChat.disputeId}
+          channel={activeChat.channel}
+          onClose={() => { setActiveChat(null); fetchDisputes(); }}
+          onMessageSent={fetchDisputes}
+        />
+      )}
     </>
   );
 };

@@ -104,14 +104,14 @@ export default function OrderHistory() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const [confirmingOrderId, setConfirmingOrderId] = useState(null);
-  
+
   const [shippingProofs, setShippingProofs] = useState({});
 
 
   // States for pay remaining
   const [expandedPayConfirmId, setExpandedPayConfirmId] = useState(null);
   const [closingPayConfirmId, setClosingPayConfirmId] = useState(null);
-  
+
   const [disputingOrderId, setDisputingOrderId] = useState(null);
   const [closingDisputeId, setClosingDisputeId] = useState(null);
   const [disputeDescription, setDisputeDescription] = useState("");
@@ -205,7 +205,7 @@ export default function OrderHistory() {
       setReviewRating(5);
       setReviewComment("");
       setExistingReview(null);
-      
+
       setFetchingReview(true);
       try {
         const res = await reviewApi.getByOrder(orderId);
@@ -227,7 +227,7 @@ export default function OrderHistory() {
       toast.error("Vui lòng chọn số sao đánh giá");
       return;
     }
-    
+
     try {
       setSubmittingReview(true);
       await reviewApi.create({
@@ -236,7 +236,7 @@ export default function OrderHistory() {
         comment: reviewComment.trim() || null
       });
       toast.success("Gửi đánh giá thành công!");
-      
+
       // Close review panel
       handleToggleReview(orderId);
     } catch (error) {
@@ -277,7 +277,7 @@ export default function OrderHistory() {
 
       const formData = new FormData();
       formData.append("Description", disputeDescription.trim());
-      
+
       disputeFiles.forEach(file => {
         if (file.type.startsWith("image/")) {
           formData.append("Images", file);
@@ -357,7 +357,7 @@ export default function OrderHistory() {
               changed = true;
             }
           } catch (err) {
-             console.error("Lỗi tải ảnh giao hàng:", err);
+            console.error("Lỗi tải ảnh giao hàng:", err);
           }
         }
       }
@@ -366,7 +366,7 @@ export default function OrderHistory() {
         setShippingProofs(newProofs);
       }
     };
-    
+
     fetchProofs();
 
     return () => { isMounted = false; };
@@ -425,11 +425,10 @@ export default function OrderHistory() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`relative px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-                  activeTab === tab.key
+                className={`relative px-6 py-3 text-sm font-medium transition-colors duration-200 ${activeTab === tab.key
                     ? "text-blue-600 font-bold border-b-2 border-blue-600"
                     : "text-slate-500 hover:text-slate-700"
-                }`}
+                  }`}
               >
                 {tab.label} ({tabCounts[tab.key] ?? 0})
               </button>
@@ -553,14 +552,14 @@ export default function OrderHistory() {
 
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 bg-slate-50/30 px-6 py-4">
                     <p className="text-sm font-medium text-slate-500">
-                        Người bán:{" "}
-                        <button
-                          type="button"
-                          onClick={() => handleGoToSeller(order)}
-                          className="font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                        >
-                          {order?.sellerName || "N/A"}
-                        </button>
+                      Người bán:{" "}
+                      <button
+                        type="button"
+                        onClick={() => handleGoToSeller(order)}
+                        className="font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                      >
+                        {order?.sellerName || "N/A"}
+                      </button>
                     </p>
                     <div className="flex items-center gap-3">
                       {String(order?.status || "").toLowerCase() === "disputed" && (
@@ -590,18 +589,16 @@ export default function OrderHistory() {
                             type="button"
                             disabled={confirmingOrderId === order?.orderId || expandedPayConfirmId === order?.orderId}
                             onClick={() => setExpandedPayConfirmId(order?.orderId)}
-                            className={`inline-flex items-center gap-2 rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 transition-all duration-300 ${
-                              expandedPayConfirmId === order?.orderId ? "opacity-0 pointer-events-none" : "opacity-100"
-                            }`}
+                            className={`inline-flex items-center gap-2 rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 transition-all duration-300 ${expandedPayConfirmId === order?.orderId ? "opacity-0 pointer-events-none" : "opacity-100"
+                              }`}
                           >
                             <span className="material-symbols-outlined text-[18px]">payment</span>
                             {confirmingOrderId === order?.orderId ? "Đang xử lý..." : "Thanh toán khoản còn lại"}
                           </button>
 
                           {(expandedPayConfirmId === order?.orderId || closingPayConfirmId === order?.orderId) && (
-                            <div className={`absolute right-0 top-0 h-full ${
-                              closingPayConfirmId === order?.orderId ? "expand-right-exit" : "expand-right-enter"
-                            }`}>
+                            <div className={`absolute right-0 top-0 h-full ${closingPayConfirmId === order?.orderId ? "expand-right-exit" : "expand-right-enter"
+                              }`}>
                               <div className="flex items-center gap-2.5 h-full rounded-lg bg-orange-50 border border-orange-300 px-4 whitespace-nowrap">
                                 <span className="material-symbols-outlined text-[18px] text-orange-600">help</span>
                                 <span className="text-sm font-semibold text-orange-800">Xác nhận thanh toán?</span>
@@ -670,9 +667,8 @@ export default function OrderHistory() {
                       </div>
 
                       {(disputingOrderId === order?.orderId || closingDisputeId === order?.orderId) && (
-                        <div className={`mt-4 rounded-lg border border-red-200 bg-red-50 p-4 ${
-                          closingDisputeId === order?.orderId ? "slide-down-exit" : "slide-down-enter"
-                        }`}>
+                        <div className={`mt-4 rounded-lg border border-red-200 bg-red-50 p-4 ${closingDisputeId === order?.orderId ? "slide-down-exit" : "slide-down-enter"
+                          }`}>
                           <h4 className="text-sm font-bold text-red-800 mb-3">Mở khiếu nại cho đơn #{order?.orderId}</h4>
                           <div className="flex flex-col gap-3">
                             <div>
@@ -770,9 +766,8 @@ export default function OrderHistory() {
                       </div>
 
                       {(reviewingOrderId === order?.orderId || closingReviewId === order?.orderId) && (
-                        <div className={`mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 ${
-                          closingReviewId === order?.orderId ? "slide-down-exit" : "slide-down-enter"
-                        }`}>
+                        <div className={`mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 ${closingReviewId === order?.orderId ? "slide-down-exit" : "slide-down-enter"
+                          }`}>
                           <h4 className="text-sm font-bold text-blue-800 mb-3">Đánh giá quá trình mua hàng cho đơn #{order?.orderId}</h4>
                           <div className="flex flex-col gap-4">
                             <div>
@@ -785,9 +780,8 @@ export default function OrderHistory() {
                                     key={star}
                                     type="button"
                                     onClick={() => setReviewRating(star)}
-                                    className={`material-symbols-outlined text-3xl transition-colors ${
-                                      star <= reviewRating ? "text-amber-400" : "text-slate-300"
-                                    }`}
+                                    className={`material-symbols-outlined text-3xl transition-colors ${star <= reviewRating ? "text-amber-400" : "text-slate-300"
+                                      }`}
                                     style={{ fontVariationSettings: star <= reviewRating ? "'FILL' 1" : "'FILL' 0" }}
                                   >
                                     star

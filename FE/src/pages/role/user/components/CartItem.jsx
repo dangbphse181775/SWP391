@@ -37,8 +37,8 @@ export default function CartItem({
                                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60"></span>
                                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                             </span>
-                            <span className="text-xs font-medium text-slate-600 uppercase">
-                                Số lượng: {quantity}
+                            <span className="text-xs font-medium text-emerald-600 uppercase">
+                                Còn hàng
                             </span>
                         </div>
                     </div>

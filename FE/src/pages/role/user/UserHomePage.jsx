@@ -30,7 +30,7 @@ const UserHomePage = () => {
       setIsLoading(true);
       try {
         const data = await productsApi.getAllVehicles();
-        
+
         let sellerVehicleIds = [];
         if (user) {
           try {
@@ -46,7 +46,7 @@ const UserHomePage = () => {
             console.warn('Could not fetch user vehicles for filtering:', err);
           }
         }
-        
+
         let normalizedData = data?.data || data; // handle axios wrapper
         // Safe check if data is array
         if (!Array.isArray(normalizedData)) {
@@ -54,16 +54,16 @@ const UserHomePage = () => {
           setProductsByCategory({});
           return;
         }
-        
+
         // Group products by category
         const grouped = {};
         categories.forEach(cat => {
           grouped[cat] = [];
         });
-        
+
         // Filter out vehicles that belong to the current user (the property is vehicleId)
         const filteredData = normalizedData.filter(product => !sellerVehicleIds.includes(product.vehicleId));
-        
+
         filteredData.forEach(product => {
           const category = product.categoryName || 'Khác';
           if (grouped[category]) {
@@ -72,7 +72,7 @@ const UserHomePage = () => {
             grouped['Khác'].push(product);
           }
         });
-        
+
         setProductsByCategory(grouped);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -104,7 +104,7 @@ const UserHomePage = () => {
           <>
             {categories.map((category) => {
               const products = productsByCategory[category] || [];
-              
+
               return (
                 <ProductSection
                   key={category}

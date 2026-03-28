@@ -27,20 +27,20 @@ const HomePage = () => {
       setIsLoading(true);
       try {
         const data = await productsApi.getAllVehicles();
-        
+
         // Safe check if data is array
         if (!Array.isArray(data)) {
           console.error('Invalid data format:', data);
           setProductsByCategory({});
           return;
         }
-        
+
         // Group products by category
         const grouped = {};
         categories.forEach(cat => {
           grouped[cat] = [];
         });
-        
+
         data.forEach(product => {
           const category = product.categoryName || 'Khác';
           if (grouped[category]) {
@@ -49,7 +49,7 @@ const HomePage = () => {
             grouped['Khác'].push(product);
           }
         });
-        
+
         setProductsByCategory(grouped);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -81,7 +81,7 @@ const HomePage = () => {
           <>
             {categories.map((category) => {
               const products = productsByCategory[category] || [];
-              
+
               return (
                 <ProductSection
                   key={category}

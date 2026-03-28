@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminApi from '@/service/adminApi';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -22,15 +22,15 @@ const PostApproval = () => {
     try {
       setLoading(true);
       const response = await adminApi.getPendingVehicles();
-      
-      
+
+
       let data = Array.isArray(response) ? response : (response.data || []);
-      
+
       data = data.map(vehicle => ({
         ...vehicle,
         status: vehicle.status || 'pending_admin'
       }));
-      
+
       setAllVehicles(data);
     } catch (error) {
       console.error('Error fetching pending vehicles:', error);
@@ -41,7 +41,7 @@ const PostApproval = () => {
   };
 
   const vehicles = allVehicles.filter(vehicle => {
-    if (activeTab === 'pending')  return vehicle.status === 'pending_admin';
+    if (activeTab === 'pending') return vehicle.status === 'pending_admin';
     if (activeTab === 'approved') return vehicle.status === 'active';
     if (activeTab === 'rejected') return vehicle.status === 'rejected';
     return false;

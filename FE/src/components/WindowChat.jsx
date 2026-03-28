@@ -21,11 +21,11 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
 
   // Emoji sticker data grouped by category
   const EMOJI_CATEGORIES = [
-    { name: "Smileys", emojis: ["😀","😂","🤣","😊","😍","🥰","😘","😜","🤪","😎","🥳","😇","🤗","🤔","😏","😢","😭","😤","🤬","😱","🥺","😴","🤮","🤡"] },
-    { name: "Gestures", emojis: ["👍","👎","👏","🙌","🤝","✌️","🤞","👌","🤙","💪","🙏","👋","🫡","🫶","☝️","👆","👇","👈","👉","✋","🤚","🖐️","🫰","🤌"] },
-    { name: "Hearts", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","💔","❤️‍🔥","💕","💞","💓","💗","💖","💘","💝"] },
-    { name: "Objects", emojis: ["🎉","🎊","🎁","🏆","⭐","🌟","💯","🔥","💰","💸","🏍️","🚗","🚙","🏎️","🛵","📦","📋","✅","❌","⚠️","📸","🔑","🏠","📞"] },
-    { name: "Animals", emojis: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🦋","🐛"] },
+    { name: "Smileys", emojis: ["😀", "😂", "🤣", "😊", "😍", "🥰", "😘", "😜", "🤪", "😎", "🥳", "😇", "🤗", "🤔", "😏", "😢", "😭", "😤", "🤬", "😱", "🥺", "😴", "🤮", "🤡"] },
+    { name: "Gestures", emojis: ["👍", "👎", "👏", "🙌", "🤝", "✌️", "🤞", "👌", "🤙", "💪", "🙏", "👋", "🫡", "🫶", "☝️", "👆", "👇", "👈", "👉", "✋", "🤚", "🖐️", "🫰", "🤌"] },
+    { name: "Hearts", emojis: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "💔", "❤️‍🔥", "💕", "💞", "💓", "💗", "💖", "💘", "💝"] },
+    { name: "Objects", emojis: ["🎉", "🎊", "🎁", "🏆", "⭐", "🌟", "💯", "🔥", "💰", "💸", "🏍️", "🚗", "🚙", "🏎️", "🛵", "📦", "📋", "✅", "❌", "⚠️", "📸", "🔑", "🏠", "📞"] },
+    { name: "Animals", emojis: ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐦", "🦋", "🐛"] },
   ];
 
   // Check if a message is a single emoji (sticker-style)
@@ -135,7 +135,7 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
       if (connection && connection.state === signalR.HubConnectionState.Connected) {
         connection
           .invoke("LeaveDisputeChannel", disputeId, channel)
-          .catch(() => {})
+          .catch(() => { })
           .finally(() => connection.stop());
       } else if (connection) {
         connection.stop();
@@ -191,7 +191,11 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
     });
   };
 
-  const isMe = (senderId) => senderId === user?.userId;
+  const isMe = (senderId) => {
+    const isMatch = String(senderId) === String(user?.userId);
+    console.log(`[isMe Check] senderId: ${senderId} (type: ${typeof senderId}), user.userId: ${user?.userId} (type: ${typeof user?.userId}), match: ${isMatch}`);
+    return isMatch;
+  };
 
   return (
     <div className="fixed bottom-5 right-5 z-50">
@@ -339,9 +343,8 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
             <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
               <button
                 onClick={() => setShowEmoji((prev) => !prev)}
-                className={`p-1 rounded-full transition-colors ${
-                  showEmoji ? "text-slate-900 bg-slate-200" : "text-slate-400 hover:text-slate-600"
-                }`}
+                className={`p-1 rounded-full transition-colors ${showEmoji ? "text-slate-900 bg-slate-200" : "text-slate-400 hover:text-slate-600"
+                  }`}
                 title="Sticker"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
