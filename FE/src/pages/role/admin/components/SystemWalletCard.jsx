@@ -12,6 +12,27 @@ const formatDate = (dateString) => {
   }).format(date);
 };
 
+// Xác định giao dịch là tiền ra (expense) hay tiền vào (income)
+const checkIsExpense = (tx) => {
+  const type = String(tx?.type || '').toLowerCase();
+  const amount = Number(tx?.amount || 0);
+  const desc = String(tx?.description || '').toLowerCase();
+
+  if (amount < 0) return true;
+  if (type === 'deposit') return false;
+
+  // Kiểm tra "cho seller/buyer" TRƯỚC — vì "Hoàn X cho buyer" vừa chứa 'hoàn' vừa chứa 'cho buyer'
+  // Từ góc nhìn ví tổng: chuyển tiền cho bất kỳ ai = tiền RA = expense
+  if (desc.includes('cho seller') || desc.includes('cho buyer') || desc.includes('chuyển tiền')) return true;
+
+  // Tiền nhận vào (income) — chỉ áp dụng khi không phải "chuyển cho ai"
+  if (desc.includes('nhận ') || desc.includes('hoàn ') || desc.startsWith('nhận')) return false;
+
+  if (type === 'payment') return true;
+
+  return false;
+};
+
 export default function SystemWalletCard({ balance, transactions, loading }) {
   return (
     <Card className="border border-gray-200 mb-6">
@@ -50,16 +71,16 @@ export default function SystemWalletCard({ balance, transactions, loading }) {
                       <TableCell className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-1">
                           {tx.type?.toLowerCase().includes('in') ||
-                           tx.type?.toLowerCase().includes('deposit') ||
-                           tx.type?.toLowerCase().includes('receive')
+                            tx.type?.toLowerCase().includes('deposit') ||
+                            tx.type?.toLowerCase().includes('receive')
                             ? <ArrowDownCircle className="w-4 h-4 text-green-500" />
                             : <ArrowUpCircle className="w-4 h-4 text-red-500" />}
                           <span>{tx.type}</span>
                         </div>
                       </TableCell>
                       <TableCell className="px-4 py-3 text-sm text-gray-600">{tx.description || '-'}</TableCell>
-                      <TableCell className={`px-4 py-3 text-sm font-semibold ${tx.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {tx.amount >= 0 ? '+' : ''}{formatPrice(Math.abs(tx.amount))}
+                      <TableCell className={`px-4 py-3 text-sm font-semibold ${checkIsExpense(tx) ? 'text-red-600' : 'text-green-600'}`}>
+                        {checkIsExpense(tx) ? '-' : '+'}{formatPrice(Math.abs(tx.amount))}
                       </TableCell>
                       <TableCell className="px-4 py-3">
                         <Badge

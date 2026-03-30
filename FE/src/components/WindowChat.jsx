@@ -87,14 +87,23 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
       connectionRef.current = connection;
 
       // Listen for incoming messages
-      connection.on("ReceiveMessage", (msg) => {
-        setMessages((prev) => {
-          // Deduplicate by disputeChatId
-          if (msg.disputeChatId && prev.some((m) => m.disputeChatId === msg.disputeChatId)) {
-            return prev;
-          }
-          return [...prev, msg];
-        });
+      // Re-fetch history from REST instead of using the raw SignalR payload directly,
+      // because the SignalR broadcast may lack senderName/senderAvatar (shows "User #N").
+      // The history API always returns the full, enriched message objects.
+      connection.on("ReceiveMessage", async (msg) => {
+        try {
+          const res = await disputeApi.getChatHistory(disputeId, channel);
+          const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+          if (!disposed) setMessages(list);
+        } catch {
+          // Fallback: append raw message if history fetch fails
+          setMessages((prev) => {
+            if (msg.disputeChatId && prev.some((m) => m.disputeChatId === msg.disputeChatId)) {
+              return prev;
+            }
+            return [...prev, msg];
+          });
+        }
         setUnread((prev) => prev + 1);
       });
 

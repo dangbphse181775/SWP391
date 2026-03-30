@@ -48,6 +48,26 @@ const adminApi = {
     // Update a system config by key (admin only)
     updateSystemConfig(key, value) {
         return axiosClient.put(`/SystemConfig/${key}`, { value });
+    },
+
+    // Get all pending withdrawal requests (admin only)
+    getPendingWithdrawals() {
+        return axiosClient.get('/Wallet/withdraw/pending');
+    },
+
+    // Approve a withdrawal request (backend: HttpPut)
+    approveWithdrawal(id) {
+        return axiosClient.put(`/Wallet/withdraw/${id}/approve`);
+    },
+
+    // Reject a withdrawal request (backend: HttpPut)
+    rejectWithdrawal(id) {
+        return axiosClient.put(`/Wallet/withdraw/${id}/reject`);
+    },
+
+    // Get user profile by userId (to resolve name from withdrawal list)
+    getUserProfile(userId) {
+        return axiosClient.get(`/Profile/profile/${userId}`);
     }
 };
 

@@ -37,6 +37,9 @@ const Header = () => {
     user?.role?.toLowerCase() !== 'admin' &&
     user?.role?.toLowerCase() !== 'inspector';
 
+  // Statuses that mean the dispute is no longer active
+  const RESOLVED_STATUSES = ['resolved_refund', 'resolved_seller_win', 'resolved_partial', 'closed'];
+
   // Fetch disputed orders and their dispute details
   const fetchDisputes = useCallback(async () => {
     if (!isBuyerOrSeller) return;
@@ -48,19 +51,23 @@ const Header = () => {
       const buyerOrders = (Array.isArray(buyerRes?.data) ? buyerRes.data : Array.isArray(buyerRes) ? buyerRes : []);
       const sellerOrders = (Array.isArray(sellerRes?.data) ? sellerRes.data : Array.isArray(sellerRes) ? sellerRes : []);
 
+      // Include 'disputed' AND 'investigating' order statuses so button appears immediately
+      const ACTIVE_ORDER_STATUSES = ['disputed', 'investigating'];
       const disputedOrders = [
-        ...buyerOrders.filter(o => o?.status?.toLowerCase() === 'disputed').map(o => ({ ...o, _role: 'buyer' })),
-        ...sellerOrders.filter(o => o?.status?.toLowerCase() === 'disputed').map(o => ({ ...o, _role: 'seller' })),
+        ...buyerOrders
+          .filter(o => ACTIVE_ORDER_STATUSES.includes(o?.status?.toLowerCase()))
+          .map(o => ({ ...o, _role: 'buyer' })),
+        ...sellerOrders
+          .filter(o => ACTIVE_ORDER_STATUSES.includes(o?.status?.toLowerCase()))
+          .map(o => ({ ...o, _role: 'seller' })),
       ];
 
       const disputeDetails = await Promise.all(
         disputedOrders.map(async (order) => {
           try {
-            // First get disputeId from order
             const orderRes = await disputeApi.getDisputeByOrder(order.orderId);
             const brief = orderRes?.data?.data || orderRes?.data;
             if (!brief?.disputeId) return null;
-            // Then get full detail (includes chats based on role)
             const detailRes = await disputeApi.getDisputeDetail(brief.disputeId);
             const d = detailRes?.data?.data || detailRes?.data;
             return d ? { ...d, _role: order._role } : null;
@@ -68,13 +75,35 @@ const Header = () => {
         })
       );
 
-      setDisputes(disputeDetails.filter(Boolean));
+      // Only keep disputes that are NOT yet resolved
+      const activeDisputes = disputeDetails
+        .filter(Boolean)
+        .filter(d => !RESOLVED_STATUSES.includes((d?.status || '').toLowerCase()));
+
+      setDisputes(activeDisputes);
     } catch { /* ignore */ }
   }, [isBuyerOrSeller]);
 
   useEffect(() => {
     fetchDisputes();
   }, [fetchDisputes]);
+
+  // Listen for the custom event dispatched by OrderHistory when buyer creates a dispute
+  // This makes the chat button appear immediately without a page reload
+  useEffect(() => {
+    const handleDisputeCreated = () => fetchDisputes();
+    window.addEventListener('disputeCreated', handleDisputeCreated);
+    return () => window.removeEventListener('disputeCreated', handleDisputeCreated);
+  }, [fetchDisputes]);
+
+  // Poll every 30s so the seller/buyer picks up new disputes created while the page is open.
+  // Without this, the SignalR group is never joined for the new dispute → admin messages arrive
+  // silently and the badge only updates after a manual reload.
+  useEffect(() => {
+    if (!isBuyerOrSeller) return;
+    const interval = setInterval(fetchDisputes, 5_000);
+    return () => clearInterval(interval);
+  }, [isBuyerOrSeller, fetchDisputes]);
 
   // Keep disputeIdsRef in sync
   useEffect(() => {
@@ -94,11 +123,9 @@ const Header = () => {
 
     signalRRef.current = connection;
 
-    connection.on('ReceiveMessage', (msg) => {
-      // If message is from someone else, re-fetch to update badge
-      if (msg.senderId !== user?.userId) {
-        fetchDisputes();
-      }
+    connection.on('ReceiveMessage', () => {
+      // Re-fetch on every message so the button always stays up-to-date
+      fetchDisputes();
     });
 
     const joinAll = async () => {

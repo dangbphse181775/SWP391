@@ -7,8 +7,9 @@ const ITEMS_PER_PAGE = 8;
 
 const TYPE_OPTIONS = [
   { value: "", label: "Tất cả loại giao dịch" },
-  { value: "deposit", label: "Nạp tiền" },
-  { value: "payment", label: "Mua hàng" },
+  { value: "deposit",    label: "Nạp tiền" },
+  { value: "payment",    label: "Mua hàng" },
+  { value: "withdrawal", label: "Rút tiền" },
 ];
 
 const DATE_OPTIONS = [
@@ -121,6 +122,12 @@ export default function TransactionsPage() {
         icon: "cancel",
         className: "bg-rose-100 text-rose-700",
       };
+    if (s === "rejected")
+      return {
+        label: "Từ chối",
+        icon: "block",
+        className: "bg-red-100 text-red-700",
+      };
     return {
       label: "Đang xử lý",
       icon: "schedule",
@@ -129,25 +136,32 @@ export default function TransactionsPage() {
   };
 
   const checkIsExpense = (item) => {
-    const type = String(item?.type || "").toLowerCase();
+    const type   = String(item?.type   || "").toLowerCase();
+    const status = String(item?.status || "").toLowerCase();
     const amount = Number(item?.amount || 0);
-    const desc = String(item?.description || "").toLowerCase();
-    
+    const desc   = String(item?.description || "").toLowerCase();
+
     if (amount < 0) return true;
     if (type === "deposit") return false;
-    
-    if (desc.includes("nhận ") || desc.includes("hoàn ") || desc.startsWith("nhận")) {
-      return false; 
+
+    // Withdrawal: rejected = hoàn tiền (thu vào), success/pending = chi ra
+    if (type === "withdrawal") {
+      return status !== "rejected";
     }
-    
-    if (type === "payment") return true; 
+
+    if (desc.includes("nhận ") || desc.includes("hoàn ") || desc.startsWith("nhận")) {
+      return false;
+    }
+
+    if (type === "payment") return true;
 
     return false;
   };
-  
+
   const getTypeIcon = (type) => {
     const t = String(type || "").toLowerCase();
-    if (t === "deposit") return { icon: "account_balance_wallet", bg: "bg-green-50 text-green-600" };
+    if (t === "deposit")    return { icon: "account_balance_wallet", bg: "bg-green-50 text-green-600" };
+    if (t === "withdrawal") return { icon: "output",                  bg: "bg-blue-50 text-blue-600"  };
     return { icon: "shopping_bag", bg: "bg-slate-100 text-slate-700" };
   };
 
@@ -158,11 +172,10 @@ export default function TransactionsPage() {
         <button
           key={i}
           onClick={() => setCurrentPage(i)}
-          className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-            i === currentPage
+          className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${i === currentPage
               ? "bg-black text-white shadow-sm font-bold"
               : "border border-slate-200 text-slate-600 hover:bg-slate-50"
-          }`}
+            }`}
         >
           {i}
         </button>
@@ -291,11 +304,11 @@ export default function TransactionsPage() {
                 {!isLoading &&
                   paginated.map((item, index) => {
                     const isDeposit = String(item?.type || "").toLowerCase() === "deposit";
-                      const status = getStatusMeta(item?.status);
-                      const typeIcon = getTypeIcon(item?.type);
-                      const amountValue = Number(item?.amount || 0);
-                      const isPending = String(item?.status || "").toLowerCase() !== "success" && String(item?.status || "").toLowerCase() !== "failed";
-                      const isExpense = checkIsExpense(item);
+                    const status = getStatusMeta(item?.status);
+                    const typeIcon = getTypeIcon(item?.type);
+                    const amountValue = Number(item?.amount || 0);
+                    const isPending = !["success", "failed", "rejected"].includes(String(item?.status || "").toLowerCase());
+                    const isExpense = checkIsExpense(item);
 
                     return (
                       <tr
@@ -338,9 +351,8 @@ export default function TransactionsPage() {
                         </td>
 
                         <td
-                          className={`px-6 py-5 text-right font-bold ${
-                            isPending ? "text-slate-900" : isExpense ? "text-rose-600" : "text-emerald-600"
-                          }`}
+                          className={`px-6 py-5 text-right font-bold ${isPending ? "text-slate-900" : isExpense ? "text-rose-600" : "text-emerald-600"
+                            }`}
                         >
                           {!isPending && (isExpense ? "-" : "+")}
                           {formatCurrency(Math.abs(amountValue))}

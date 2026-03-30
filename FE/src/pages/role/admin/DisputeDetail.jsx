@@ -50,6 +50,16 @@ const formatDate = (dateString) => {
   }).format(new Date(dateString));
 };
 
+// Parse evidenceUrls which backend may return as JSON array string ["url1"] or comma-separated
+const parseEvidenceUrls = (raw) => {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+  } catch {}
+  return String(raw).split(',').map(u => u.trim()).filter(Boolean);
+};
+
 const DisputeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -196,20 +206,20 @@ const DisputeDetail = () => {
                     </p>
                   </div>
 
-                  {dispute.evidenceUrls && (
+                    {dispute.evidenceUrls && (
                     <div>
                       <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Bằng chứng</label>
                       <div className="mt-3 flex flex-wrap gap-3">
-                        {dispute.evidenceUrls.split(',').map((url, index) => (
+                        {parseEvidenceUrls(dispute.evidenceUrls).map((url, index) => (
                           <a
                             key={index}
-                            href={url.trim()}
+                            href={url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="group relative w-32 h-32 rounded-xl border border-gray-200 overflow-hidden hover:border-blue-400 transition-all bg-gray-50 flex-shrink-0 block"
                           >
                             <img
-                              src={url.trim()}
+                              src={url}
                               alt={`Bằng chứng ${index + 1}`}
                               className="w-full h-full object-cover"
                             />

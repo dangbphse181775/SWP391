@@ -7,7 +7,8 @@ import {
   BarChart3, 
   Settings, 
   LogOut,
-  Scale
+  Scale,
+  Banknote
 } from 'lucide-react';
 
 const AdminSidebar = ({ pendingCount = 0, disputeCount = 0 }) => {
@@ -18,6 +19,7 @@ const AdminSidebar = ({ pendingCount = 0, disputeCount = 0 }) => {
     { icon: LayoutDashboard, label: 'Tổng quan', path: '/admin/dashboard' },
     { icon: FileText, label: 'Duyệt bài đăng', path: '/admin/posts', badge: pendingCount },
     { icon: Scale, label: 'Khiếu nại', path: '/admin/disputes', badge: disputeCount },
+    { icon: Banknote, label: 'Rút tiền', path: '/admin/withdrawals' },
     { icon: Users, label: 'Người dùng', path: '/admin/users' },
     { icon: Package, label: 'Sản phẩm', path: '/admin/products' },
     { icon: BarChart3, label: 'Thống kê', path: '/admin/reports' },
@@ -46,7 +48,8 @@ const AdminSidebar = ({ pendingCount = 0, disputeCount = 0 }) => {
         {sidebarItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || 
-                          (item.path === '/admin/posts' && location.pathname.startsWith('/admin/posts'));
+                          (item.path === '/admin/posts' && location.pathname.startsWith('/admin/posts')) ||
+                          (item.path === '/admin/withdrawals' && location.pathname.startsWith('/admin/withdrawals'));
           
           return (
             <button

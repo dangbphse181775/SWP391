@@ -117,6 +117,13 @@ export default function DigitalWallet() {
       };
     }
 
+    if (normalizedStatus === "rejected") {
+      return {
+        label: "Từ chối",
+        className: "bg-red-100 text-red-600",
+      };
+    }
+
     return {
       label: "Đang xử lý",
       className: "bg-yellow-100 text-yellow-600",
@@ -124,20 +131,27 @@ export default function DigitalWallet() {
   };
 
   const checkIsExpense = (item) => {
-    const type = String(item?.type || "").toLowerCase();
+    const type   = String(item?.type   || "").toLowerCase();
+    const status = String(item?.status || "").toLowerCase();
     const amount = Number(item?.amount || 0);
-    const desc = String(item?.description || "").toLowerCase();
-    
+    const desc   = String(item?.description || "").toLowerCase();
+
     if (amount < 0) return true;
     if (type === "deposit") return false;
-    
-    // Check keywords in description since BE uses 'payment' type for both income and expense in User Wallet
-    if (desc.includes("nhận ") || desc.includes("hoàn ") || desc.startsWith("nhận")) {
-      return false; // Tiền nhận vào
+
+    // Withdrawal logic:
+    //   success  → tiền đã rút ra khỏi ví → CHI RA (expense)
+    //   rejected → tiền bị hoàn về ví     → THU VÀO (income)
+    if (type === "withdrawal") {
+      return status !== "rejected"; // rejected = hoàn tiền = không phải expense
     }
-    
-    // All other payments (phí đăng bài, thanh toán, đặt cọc, mất tiền...) are expenses
-    if (type === "payment") return true; 
+
+    // Check keywords in description
+    if (desc.includes("nhận ") || desc.includes("hoàn ") || desc.startsWith("nhận")) {
+      return false;
+    }
+
+    if (type === "payment") return true;
 
     return false;
   };
@@ -279,6 +293,15 @@ export default function DigitalWallet() {
 
             </div>
 
+            {/* WITHDRAW SHORTCUT */}
+            <button
+              type="button"
+              onClick={() => navigate(getPath("wallet/withdraw"))}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-blue-400 rounded-xl hover:shadow-md hover:border-blue-500 active:scale-95 transition-all text-slate-700 font-bold text-sm"
+            >
+              <span className="material-symbols-outlined text-blue-600">output</span>
+              Rút tiền
+            </button>
 
             {/* TOP UP */}
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
@@ -441,7 +464,7 @@ export default function DigitalWallet() {
                       const isDeposit = String(item?.type || "").toLowerCase() === "deposit";
                       const status = getStatusMeta(item?.status);
                       const amountValue = Number(item?.amount || 0);
-                      const isPending = String(item?.status || "").toLowerCase() !== "success" && String(item?.status || "").toLowerCase() !== "failed";
+                      const isPending = !["success", "failed", "rejected"].includes(String(item?.status || "").toLowerCase());
                       const isExpense = checkIsExpense(item);
                       const amountClass = isPending ? "text-slate-900" : isExpense ? "text-rose-500" : "text-emerald-500";
                       const signedAmount = isPending ? formatCurrency(Math.abs(amountValue)) : `${isExpense ? "-" : "+"} ${formatCurrency(Math.abs(amountValue))}`;

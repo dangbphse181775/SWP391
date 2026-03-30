@@ -28,6 +28,8 @@ import DisputeList from '@/pages/role/admin/DisputeList';
 import DisputeDetail from '@/pages/role/admin/DisputeDetail';
 import ManagePosts from '@/pages/role/user/ManagePosts';
 import SellerDisputeResponse from '@/pages/common/SellerDisputeResponse';
+import WithdrawPage from '@/pages/common/WithdrawPage';
+import AdminWithdrawList from '@/pages/role/admin/AdminWithdrawList';
 const VehicleDetailRoute = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -87,6 +89,11 @@ function App() {
             <Route path="/buyer/wallet" element={
               <RoleBasedRoute>
                 <DigitalWallet />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/wallet/withdraw" element={
+              <RoleBasedRoute>
+                <WithdrawPage />
               </RoleBasedRoute>
             } />
             <Route path="/buyer/transactions" element={
@@ -152,6 +159,11 @@ function App() {
                 <DigitalWallet />
               </RoleBasedRoute>
             } />
+            <Route path="/seller/wallet/withdraw" element={
+              <RoleBasedRoute>
+                <WithdrawPage />
+              </RoleBasedRoute>
+            } />
             <Route path="/seller/transactions" element={
               <RoleBasedRoute>
                 <TransactionsPage />
@@ -215,6 +227,11 @@ function App() {
                 <DigitalWallet />
               </RoleBasedRoute>
             } />
+            <Route path="/inspector/wallet/withdraw" element={
+              <RoleBasedRoute>
+                <WithdrawPage />
+              </RoleBasedRoute>
+            } />
             <Route path="/inspector/transactions" element={
               <RoleBasedRoute>
                 <TransactionsPage />
@@ -274,6 +291,11 @@ function App() {
             <Route path="/admin/wallet" element={
               <RoleBasedRoute>
                 <DigitalWallet />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/wallet/withdraw" element={
+              <RoleBasedRoute>
+                <WithdrawPage />
               </RoleBasedRoute>
             } />
             <Route path="/admin/transactions" element={
@@ -342,6 +364,11 @@ function App() {
           <Route path="/admin/settings" element={
             <RoleBasedRoute>
               <SystemConfig />
+            </RoleBasedRoute>
+          } />
+          <Route path="/admin/withdrawals" element={
+            <RoleBasedRoute>
+              <AdminWithdrawList />
             </RoleBasedRoute>
           } />
 

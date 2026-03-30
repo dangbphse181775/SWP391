@@ -288,6 +288,8 @@ export default function OrderHistory() {
 
       await disputeApi.openDispute(orderId, formData);
       toast.success("Khiếu nại đã được gửi thành công!");
+      // Notify Header to refresh the dispute chat button immediately (no reload needed)
+      window.dispatchEvent(new CustomEvent('disputeCreated'));
       setOrders((prev) =>
         prev.map((o) =>
           o.orderId === orderId ? { ...o, status: "disputed" } : o

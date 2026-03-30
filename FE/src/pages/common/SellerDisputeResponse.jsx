@@ -31,6 +31,16 @@ const formatDate = (dateString) => {
   }).format(new Date(dateString));
 };
 
+// Parse evidenceUrls which backend may return as JSON array string ["url"] or comma-separated
+const parseEvidenceUrls = (raw) => {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+  } catch {}
+  return String(raw).split(',').map(u => u.trim()).filter(Boolean);
+};
+
 /* ─── status config ─── */
 const statusConfig = {
   open:                { label: 'Chờ xử lý',      cls: 'bg-amber-50 text-amber-700 border-amber-200',   dot: 'bg-amber-500' },
@@ -268,16 +278,19 @@ export default function SellerDisputeResponse() {
               {dispute.evidenceUrls && (
                 <div>
                   <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Bằng chứng</label>
-                  <div className="mt-2">
-                    <a
-                      href={dispute.evidenceUrls}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 hover:border-blue-200 transition-all font-medium"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Xem bằng chứng
-                    </a>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {parseEvidenceUrls(dispute.evidenceUrls).map((url, idx) => (
+                      <a
+                        key={idx}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 hover:border-blue-200 transition-all font-medium"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Xem bằng chứng {parseEvidenceUrls(dispute.evidenceUrls).length > 1 ? idx + 1 : ''}
+                      </a>
+                    ))}
                   </div>
                 </div>
               )}
