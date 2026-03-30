@@ -1,0 +1,301 @@
+using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+
+namespace Bike_Link.Domain.Models;
+
+public partial class BikeLinkContext : DbContext
+{
+    public BikeLinkContext()
+    {
+    }
+
+    public BikeLinkContext(DbContextOptions<BikeLinkContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<Admin> Admins { get; set; }
+    public virtual DbSet<Brand> Brands { get; set; }
+    public virtual DbSet<Category> Categories { get; set; }
+    public virtual DbSet<Dispute> Disputes { get; set; }
+    public virtual DbSet<InspectionReport> InspectionReports { get; set; }
+    public virtual DbSet<Inspector> Inspectors { get; set; }
+    public virtual DbSet<Order> Orders { get; set; }
+    public virtual DbSet<OrderDetail> OrderDetails { get; set; }
+    public virtual DbSet<Payment> Payments { get; set; }
+    public virtual DbSet<Report> Reports { get; set; }
+    public virtual DbSet<Review> Reviews { get; set; }
+    public virtual DbSet<Role> Roles { get; set; }
+
+    // Chỉ còn một thực thể trung tâm
+    public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<Vehicle> Vehicles { get; set; }
+    public virtual DbSet<VehicleMedium> VehicleMedia { get; set; }
+    public virtual DbSet<Wishlist> Wishlists { get; set; }
+    public virtual DbSet<WishlistItem> WishlistItems { get; set; }
+    public virtual DbSet<Cart> Carts { get; set; }
+    public virtual DbSet<CartItem> CartItems { get; set; }
+    public virtual DbSet<Wallet> Wallets { get; set; }
+    public virtual DbSet<WalletTransaction> WalletTransactions { get; set; }
+    public virtual DbSet<Shipping> Shippings { get; set; }
+    public virtual DbSet<SystemConfig> SystemConfigs { get; set; }
+    public virtual DbSet<DisputeChat> DisputeChats { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Admin 1-1 User
+        modelBuilder.Entity<Admin>(entity =>
+        {
+            entity.HasKey(a => a.UserId);
+
+            entity.HasOne(a => a.User)
+                .WithOne(u => u.Admin)
+                .HasForeignKey<Admin>(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Inspector 1-1 User
+        modelBuilder.Entity<Inspector>(entity =>
+        {
+            entity.HasKey(i => i.UserId);
+
+            entity.HasOne(i => i.User)
+                .WithOne(u => u.Inspector)
+                .HasForeignKey<Inspector>(i => i.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Order: Buyer & Seller đều trỏ về Users
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.HasOne(o => o.Buyer)
+                .WithMany(u => u.BuyOrders)
+                .HasForeignKey(o => o.BuyerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(o => o.Seller)
+                .WithMany(u => u.SellOrders)
+                .HasForeignKey(o => o.SellerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Vehicle -> User (Seller)
+        modelBuilder.Entity<Vehicle>(entity =>
+        {
+            entity.HasOne(v => v.Seller)
+                .WithMany(u => u.Vehicles)
+                .HasForeignKey(v => v.SellerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Wishlist -> User
+        modelBuilder.Entity<Wishlist>(entity =>
+        {
+            entity.HasOne(w => w.User)
+                .WithOne(u => u.Wishlist)
+                .HasForeignKey<Wishlist>(w => w.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // WishlistItem composite key
+        modelBuilder.Entity<WishlistItem>(entity =>
+        {
+            entity.HasKey(x => new { x.WishlistId, x.VehicleId });
+
+            entity.HasOne(x => x.Wishlist)
+                .WithMany(w => w.WishlistItems)
+                .HasForeignKey(x => x.WishlistId);
+
+            entity.HasOne(x => x.Vehicle)
+                .WithMany(v => v.WishlistItems)
+                .HasForeignKey(x => x.VehicleId);
+        });
+
+        // Review: 2 FK -> User
+        modelBuilder.Entity<Review>(entity =>
+        {
+            entity.HasOne(r => r.Order)
+                .WithMany(o => o.Reviews)
+                .HasForeignKey(r => r.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.Reviewer)
+                .WithMany(u => u.ReviewReviewers)
+                .HasForeignKey(r => r.ReviewerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.TargetUser)
+                .WithMany(u => u.ReviewTargetUsers)
+                .HasForeignKey(r => r.TargetUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Dispute
+        modelBuilder.Entity<Dispute>(entity =>
+        {
+            entity.HasOne(d => d.Order)
+                .WithMany(o => o.Disputes)
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.OpenedByUser)
+                .WithMany(u => u.Disputes)
+                .HasForeignKey(d => d.OpenedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.ResolvedByUser)
+                .WithMany(u => u.ResolvedDisputes)
+                .HasForeignKey(d => d.ResolvedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // DisputeChat
+        modelBuilder.Entity<DisputeChat>(entity =>
+        {
+            entity.HasKey(c => c.DisputeChatId);
+
+            entity.HasOne(c => c.Dispute)
+                .WithMany(d => d.DisputeChats)
+                .HasForeignKey(c => c.DisputeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(c => c.Sender)
+                .WithMany(u => u.DisputeChats)
+                .HasForeignKey(c => c.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(c => c.Channel)
+                .HasMaxLength(10)
+                .IsRequired();
+        });
+
+        // Report
+        modelBuilder.Entity<Report>(entity =>
+        {
+            entity.HasOne(r => r.Reporter)
+                .WithMany(u => u.Reports)
+                .HasForeignKey(r => r.ReporterId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // OrderDetail
+        modelBuilder.Entity<OrderDetail>(entity =>
+        {
+            entity.HasOne(od => od.Order)
+                .WithMany(o => o.OrderDetails)
+                .HasForeignKey(od => od.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(od => od.Vehicle)
+                .WithMany(v => v.OrderDetails)
+                .HasForeignKey(od => od.VehicleId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Payment
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasOne(p => p.Order)
+                .WithMany(o => o.Payments)
+                .HasForeignKey(p => p.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // InspectionReport
+        modelBuilder.Entity<InspectionReport>(entity =>
+        {
+            entity.HasKey(r => r.ReportId);
+
+            entity.HasOne(r => r.Inspector)
+                .WithMany(i => i.InspectionReports)
+                .HasForeignKey(r => r.InspectorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.Vehicle)
+                .WithMany(v => v.InspectionReports)
+                .HasForeignKey(r => r.VehicleId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<VehicleMedium>(entity =>
+        {
+            entity.HasOne(m => m.Vehicle)
+                .WithMany(v => v.VehicleMedia)
+                .HasForeignKey(m => m.VehicleId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+
+        // 1 User - 1 Cart
+        modelBuilder.Entity<Cart>()
+            .HasOne(c => c.User)
+            .WithOne(u => u.Cart)
+            .HasForeignKey<Cart>(c => c.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // 1 Cart - Many CartItems
+        modelBuilder.Entity<CartItem>()
+            .HasOne(ci => ci.Cart)
+            .WithMany(c => c.CartItems)
+            .HasForeignKey(ci => ci.CartId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CartItem>()
+            .HasOne(ci => ci.Vehicle)
+            .WithMany(v => v.CartItems)
+            .HasForeignKey(ci => ci.VehicleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // 1 User - 1 Wallet
+        modelBuilder.Entity<Wallet>()
+            .HasOne(w => w.User)
+            .WithOne(u => u.Wallet)
+            .HasForeignKey<Wallet>(w => w.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WalletTransaction>()
+            .HasOne(t => t.Wallet)
+            .WithMany(w => w.Transactions)
+            .HasForeignKey(t => t.WalletId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // 1 Order - 1 Shipping
+        modelBuilder.Entity<Shipping>(entity =>
+        {
+            entity.HasKey(s => s.ShippingId);
+
+            entity.HasOne(s => s.Order)
+                .WithOne(o => o.Shipping)
+                .HasForeignKey<Shipping>(s => s.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SystemConfig>(entity =>
+        {
+            entity.ToTable("SystemConfigs");
+            
+            entity.HasKey(e => e.Key);
+            entity.Property(e => e.Key)
+                .HasMaxLength(100)
+                .IsRequired();
+            entity.Property(e => e.Value)
+                .HasMaxLength(255)
+                .IsRequired();
+            entity.Property(e => e.Description)
+                .HasMaxLength(500);
+
+            // Seed data mặc định
+            entity.HasData(
+                new SystemConfig { Key = "deposit_rate", Value = "0.20", Description = "Tỉ lệ đặt cọc (20%)", UpdatedAt = null },
+                new SystemConfig { Key = "cancel_refund_rate", Value = "0.95", Description = "Tỉ lệ hoàn tiền khi hủy cọc (95%)", UpdatedAt = null },
+                new SystemConfig { Key = "expired_seller_rate", Value = "0.80", Description = "Tỉ lệ seller nhận khi cọc quá hạn (80%)", UpdatedAt = null },
+                new SystemConfig { Key = "deposit_expiry_hours", Value = "72", Description = "Thời hạn đặt cọc (giờ)", UpdatedAt = null },
+                new SystemConfig { Key = "posting_fee_rate", Value = "0.01", Description = "Phí đăng bài (1% giá xe)", UpdatedAt = null },
+                new SystemConfig { Key = "dispute_window_days", Value = "3", Description = "Thời hạn mở tranh chấp sau khi nhận hàng (ngày)", UpdatedAt = null }
+            );          
+        });
+
+        base.OnModelCreating(modelBuilder);
+    }
+}

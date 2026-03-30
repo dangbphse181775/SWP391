@@ -1,0 +1,385 @@
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import MainLayout from '@/components/layout/MainLayout';
+import HomePage from '@/pages/common/HomePage';
+import UserHomePage from '@/pages/role/user/UserHomePage';
+import ProfilePage from '@/pages/role/user/ProfilePage';
+import LoginPage from '@/pages/auth/LoginPage';
+import RegisterPage from '@/pages/auth/RegisterPage';
+import Sell from '@/pages/role/user/Sell';
+import ProductPage from '@/pages/common/ProductsPage';
+import WishlistPage from '@/pages/role/user/WishlistPage';
+import CartPage from '@/pages/role/user/Cart';
+import Dashboard from '@/pages/role/admin/Dashboard';
+import PostApproval from '@/pages/role/admin/PostApproval';
+import PostDetail from '@/pages/role/admin/PostDetail';
+import SystemConfig from '@/pages/role/admin/SystemConfig';
+import AppToaster from "@/components/ui/Toaster";
+import { AuthProvider } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { RoleBasedRoute } from '@/components/auth/RoleBasedRoute';
+import Vehicle_Detail from '@/pages/role/user/Vehicle_Detail';
+import InspectorDashboard from '@/pages/role/inspector/InspectorDashboard';
+import DigitalWallet from '@/pages/common/DigitalWallet';
+import TransactionsPage from '@/pages/common/TransactionsPage';
+import PaymentResult from '@/pages/common/PaymentResult';
+import OrderHistory from '@/pages/common/OrderHistory';
+import SelledHistory from '@/pages/common/SelledHistory';
+import DisputeList from '@/pages/role/admin/DisputeList';
+import DisputeDetail from '@/pages/role/admin/DisputeDetail';
+import ManagePosts from '@/pages/role/user/ManagePosts';
+import SellerDisputeResponse from '@/pages/common/SellerDisputeResponse';
+import WithdrawPage from '@/pages/common/WithdrawPage';
+import AdminWithdrawList from '@/pages/role/admin/AdminWithdrawList';
+const VehicleDetailRoute = () => {
+  const { id } = useParams();
+  const { user } = useAuth();
+  if (user?.role) {
+    return <Navigate to={`/${user.role.toLowerCase()}/Vehicle_Detail/${id}`} replace />;
+  }
+  return <Vehicle_Detail />;
+};
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppToaster />
+
+        <Routes>
+          {/* Public Routes with Header and Footer */}
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/product" element={<ProductPage />} />
+            <Route path="/products" element={<ProductPage />} />
+            <Route path="/Vehicle_Detail/:id" element={<VehicleDetailRoute />} />
+          </Route>
+
+          <Route element={<MainLayout />}>
+            <Route path="/buyer" element={
+              <RoleBasedRoute>
+                <UserHomePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/profile" element={
+              <RoleBasedRoute>
+                <ProfilePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/wishlist" element={
+              <RoleBasedRoute>
+                <WishlistPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/Cart" element={
+              <RoleBasedRoute>
+                <CartPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/sell" element={
+              <RoleBasedRoute>
+                <Sell />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/products" element={
+              <RoleBasedRoute>
+                <ProductPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/Vehicle_Detail/:id" element={<Vehicle_Detail />} />
+            <Route path="/buyer/wallet" element={
+              <RoleBasedRoute>
+                <DigitalWallet />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/wallet/withdraw" element={
+              <RoleBasedRoute>
+                <WithdrawPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/transactions" element={
+              <RoleBasedRoute>
+                <TransactionsPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/orderHistory" element={
+              <RoleBasedRoute>
+                <OrderHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/dispute/:orderId" element={
+              <RoleBasedRoute>
+                <SellerDisputeResponse />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/selledHistory" element={
+              <RoleBasedRoute>
+                <SelledHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/managePosts" element={
+              <RoleBasedRoute>
+                <ManagePosts />
+              </RoleBasedRoute>
+            } />
+
+            {/* Seller Role Routes */}
+            <Route path="/seller" element={
+              <RoleBasedRoute>
+                <UserHomePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/profile" element={
+              <RoleBasedRoute>
+                <ProfilePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/wishlist" element={
+              <RoleBasedRoute>
+                <WishlistPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/Cart" element={
+              <RoleBasedRoute>
+                <CartPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/sell" element={
+              <RoleBasedRoute>
+                <Sell />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/products" element={
+              <RoleBasedRoute>
+                <ProductPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/Vehicle_Detail/:id" element={<Vehicle_Detail />} />
+            <Route path="/seller/wallet" element={
+              <RoleBasedRoute>
+                <DigitalWallet />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/wallet/withdraw" element={
+              <RoleBasedRoute>
+                <WithdrawPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/transactions" element={
+              <RoleBasedRoute>
+                <TransactionsPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/orderHistory" element={
+              <RoleBasedRoute>
+                <OrderHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/selledHistory" element={
+              <RoleBasedRoute>
+                <SelledHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/dispute/:orderId" element={
+              <RoleBasedRoute>
+                <SellerDisputeResponse />
+              </RoleBasedRoute>
+            } />
+            <Route path="/seller/managePosts" element={
+              <RoleBasedRoute>
+                <ManagePosts />
+              </RoleBasedRoute>
+            } />
+
+            {/* Inspector Role Routes */}
+            <Route path="/inspector" element={
+              <RoleBasedRoute>
+                <UserHomePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/profile" element={
+              <RoleBasedRoute>
+                <ProfilePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/wishlist" element={
+              <RoleBasedRoute>
+                <WishlistPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/Cart" element={
+              <RoleBasedRoute>
+                <CartPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/sell" element={
+              <RoleBasedRoute>
+                <Sell />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/products" element={
+              <RoleBasedRoute>
+                <ProductPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/Vehicle_Detail/:id" element={<Vehicle_Detail />} />
+            <Route path="/inspector/wallet" element={
+              <RoleBasedRoute>
+                <DigitalWallet />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/wallet/withdraw" element={
+              <RoleBasedRoute>
+                <WithdrawPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/transactions" element={
+              <RoleBasedRoute>
+                <TransactionsPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/orderHistory" element={
+              <RoleBasedRoute>
+                <OrderHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/selledHistory" element={
+              <RoleBasedRoute>
+                <SelledHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/inspector/managePosts" element={
+              <RoleBasedRoute>
+                <ManagePosts />
+              </RoleBasedRoute>
+            } />
+
+          </Route>
+
+          {/* Admin Home Route - With MainLayout */}
+          <Route element={<MainLayout />}>
+            <Route path="/admin" element={
+              <RoleBasedRoute>
+                <UserHomePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/profile" element={
+              <RoleBasedRoute>
+                <ProfilePage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/wishlist" element={
+              <RoleBasedRoute>
+                <WishlistPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/Cart" element={
+              <RoleBasedRoute>
+                <CartPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/sell" element={
+              <RoleBasedRoute>
+                <Sell />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/Vehicle_Detail/:id" element={<Vehicle_Detail />} />
+            <Route path="/admin/products" element={
+              <RoleBasedRoute>
+                <ProductPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/wallet" element={
+              <RoleBasedRoute>
+                <DigitalWallet />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/wallet/withdraw" element={
+              <RoleBasedRoute>
+                <WithdrawPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/transactions" element={
+              <RoleBasedRoute>
+                <TransactionsPage />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/orderHistory" element={
+              <RoleBasedRoute>
+                <OrderHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/selledHistory" element={
+              <RoleBasedRoute>
+                <SelledHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/admin/managePosts" element={
+              <RoleBasedRoute>
+                <ManagePosts />
+              </RoleBasedRoute>
+            } />
+          </Route>
+
+          {/* Admin Dashboard Routes - Without MainLayout (has its own sidebar) */}
+          <Route path="/admin/dashboard" element={
+            <RoleBasedRoute>
+              <Dashboard />
+            </RoleBasedRoute>
+          } />
+          <Route path="/admin/posts" element={
+            <RoleBasedRoute>
+              <PostApproval />
+            </RoleBasedRoute>
+          } />
+          <Route path="/admin/posts/:id" element={
+            <RoleBasedRoute>
+              <PostDetail />
+            </RoleBasedRoute>
+          } />
+          <Route path="/admin/disputes" element={
+            <RoleBasedRoute>
+              <DisputeList />
+            </RoleBasedRoute>
+          } />
+          <Route path="/admin/disputes/:id" element={
+            <RoleBasedRoute>
+              <DisputeDetail />
+            </RoleBasedRoute>
+          } />
+          <Route path="/inspector/inspection" element={
+            <RoleBasedRoute>
+              <InspectorDashboard />
+            </RoleBasedRoute>
+          } />
+          <Route path="/inspector/disputes" element={
+            <RoleBasedRoute>
+              <DisputeList />
+            </RoleBasedRoute>
+          } />
+          <Route path="/inspector/disputes/:id" element={
+            <RoleBasedRoute>
+              <DisputeDetail />
+            </RoleBasedRoute>
+          } />
+          <Route path="/admin/settings" element={
+            <RoleBasedRoute>
+              <SystemConfig />
+            </RoleBasedRoute>
+          } />
+          <Route path="/admin/withdrawals" element={
+            <RoleBasedRoute>
+              <AdminWithdrawList />
+            </RoleBasedRoute>
+          } />
+
+          {/* Auth Routes without Header and Footer */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/payment" element={<PaymentResult />} />
+        </Routes>
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export default App;

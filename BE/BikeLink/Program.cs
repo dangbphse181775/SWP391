@@ -1,23 +1,217 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Bike_Link.Application.IService;
+using Bike_Link.Application.Services;
+using Bike_Link.Infrastructure.Persitence.Repository;
+using CloudinaryDotNet;
+using Npgsql;
+using System.Text;
+using Bike_Link.Domain.Models;
+using Microsoft.EntityFrameworkCore;
+using Bike_Link.Domain.IRepository;
+using BikeLink.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// SignalR
+builder.Services.AddSignalR();
 
+// Add services
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "BikeLink API", Version = "v1" });
+
+    // Cấu hình Bearer Token
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Nhập: Bearer {your JWT token}"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+builder.Services.AddSingleton<NpgsqlDataSource>(_ =>
+{
+    var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+    return NpgsqlDataSource.Create(connStr);
+});
+
+builder.Services.AddDbContext<BikeLinkContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+var jwtKey = builder.Configuration["Jwt:Key"];
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey!)
+            )
+        };
+
+        // SignalR gửi JWT qua query string, không phải header
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                // Chỉ áp dụng cho request đến SignalR hub
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+
+//seller service and repository
+builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
+builder.Services.AddScoped<ISellerService, SellerService>();
+
+//auth
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+//wishlist
+builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
+builder.Services.AddScoped<IWishlistItemRepository, WishlistItemRepository>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
+
+//cart
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<ICartItemRepository, CartItemRepository>();
+builder.Services.AddScoped<ICartService, CartService>();
+
+//show public vehicles
+builder.Services.AddScoped<IPublicVehicleRepository, PublicVehicleRepository>();
+builder.Services.AddScoped<IPublicVehicleService, PublicVehicleService>();
+
+//admin service and repository
+builder.Services.AddScoped<IAdminVehicleRepository, AdminVehicleRepository>();
+builder.Services.AddScoped<IAdminVehicleService, AdminVehicleService>();
+
+//inspector service and repository
+builder.Services.AddScoped<IInspectorRepository, InspectorRepository>();
+builder.Services.AddScoped<IInspectorService, InspectorService>();
+
+//seller view inspection report
+builder.Services.AddScoped<IInspectionRepository, InspectionRepository>();
+builder.Services.AddScoped<ISellerInspectionService, SellerInspectionService>();
+
+//user profile
+builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+
+//wallet and payment
+builder.Services.AddScoped<VNPayService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IWalletRepository, WalletRepository>();
+
+//order and checkout
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+//shipping
+builder.Services.AddScoped<IShippingRepository, ShippingRepository>();
+builder.Services.AddScoped<IShippingService, ShippingService>();
+
+//system config
+builder.Services.AddScoped<ISystemConfigRepository, SystemConfigRepository>();
+builder.Services.AddScoped<ISystemConfigService, SystemConfigService>();
+
+//review
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
+//dispute
+builder.Services.AddScoped<IDisputeRepository, DisputeRepository>();
+builder.Services.AddScoped<IDisputeService, DisputeService>();
+
+// Background service: tự động xử lý cọc quá hạn 72h
+builder.Services.AddHostedService<BikeLink.BackgroundServices.DepositExpiryService>();
+
+
+// Cloudinary
+builder.Services.AddSingleton(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>().GetSection("Cloudinary");
+    var acc = new Account(
+        cfg["CloudName"],
+        cfg["ApiKey"],
+        cfg["ApiSecret"]
+    );
+    return new Cloudinary(acc);
+});
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVite",
+        policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+});
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Swagger only in Development
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "BikeLink API v1");
+        c.RoutePrefix = "swagger"; // mở tại /swagger
+    });
 }
 
-app.UseHttpsRedirection();
 
+app.UseHttpsRedirection();
+app.UseCors("AllowVite");
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MapHub<DisputeChatHub>("/hubs/dispute-chat");
 app.Run();
