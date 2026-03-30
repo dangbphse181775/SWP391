@@ -3,6 +3,7 @@ import { Heart } from 'lucide-react';
 import WishlistAPI from '@/service/WishlistAPI';
 import { useNavigate } from 'react-router-dom';
 import { useRolePath } from '@/hooks/useRolePath';
+import { getAccessToken } from '@/service/auth';
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const ProductCard = ({ product }) => {
 
   const handleWishlistClick = (e) => {
     e.stopPropagation();
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (!token) {
       alert('Vui lòng đăng nhập để thêm vào yêu thích!');
       navigate('/login');
@@ -62,7 +63,7 @@ const ProductCard = ({ product }) => {
   // Initialize wishlist state from server so heart reflects saved wishlist
   // Only fetch when user is authenticated to avoid 404 spam on public pages
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (!token) return;
 
     let mounted = true;

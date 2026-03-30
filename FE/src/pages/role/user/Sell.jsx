@@ -2,10 +2,11 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { createVehicle, getFeePreview } from "@/service/SellAPI";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "sonner";
+import { useRolePath } from "@/hooks/useRolePath";
 import MediaUploadSection from "./components/MediaUploadSection";
 import { AlertTriangle, Wallet, Tag } from "lucide-react";
 
@@ -14,6 +15,7 @@ export default function Sell() {
   const [media, setMedia] = useState([]);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  const { getHomePath } = useRolePath();
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingData, setPendingData] = useState(null);
@@ -24,6 +26,7 @@ export default function Sell() {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors },
   } = useForm();
 
@@ -101,7 +104,7 @@ export default function Sell() {
     try {
       await createVehicle(pendingData, media);
       toast.success("Đăng xe thành công! Bài đăng đang chờ admin duyệt.");
-      navigate("/");
+      navigate(getHomePath());
     } catch (err) {
       const status = err?.response?.status;
       const body = err?.response?.data;
@@ -254,15 +257,27 @@ export default function Sell() {
               </h2>
 
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Giá bán (VNĐ)"
-                  {...register("Price", {
-                    required: "Giá bán là bắt buộc",
-                    valueAsNumber: true,
-                  })}
-                />
+                <div>
+                  <Controller
+                    control={control}
+                    name="Price"
+                    rules={{ required: "Giá bán là bắt buộc" }}
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        type="text"
+                        placeholder="Giá bán (VNĐ)"
+                        value={value ? new Intl.NumberFormat("vi-VN").format(value) : ""}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/\D/g, "");
+                          onChange(raw ? Number(raw) : "");
+                        }}
+                      />
+                    )}
+                  />
+                  {errors.Price && (
+                    <p className="text-red-500 text-sm mt-1">{errors.Price.message}</p>
+                  )}
+                </div>
 
                 <select
                   className="h-10 border rounded-md px-3"

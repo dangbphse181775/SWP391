@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import adminApi from '@/service/adminApi';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 
 // Friendly Vietnamese labels per key
 const KEY_LABELS = {
@@ -69,11 +70,7 @@ export default function SystemConfig() {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pendingKey, setPendingKey] = useState(null);
 
-    useEffect(() => {
-        fetchConfigs();
-    }, []);
-
-    const fetchConfigs = async () => {
+    const fetchConfigs = useCallback(async () => {
         try {
             setLoading(true);
             const res = await adminApi.getSystemConfigs();
@@ -85,7 +82,13 @@ export default function SystemConfig() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchConfigs();
+    }, [fetchConfigs]);
+
+    useRefreshOnFocus(fetchConfigs);
 
     const startEdit = (config) => {
         setEditingKey(config.key);

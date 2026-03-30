@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import disputeApi from '@/service/disputeApi';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import InspectorSidebar from '@/components/admin/InspectorSidebar';
 import ResolveDisputeDialog from './components/ResolveDisputeDialog';
@@ -73,11 +74,8 @@ const DisputeDetail = () => {
   const isInspector = location.pathname.startsWith('/inspector');
   const basePath = isInspector ? '/inspector' : '/admin';
 
-  useEffect(() => {
-    fetchDetail();
-  }, [id]);
 
-  const fetchDetail = async () => {
+  const fetchDetail = useCallback(async () => {
     try {
       setLoading(true);
       const response = await disputeApi.getDisputeDetail(id);
@@ -101,7 +99,13 @@ const DisputeDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, basePath, navigate]);
+
+  useEffect(() => {
+    fetchDetail();
+  }, [fetchDetail]);
+
+  useRefreshOnFocus(fetchDetail);
 
   const handleResolve = async (data) => {
     try {
@@ -360,7 +364,7 @@ const DisputeDetail = () => {
                 <CardContent className="p-5 space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm">
-                      {(dispute.buyerName || '?')[0].toUpperCase()}
+                      {(dispute.buyerName || ' ')[0].toUpperCase()}
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">{dispute.buyerName || '—'}</p>
@@ -404,7 +408,7 @@ const DisputeDetail = () => {
                 <CardContent className="p-5 space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold text-sm">
-                      {(dispute.sellerName || '?')[0].toUpperCase()}
+                      {(dispute.sellerName || ' ')[0].toUpperCase()}
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">{dispute.sellerName || '—'}</p>

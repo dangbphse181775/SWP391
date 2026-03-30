@@ -2,14 +2,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   FileText, 
-  Users, 
   Package, 
-  BarChart3, 
   Settings, 
   LogOut,
   Scale,
   Banknote
 } from 'lucide-react';
+import { logout } from '@/service/auth';
 
 const AdminSidebar = ({ pendingCount = 0, disputeCount = 0 }) => {
   const navigate = useNavigate();
@@ -20,17 +19,12 @@ const AdminSidebar = ({ pendingCount = 0, disputeCount = 0 }) => {
     { icon: FileText, label: 'Duyệt bài đăng', path: '/admin/posts', badge: pendingCount },
     { icon: Scale, label: 'Khiếu nại', path: '/admin/disputes', badge: disputeCount },
     { icon: Banknote, label: 'Rút tiền', path: '/admin/withdrawals' },
-    { icon: Users, label: 'Người dùng', path: '/admin/users' },
     { icon: Package, label: 'Sản phẩm', path: '/admin/products' },
-    { icon: BarChart3, label: 'Thống kê', path: '/admin/reports' },
     { icon: Settings, label: 'Cài đặt', path: '/admin/settings' }
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('remember_me');
-    navigate('/login');
+    logout();
   };
 
   return (

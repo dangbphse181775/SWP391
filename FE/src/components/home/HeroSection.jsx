@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useState } from 'react';
+import { getAccessToken } from '@/service/auth';
 
 const HeroSection = () => {
   const navigate = useNavigate();
   const [showAlert, setShowAlert] = useState(false);
 
   const handleBuyClick = () => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (!token) {
       setShowAlert(true);
       setTimeout(() => {

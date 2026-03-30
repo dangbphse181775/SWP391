@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import disputeApi from '@/service/disputeApi';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import InspectorSidebar from '@/components/admin/InspectorSidebar';
 import { Badge } from '@/components/ui/badge';
@@ -53,11 +54,8 @@ const DisputeList = () => {
 
   const isInspector = location.pathname.startsWith('/inspector');
 
-  useEffect(() => {
-    fetchDisputes();
-  }, []);
 
-  const fetchDisputes = async () => {
+  const fetchDisputes = useCallback(async () => {
     try {
       setLoading(true);
       // Try to get all disputes first, fallback to pending only
@@ -77,7 +75,13 @@ const DisputeList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDisputes();
+  }, [fetchDisputes]);
+
+  useRefreshOnFocus(fetchDisputes);
 
   const isResolved = (status) => status && status !== 'open' && status !== 'investigating';
 

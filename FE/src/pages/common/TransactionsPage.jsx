@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import walletTransactionsAPI from "@/service/getTransactinos";
 import { useRolePath } from "@/hooks/useRolePath";
+import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -30,26 +31,29 @@ export default function TransactionsPage() {
   const [dateFilter, setDateFilter] = useState(30);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const response = await walletTransactionsAPI.getTransactions();
+      const list = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+      setTransactions(list);
+    } catch {
+      setTransactions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
-    const fetchTransactions = async () => {
-      try {
-        const response = await walletTransactionsAPI.getTransactions();
-        const list = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.data)
-            ? response.data
-            : [];
-        if (isMounted) setTransactions(list);
-      } catch {
-        if (isMounted) setTransactions([]);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-    fetchTransactions();
+    fetchTransactions().finally(() => { if (!isMounted) return; });
     return () => { isMounted = false; };
-  }, []);
+  }, [fetchTransactions]);
+
+  useRefreshOnFocus(fetchTransactions);
 
   const filtered = useMemo(() => {
     let result = [...transactions];

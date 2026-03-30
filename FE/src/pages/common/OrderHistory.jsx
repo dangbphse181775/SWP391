@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
 import disputeApi from "@/service/disputeApi";
 import reviewApi from "@/service/reviewApi";
 import { useRolePath } from "@/hooks/useRolePath";
+import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 
 const formatVnd = (value) => {
   const numberValue = Number(value);
@@ -307,38 +308,33 @@ export default function OrderHistory() {
     }
   };
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const res = await orderApi.getMyOrders();
-        const list = Array.isArray(res?.data)
-          ? res.data
-          : Array.isArray(res)
-            ? res
-            : [];
-
-        if (isMounted) setOrders(list);
-      } catch (err) {
-        const msg =
-          err?.response?.data?.message ||
-          err?.message ||
-          "Không thể tải lịch sử mua hàng";
-        toast.error(msg);
-        if (isMounted) setOrders([]);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    fetchOrders();
-
-    return () => {
-      isMounted = false;
-    };
+  const fetchOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await orderApi.getMyOrders();
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res)
+          ? res
+          : [];
+      setOrders(list);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Không thể tải lịch sử mua hàng";
+      toast.error(msg);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  useRefreshOnFocus(fetchOrders);
 
   useEffect(() => {
     let isMounted = true;
@@ -567,7 +563,7 @@ export default function OrderHistory() {
                       {String(order?.status || "").toLowerCase() === "disputed" && (
                         <button
                           type="button"
-                          onClick={() => navigate(`/buyer/dispute/${order?.orderId}`)}
+                          onClick={() => navigate(getPath(`dispute/${order?.orderId}`))}
                           className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition-colors"
                         >
                           <span className="material-symbols-outlined text-[16px]">gavel</span>

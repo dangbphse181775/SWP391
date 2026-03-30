@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import walletAPI from "@/service/getBalance";
 import walletTransactionsAPI from "@/service/getTransactinos";
 import paymentAPI from "@/service/paymentDeposit";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRolePath } from "@/hooks/useRolePath";
+import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 import { toast } from "sonner";
 
 export default function DigitalWallet() {
@@ -21,69 +22,51 @@ export default function DigitalWallet() {
   const [isDepositing, setIsDepositing] = useState(false);
   const [showFullMemberCode, setShowFullMemberCode] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchBalance = async () => {
-      try {
-        const response = await walletAPI.getBalance();
-        const rawBalance = typeof response?.balance !== "undefined"
-          ? response.balance
-          : response?.data?.balance;
-
-        if (isMounted) {
-          setBalance(Number(rawBalance || 0));
-        }
-      } catch (error) {
-        if (isMounted) {
-          setBalance(0);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingBalance(false);
-        }
-      }
-    };
-
-    fetchBalance();
-
-    return () => {
-      isMounted = false;
-    };
+  const fetchBalance = useCallback(async () => {
+    try {
+      const response = await walletAPI.getBalance();
+      const rawBalance = typeof response?.balance !== "undefined"
+        ? response.balance
+        : response?.data?.balance;
+      setBalance(Number(rawBalance || 0));
+    } catch (error) {
+      setBalance(0);
+    } finally {
+      setIsLoadingBalance(false);
+    }
   }, []);
 
   useEffect(() => {
     let isMounted = true;
+    fetchBalance().finally(() => { if (!isMounted) return; });
+    return () => { isMounted = false; };
+  }, [fetchBalance]);
 
-    const fetchTransactions = async () => {
-      try {
-        const response = await walletTransactionsAPI.getTransactions();
-        const list = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.data)
-            ? response.data
-            : [];
+  useRefreshOnFocus(fetchBalance);
 
-        if (isMounted) {
-          setTransactions(list);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setTransactions([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingTransactions(false);
-        }
-      }
-    };
-
-    fetchTransactions();
-
-    return () => {
-      isMounted = false;
-    };
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const response = await walletTransactionsAPI.getTransactions();
+      const list = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+      setTransactions(list);
+    } catch (error) {
+      setTransactions([]);
+    } finally {
+      setIsLoadingTransactions(false);
+    }
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchTransactions().finally(() => { if (!isMounted) return; });
+    return () => { isMounted = false; };
+  }, [fetchTransactions]);
+
+  useRefreshOnFocus(fetchTransactions);
 
   const formattedBalance = Number(balance || 0).toLocaleString("vi-VN");
   const formatCurrency = (value) => `₫ ${Number(value || 0).toLocaleString("vi-VN")}`;

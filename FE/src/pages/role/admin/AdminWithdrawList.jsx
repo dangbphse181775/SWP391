@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -94,11 +95,8 @@ const AdminWithdrawList = () => {
   // modal state
   const [modal, setModal] = useState({ open: false, type: null, item: null });
 
-  useEffect(() => {
-    fetchWithdrawals();
-  }, []);
 
-  const fetchWithdrawals = async () => {
+  const fetchWithdrawals = useCallback(async () => {
     try {
       setLoading(true);
       const res = await adminApi.getPendingWithdrawals();
@@ -116,7 +114,13 @@ const AdminWithdrawList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchWithdrawals();
+  }, [fetchWithdrawals]);
+
+  useRefreshOnFocus(fetchWithdrawals);
 
   // Fetch display names for all unique userIds in parallel
   const resolveUserNames = async (list) => {

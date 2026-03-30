@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as signalR from "@microsoft/signalr";
 import disputeApi from "@/service/disputeApi";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAccessToken } from "@/service/auth";
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "");
 
@@ -79,7 +80,7 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
       // 2. Build SignalR connection
       connection = new signalR.HubConnectionBuilder()
         .withUrl(`${BASE_URL}/hubs/dispute-chat`, {
-          accessTokenFactory: () => localStorage.getItem("access_token"),
+          accessTokenFactory: () => getAccessToken(),
         })
         .withAutomaticReconnect()
         .build();

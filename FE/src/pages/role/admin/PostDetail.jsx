@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import adminApi from '@/service/adminApi';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,11 +22,8 @@ const PostDetail = () => {
   const [processing, setProcessing] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  useEffect(() => {
-    fetchVehicleDetail();
-  }, [id]);
 
-  const fetchVehicleDetail = async () => {
+  const fetchVehicleDetail = useCallback(async () => {
     try {
       setLoading(true);
       const response = await adminApi.getVehicleDetail(id);
@@ -38,7 +36,13 @@ const PostDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
+
+  useEffect(() => {
+    fetchVehicleDetail();
+  }, [fetchVehicleDetail]);
+
+  useRefreshOnFocus(fetchVehicleDetail);
 
   const handleApprove = async () => {
     try {

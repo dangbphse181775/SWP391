@@ -1,6 +1,6 @@
 import DetailModal from '@/pages/role/inspector/components/DetailModal';
 import BikeCard from '@/pages/role/inspector/components/BikeCard';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast, Toaster } from "sonner";
@@ -8,6 +8,7 @@ import { Search, X, Loader2 } from "lucide-react";
 import { useDebounce } from "use-debounce";
 import * as InspectorAPI from "@/service/InspectorAPI";
 import InspectorSidebar from '@/components/admin/InspectorSidebar';
+import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 
 export default function InspectorDashboard() {
   const [bikes, setBikes] = useState([]);
@@ -17,24 +18,27 @@ export default function InspectorDashboard() {
   const [selectedBike, setSelectedBike] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setPageLoading(true);
-        const data = await InspectorAPI.getPendingVehicles();
-        setBikes(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("API Error:", err);
-        toast.error("Lỗi tải dữ liệu", {
-          description: "Không thể kết nối API. Vui lòng kiểm tra backend.",
-        });
-        setBikes([]);
-      } finally {
-        setPageLoading(false);
-      }
-    };
-    fetchData();
+  const fetchData = useCallback(async () => {
+    try {
+      setPageLoading(true);
+      const data = await InspectorAPI.getPendingVehicles();
+      setBikes(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("API Error:", err);
+      toast.error("Lỗi tải dữ liệu", {
+        description: "Không thể kết nối API. Vui lòng kiểm tra backend.",
+      });
+      setBikes([]);
+    } finally {
+      setPageLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useRefreshOnFocus(fetchData);
 
   const filtered = bikes.filter(b => {
     const q = debouncedSearch.toLowerCase();
@@ -54,13 +58,10 @@ export default function InspectorDashboard() {
   };
 
   const handleSuccess = (vehicleId, passed) => {
-    setBikes(p =>
-      p.map(b =>
-        b.id === vehicleId
-          ? { ...b, status: passed ? "Đã duyệt" : "Từ chối" }
-          : b
-      )
-    );
+    // Xóa ngay lập tức xe đã duyệt ra khỏi danh sách đang chờ duyệt
+    setBikes(p => p.filter(b => b.id !== vehicleId));
+    // Tải lại ngầm danh sách mới cho đồng bộ dữ liệu với server
+    fetchData();
   };
 
   return (

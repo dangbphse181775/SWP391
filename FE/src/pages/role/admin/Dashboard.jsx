@@ -1,14 +1,32 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRolePath } from '@/hooks/useRolePath';
-import { Home } from 'lucide-react';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
+import { Home, PieChart as PieChartIcon, BarChart2 } from 'lucide-react';
 import adminApi from '@/service/adminApi';
 import StatCard from './components/StatCard';
 import SystemWalletCard from './components/SystemWalletCard';
 import RecentPostsTable from './components/RecentPostsTable';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -30,12 +48,8 @@ const Dashboard = () => {
   const [walletTransactions, setWalletTransactions] = useState([]);
   const [walletLoading, setWalletLoading] = useState(false);
 
-  useEffect(() => {
-    fetchDashboardData();
-    fetchWalletData();
-  }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const [pendingRes, statsRes] = await Promise.all([
@@ -68,9 +82,9 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchWalletData = async () => {
+  const fetchWalletData = useCallback(async () => {
     try {
       setWalletLoading(true);
       const [balanceRes, txRes] = await Promise.all([
@@ -86,16 +100,18 @@ const Dashboard = () => {
     } finally {
       setWalletLoading(false);
     }
-  };
+  }, []);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).format(date);
-  };
+  const refreshAll = useCallback(() => {
+    fetchDashboardData();
+    fetchWalletData();
+  }, [fetchDashboardData, fetchWalletData]);
+
+  useEffect(() => {
+    refreshAll();
+  }, [refreshAll]);
+
+  useRefreshOnFocus(refreshAll);
 
   const getCurrentDate = () => {
     const date = new Date();
@@ -117,6 +133,33 @@ const Dashboard = () => {
     { title: 'Từ chối',      value: stats.rejected.toString(),         change: 'Các xe bị huỷ',    trend: 'down', bgColor: 'bg-red-50',    iconColor: 'text-red-600' },
     { title: 'Chưa kiểm định', value: stats.pendingInspection.toString(), change: 'Chờ kiểm duyệt xe', trend: 'down', bgColor: 'bg-orange-50', iconColor: 'text-orange-600' }
   ];
+
+  const barData = [
+    { name: "Tài khoản", value: stats.totalUsers },
+    { name: "Đơn hàng", value: stats.totalOrders },
+    { name: "Bài đăng", value: stats.totalPosts },
+  ];
+
+  const pieData = [
+    { name: "Chờ duyệt", value: stats.pending, fill: "#eab308" },
+    { name: "Đã duyệt", value: stats.approved, fill: "#22c55e" },
+    { name: "Từ chối", value: stats.rejected, fill: "#ef4444" },
+    { name: "Chưa kiểm định", value: stats.pendingInspection, fill: "#f97316" },
+  ].filter(item => item.value > 0); // Chỉ hiện những status có data để tránh label đè lên nhau
+
+  const barChartConfig = {
+    value: {
+      label: "Số lượng",
+      color: "hsl(var(--primary))",
+    },
+  };
+
+  const pieChartConfig = {
+    pending: { label: "Chờ duyệt", color: "#eab308" },
+    approved: { label: "Đã duyệt", color: "#22c55e" },
+    rejected: { label: "Từ chối", color: "#ef4444" },
+    pendingInspection: { label: "Chưa kiểm định", color: "#f97316" },
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -144,6 +187,70 @@ const Dashboard = () => {
             {statCards.map((stat, index) => (
               <StatCard key={index} {...stat} />
             ))}
+          </div>
+
+          {/* Biểu đồ */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Pie Chart: Tỷ lệ trạng thái xe */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <PieChartIcon className="w-5 h-5 text-blue-600" />
+                  Tỷ lệ trạng thái Xe đăng tải
+                </CardTitle>
+                <CardDescription>Phân bổ số lượng xe theo các trạng thái trên hệ thống</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={pieChartConfig} className="mx-auto aspect-square max-h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                      <Pie
+                        data={pieData.length > 0 ? pieData : [{ name: "Trống", value: 1, fill: "#e5e7eb" }]}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={60}
+                        outerRadius={100}
+                        strokeWidth={2}
+                        paddingAngle={2}
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Legend verticalAlign="bottom" height={36}/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            {/* Bar Chart: Tổng quan nền tảng */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <BarChart2 className="w-5 h-5 text-indigo-600" />
+                  Khai thác Nền tảng
+                </CardTitle>
+                <CardDescription>So sánh tổng khối lượng Tài khoản, Đơn hàng và Bài đăng</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={barChartConfig} className="w-full aspect-[4/3] max-h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tickMargin={10} />
+                      <YAxis allowDecimals={false} axisLine={false} tickLine={false} />
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideIndicator />} />
+                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={40}>
+                        {barData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index === 0 ? "#8b5cf6" : index === 1 ? "#ec4899" : "#3b82f6"} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
           </div>
 
           <SystemWalletCard

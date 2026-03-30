@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart, Filter } from "lucide-react";
 import WishlistAPI from "@/service/WishlistAPI";
@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import WishlistCard from "./components/WishlistCard";
 import WishlistFilters from "./components/WishlistFilters";
+import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 export default function WishlistPage() {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,14 +20,9 @@ export default function WishlistPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedCondition, setSelectedCondition] = useState('');
-
-  useEffect(() => {
-    fetchWishlist();
-  }, []);
-
   const navigate = useNavigate();
 
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -39,7 +35,13 @@ export default function WishlistPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
+
+  useRefreshOnFocus(fetchWishlist);
 
   const handleRemoveFromWishlist = async (vehicleId) => {
     try {
@@ -48,8 +50,7 @@ export default function WishlistPage() {
       toast.success('Xóa khỏi danh sách yêu thích thành công!');
     } catch (err) {
       console.error('Remove from wishlist failed:', err);
-      alert('Lỗi khi xóa khỏi danh sách yêu thích!');
-          toast.error('Lỗi khi xóa khỏi danh sách yêu thích!');
+      toast.error('Lỗi khi xóa khỏi danh sách yêu thích!');
     }
   };
 

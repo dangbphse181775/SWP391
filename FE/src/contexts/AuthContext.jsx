@@ -21,14 +21,23 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const userData = localStorage.getItem('user_data');
+      let token = sessionStorage.getItem('access_token');
+      let userData = sessionStorage.getItem('user_data');
+      
+      if (!token && localStorage.getItem('remember_me') === 'true') {
+        token = localStorage.getItem('access_token');
+        userData = localStorage.getItem('user_data');
+        if (token && userData) {
+          sessionStorage.setItem('access_token', token);
+          sessionStorage.setItem('user_data', userData);
+        }
+      }
       
       if (token && userData && !isTokenExpired()) {
         setUser(JSON.parse(userData));
       } else {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_data');
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('user_data');
         setUser(null);
       }
     } catch (error) {
@@ -40,7 +49,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = (authData) => {
-    localStorage.setItem('access_token', authData.token);
+    sessionStorage.setItem('access_token', authData.token);
     
     const userData = {
       userId: authData.userId,
@@ -49,15 +58,34 @@ export const AuthProvider = ({ children }) => {
       role: authData.role
     };
     
-    localStorage.setItem('user_data', JSON.stringify(userData));
+    sessionStorage.setItem('user_data', JSON.stringify(userData));
+    
+    // Nếu check Remember Me từ login form
+    if (localStorage.getItem('remember_me') === 'true') {
+      localStorage.setItem('access_token', authData.token);
+      localStorage.setItem('user_data', JSON.stringify(userData));
+    }
+    
     setUser(userData);
   };
 
   const logout = () => {
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('user_data');
     localStorage.removeItem('access_token');
     localStorage.removeItem('user_data');
     localStorage.removeItem('remember_me');
     setUser(null);
+  };
+
+  const updateAuthUser = (newData) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...newData };
+    setUser(updatedUser);
+    sessionStorage.setItem('user_data', JSON.stringify(updatedUser));
+    if (localStorage.getItem('remember_me') === 'true') {
+      localStorage.setItem('user_data', JSON.stringify(updatedUser));
+    }
   };
 
   const value = {
@@ -66,7 +94,8 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     login,
     logout,
-    checkAuth
+    checkAuth,
+    updateAuthUser
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -124,8 +124,11 @@ export default function DetailModal({ open, onClose, bike, onSuccess }) {
   };
 
   const d = detail;
-  const images = d?.media?.filter(m => m.type === "image").map(m => m.url) ?? [];
-  const mainImg = images.length > 0 ? images[activeImg] : (bike?.thumbnailUrl || "/placeholder.jpg");
+  const mediaList = d?.media || [];
+  if (mediaList.length === 0 && bike?.thumbnailUrl) {
+    mediaList.push({ url: bike.thumbnailUrl, type: "image", isThumb: true });
+  }
+  const activeMedia = mediaList.length > 0 ? mediaList[activeImg] : null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -170,46 +173,69 @@ export default function DetailModal({ open, onClose, bike, onSuccess }) {
 
                 {/* Image gallery */}
                 <div className="relative rounded-xl overflow-hidden bg-gray-100 h-64 md:h-[400px] border border-black/10">
-                  <img
-                    src={mainImg}
-                    alt={d?.name || bike?.name}
-                    className="w-full h-full object-contain bg-gray-900/5"
-                    onError={e => { e.currentTarget.src = "/placeholder.jpg"; }}
-                  />
+                  {activeMedia?.type === 'video' ? (
+                    <video
+                      key={activeMedia.url}
+                      src={activeMedia.url}
+                      controls
+                      autoPlay
+                      muted
+                      className="w-full h-full object-contain bg-gray-900/5"
+                    />
+                  ) : (
+                    <img
+                      src={activeMedia?.url || "/placeholder.jpg"}
+                      alt={d?.name || bike?.name}
+                      className="w-full h-full object-contain bg-gray-900/5"
+                      onError={e => { e.currentTarget.src = "/placeholder.jpg"; }}
+                    />
+                  )}
                   {/* Prev / Next */}
-                  {images.length > 1 && (
+                  {mediaList.length > 1 && (
                     <>
                       <button
-                        onClick={() => setActiveImg(i => (i - 1 + images.length) % images.length)}
+                        onClick={() => setActiveImg(i => (i - 1 + mediaList.length) % mediaList.length)}
                         className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black text-white rounded-full p-1.5 transition"
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={() => setActiveImg(i => (i + 1) % images.length)}
+                        onClick={() => setActiveImg(i => (i + 1) % mediaList.length)}
                         className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black text-white rounded-full p-1.5 transition"
                       >
                         <ChevronRight className="h-5 w-5" />
                       </button>
                       <span className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2.5 py-1 rounded-full font-medium">
-                        {activeImg + 1} / {images.length}
+                        {activeImg + 1} / {mediaList.length}
                       </span>
                     </>
                   )}
                 </div>
 
                 {/* Thumbnail strip */}
-                {images.length > 1 && (
+                {mediaList.length > 1 && (
                   <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                    {images.map((url, i) => (
-                      <img
+                    {mediaList.map((m, i) => (
+                      <div
                         key={i}
-                        src={url}
-                        alt=""
                         onClick={() => setActiveImg(i)}
-                        className={`h-16 w-16 shrink-0 object-cover rounded-lg cursor-pointer border-2 transition-all ${i === activeImg ? "border-black opacity-100" : "border-gray-200 opacity-60 hover:opacity-90"
-                          }`}
-                      />
+                        className={`h-16 w-16 shrink-0 relative rounded-lg cursor-pointer border-2 transition-all overflow-hidden ${
+                          i === activeImg ? "border-black opacity-100" : "border-gray-200 opacity-60 hover:opacity-90"
+                        }`}
+                      >
+                        {m.type === 'video' ? (
+                          <>
+                            <video src={m.url} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                              <div className="w-6 h-6 rounded-full bg-black/60 flex items-center justify-center">
+                                <div className="w-0 h-0 border-t-4 border-t-transparent border-l-[6px] border-l-white border-b-4 border-b-transparent ml-0.5" />
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <img src={m.url} className="w-full h-full object-cover" alt="thumbnail" />
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}

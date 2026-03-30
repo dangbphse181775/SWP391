@@ -3,6 +3,7 @@ import { ShoppingCart, Heart, User, Search, Menu, LogOut, LayoutDashboard, Clipb
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRolePath } from '@/hooks/useRolePath';
+import { getAccessToken } from '@/service/auth';
 import { toast } from 'sonner';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as signalR from '@microsoft/signalr';
@@ -116,7 +117,7 @@ const Header = () => {
 
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${BASE_URL}/hubs/dispute-chat`, {
-        accessTokenFactory: () => localStorage.getItem('access_token'),
+        accessTokenFactory: () => getAccessToken(),
       })
       .withAutomaticReconnect()
       .build();
@@ -280,16 +281,10 @@ const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Link to="/contact" className="text-sm font-semibold text-gray-900 hover:text-blue-600">
-                Liên hệ
-              </Link>
             </nav>
 
             {/* Actions */}
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="hidden md:flex">
-                <Search className="h-5 w-5" />
-              </Button>
               {isAuthenticated && (
                 <>
                   <Button
@@ -372,9 +367,13 @@ const Header = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full bg-gray-200 hover:bg-gray-300"
+                      className="rounded-full overflow-hidden bg-gray-200 hover:bg-gray-300"
                     >
-                      <User className="h-5 w-5" />
+                      {user?.avatarUrl ? (
+                        <img src={user?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="h-5 w-5" />
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">

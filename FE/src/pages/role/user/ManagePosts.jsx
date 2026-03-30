@@ -18,8 +18,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { getMyVehicles, hideVehicle, getRejectionReason, getInspectionReport } from "@/service/SellAPI";
-import { Eye, Trash2, FileText, AlertCircle, Edit } from "lucide-react";
+import { getMyVehicles, getRejectionReason, getInspectionReport } from "@/service/SellAPI";
+import { Eye, FileText, AlertCircle, Edit } from "lucide-react";
 import { useRolePath } from "@/hooks/useRolePath";
 
 const ManagePosts = () => {
@@ -54,18 +54,6 @@ const ManagePosts = () => {
     }
   };
 
-  const handleHide = async (id) => {
-    if (!confirm("Bạn có chắc chắn muốn ẩn tin này?")) return;
-    
-    try {
-      await hideVehicle(id);
-      toast.success("Đã ẩn tin đăng thành công");
-      fetchVehicles(); // Refresh list
-    } catch (error) {
-      toast.error("Lỗi khi ẩn tin đăng");
-    }
-  };
-
   const handleViewRejectReason = async (id) => {
     try {
       const res = await getRejectionReason(id);
@@ -89,7 +77,7 @@ const ManagePosts = () => {
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(price || 0));
   };
 
   const formatDate = (dateString) => {
@@ -216,16 +204,6 @@ const ManagePosts = () => {
                             onClick={() => navigate(getPath(`Vehicle_Detail/${vehicle.vehicleId}`))}
                           >
                             <Eye className="w-4 h-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Ẩn tin"
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleHide(vehicle.vehicleId)}
-                          >
-                            <Trash2 className="w-4 h-4" />
                           </Button>
 
                           {vehicle.status?.toLowerCase() === "rejected" && (

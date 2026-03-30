@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
 import reviewApi from "@/service/reviewApi";
+import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 
 const formatVnd = (value) => {
   const numberValue = Number(value);
@@ -169,6 +170,8 @@ export default function SelledHistory() {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  useRefreshOnFocus(fetchOrders);
 
   const handleConfirmShipped = async (orderId) => {
     if (!shippingImageFile) {

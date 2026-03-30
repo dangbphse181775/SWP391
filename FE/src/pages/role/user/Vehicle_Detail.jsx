@@ -7,6 +7,7 @@ import cartApi from "@/service/addCartAPI";
 import cartAPI from "@/service/cartAPI";
 import { Heart, Loader2 } from "lucide-react";
 import { toast } from 'sonner';
+import { getAccessToken } from '@/service/auth';
 import VehicleMediaGallery from "./components/VehicleMediaGallery";
 import SellerInfoCard from "./components/SellerInfoCard";
 import SimilarProducts from "./components/SimilarProducts";
@@ -65,7 +66,8 @@ const Vehicle_Detail = () => {
     const fetchSimilarProducts = async (categoryName) => {
         try {
             setSimilarLoading(true);
-            const allProducts = await productsApi.getAllVehicles();
+            const raw = await productsApi.getAllVehicles();
+            const allProducts = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
 
             const similar = allProducts
                 .filter(p => {
@@ -87,7 +89,7 @@ const Vehicle_Detail = () => {
     };
     const checkCartStatus = async (vehicleId) => {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             if (!token) return;
             const cartResponse = await cartAPI.getCart();
             
@@ -153,7 +155,7 @@ const Vehicle_Detail = () => {
     };
 
     const handleBuyNow = async () => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) {
             toast.error('Bạn phải đăng nhập trước', {
                 duration: 2500,

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import cartAPI from "@/service/cartAPI";
 import vehicleDetailApi from "@/service/VehicleDetailAPI";
 import orderApi from "@/service/orderApi";
 import { toast } from "sonner";
 import { useRolePath } from "@/hooks/useRolePath";
+import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -47,7 +48,7 @@ export default function CartPage() {
         .filter((item) => selectedIds.has(item.vehicleId))
         .reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    const formatPrice = (price) => price.toLocaleString("vi-VN") + "₫";
+    const formatPrice = (price) => Number(price || 0).toLocaleString("vi-VN") + "₫";
 
     const fetchCartData = async () => {
         try {
@@ -91,6 +92,8 @@ export default function CartPage() {
         fetchCartData();
     }, []);
 
+    useRefreshOnFocus(fetchCartData);
+
     const handleSelectToggle = (vehicleId) => {
         setSelectedIds((prev) => {
             const next = new Set(prev);
@@ -132,10 +135,11 @@ export default function CartPage() {
                 });
                 return;
             }
+            const orderIds = Array.isArray(result.orderIds) ? result.orderIds : [];
             toast.success("Đặt hàng thành công!", {
-                description: `Đã tạo ${result.orderIds.length} đơn hàng`,
+                description: `Đã tạo ${orderIds.length} đơn hàng`,
             });
-            setPendingOrderIds(result.orderIds);
+            setPendingOrderIds(orderIds);
             setShowShippingModal(true);
         } catch (err) {
             const msg = err?.response?.data?.message || err?.message || "Lỗi khi thanh toán";

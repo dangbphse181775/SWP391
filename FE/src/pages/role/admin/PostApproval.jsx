@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminApi from '@/service/adminApi';
+import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Search, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,11 +15,8 @@ const PostApproval = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
 
-  useEffect(() => {
-    fetchPendingVehicles();
-  }, []);
 
-  const fetchPendingVehicles = async () => {
+  const fetchPendingVehicles = useCallback(async () => {
     try {
       setLoading(true);
       const response = await adminApi.getPendingVehicles();
@@ -38,7 +36,13 @@ const PostApproval = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPendingVehicles();
+  }, [fetchPendingVehicles]);
+
+  useRefreshOnFocus(fetchPendingVehicles);
 
   const vehicles = allVehicles.filter(vehicle => {
     if (activeTab === 'pending') return vehicle.status === 'pending_admin';

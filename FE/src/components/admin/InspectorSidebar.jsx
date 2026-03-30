@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Scale, ClipboardCheck, LogOut, Home } from 'lucide-react';
+import { logout } from '@/service/auth';
 
 const InspectorSidebar = () => {
   const navigate = useNavigate();
@@ -11,10 +12,7 @@ const InspectorSidebar = () => {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('remember_me');
-    navigate('/login');
+    logout();
   };
 
   return (
