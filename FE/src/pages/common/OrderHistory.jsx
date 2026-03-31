@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
 import disputeApi from "@/service/disputeApi";
 import reviewApi from "@/service/reviewApi";
+import shippingApi from "@/service/shippingApi";
 import { useRolePath } from "@/hooks/useRolePath";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 
@@ -106,8 +107,18 @@ export default function OrderHistory() {
   const [activeTab, setActiveTab] = useState("all");
   const [confirmingOrderId, setConfirmingOrderId] = useState(null);
 
-  const [shippingProofs, setShippingProofs] = useState({});
+  const [shippingInfo, setShippingInfo] = useState({});
 
+  // Shipping modal (after pay remaining)
+  const [showShippingModal, setShowShippingModal] = useState(false);
+  const [shippingOrderId, setShippingOrderId] = useState(null);
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingForm, setShippingForm] = useState({
+    recipientName: "",
+    recipientPhone: "",
+    shippingAddress: "",
+    note: "",
+  });
 
   // States for pay remaining
   const [expandedPayConfirmId, setExpandedPayConfirmId] = useState(null);
@@ -167,11 +178,35 @@ export default function OrderHistory() {
           o.orderId === orderId ? { ...o, status: "processing" } : o
         )
       );
+      // Open shipping info modal
+      setShippingOrderId(orderId);
+      setShippingForm({ recipientName: "", recipientPhone: "", shippingAddress: "", note: "" });
+      setShowShippingModal(true);
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || "Lỗi thanh toán khoản còn lại";
       toast.error(msg);
     } finally {
       setConfirmingOrderId(null);
+    }
+  };
+
+  const handleShippingSubmit = async (e) => {
+    e.preventDefault();
+    if (!shippingForm.recipientName.trim() || !shippingForm.recipientPhone.trim() || !shippingForm.shippingAddress.trim()) {
+      toast.error("Vui lòng điền đầy đủ thông tin người nhận và địa chỉ giao hàng");
+      return;
+    }
+    try {
+      setShippingLoading(true);
+      await orderApi.createShipping(shippingOrderId, shippingForm);
+      toast.success("Lưu thông tin giao hàng thành công!");
+      setShowShippingModal(false);
+      setShippingOrderId(null);
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Lỗi khi lưu thông tin giao hàng";
+      toast.error(msg);
+    } finally {
+      setShippingLoading(false);
     }
   };
 
@@ -336,37 +371,38 @@ export default function OrderHistory() {
 
   useRefreshOnFocus(fetchOrders, { enabled: !disputingOrderId });
 
+  // Fetch shipping info for shipped/processing orders via dedicated API
   useEffect(() => {
     let isMounted = true;
-    const fetchProofs = async () => {
-      const shippedOrders = orders.filter(o => String(o?.status || "").toLowerCase() === "shipped");
-      if (shippedOrders.length === 0) return;
+    const fetchShipping = async () => {
+      const relevantOrders = orders.filter(o => {
+        const s = String(o?.status || '').toLowerCase();
+        return s === 'shipped' || s === 'processing' || s === 'paid' || s === 'completed';
+      });
+      if (relevantOrders.length === 0) return;
 
-      const newProofs = { ...shippingProofs };
+      const newInfo = { ...shippingInfo };
       let changed = false;
 
-      for (const order of shippedOrders) {
-        if (!newProofs[order.orderId]) {
+      for (const order of relevantOrders) {
+        if (!newInfo[order.orderId]) {
           try {
-            const detail = await orderApi.getById(order.orderId);
-            const proofUrl = detail?.shippingProofUrl || detail?.data?.shippingProofUrl;
-            if (proofUrl) {
-              newProofs[order.orderId] = proofUrl;
+            const res = await shippingApi.getByOrderId(order.orderId);
+            const data = res?.data || res;
+            if (data && data.shippingId) {
+              newInfo[order.orderId] = data;
               changed = true;
             }
           } catch (err) {
-            console.error("Lỗi tải ảnh giao hàng:", err);
+            // 404 = no shipping record yet — silently ignore
           }
         }
       }
 
-      if (changed && isMounted) {
-        setShippingProofs(newProofs);
-      }
+      if (changed && isMounted) setShippingInfo(newInfo);
     };
 
-    fetchProofs();
-
+    fetchShipping();
     return () => { isMounted = false; };
   }, [orders]);
 
@@ -622,16 +658,31 @@ export default function OrderHistory() {
                     </div>
                   )}
 
+                  {/* Shipping Info Block — shown for any order that has a shipping record */}
+                  {shippingInfo[order?.orderId] && (
+                    <div className="border-t border-slate-100 px-6 py-4 bg-blue-50/40">
+                      <p className="text-xs font-bold uppercase tracking-wider text-blue-500 mb-2">Thông tin giao hàng</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
+                        <div><span className="font-semibold">Người nhận:</span> {shippingInfo[order.orderId].recipientName}</div>
+                        <div><span className="font-semibold">SĐT:</span> {shippingInfo[order.orderId].recipientPhone}</div>
+                        <div className="sm:col-span-2"><span className="font-semibold">Địa chỉ:</span> {shippingInfo[order.orderId].shippingAddress}</div>
+                        {shippingInfo[order.orderId].note && (
+                          <div className="sm:col-span-2"><span className="font-semibold">Ghi chú:</span> {shippingInfo[order.orderId].note}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {String(order?.status || "").toLowerCase() === "shipped" && (
                     <div className="border-t border-slate-100 px-6 py-4">
                       <div className="flex flex-col gap-4">
-                        {shippingProofs[order?.orderId] && (
+                        {shippingInfo[order?.orderId]?.shippingProofUrl && (
                           <div className="flex flex-col gap-2">
                             <p className="text-sm font-bold text-slate-700">Ảnh xác nhận giao hàng:</p>
-                            <a href={shippingProofs[order?.orderId]} target="_blank" rel="noreferrer" className="block w-fit">
+                            <a href={shippingInfo[order.orderId].shippingProofUrl} target="_blank" rel="noreferrer" className="block w-fit">
                               <div className="h-24 w-24 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 relative group">
                                 <img
-                                  src={shippingProofs[order?.orderId]}
+                                  src={shippingInfo[order.orderId].shippingProofUrl}
                                   alt="Shipping Proof"
                                   className="h-full w-full object-cover transition-transform group-hover:scale-110"
                                 />
@@ -827,6 +878,80 @@ export default function OrderHistory() {
           </div>
         )}
       </main>
+
+      {/* Shipping Info Modal - appears after pay remaining */}
+      {showShippingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="bg-gray-900 px-6 py-4">
+              <h3 className="text-lg font-bold text-white">Địa chỉ giao hàng</h3>
+              <p className="text-gray-300 text-sm mt-0.5">Vui lòng nhập thông tin để người bán giao hàng cho bạn</p>
+            </div>
+            <form onSubmit={handleShippingSubmit} className="px-6 py-5 flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  Tên người nhận <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={shippingForm.recipientName}
+                  onChange={(e) => setShippingForm(f => ({ ...f, recipientName: e.target.value }))}
+                  placeholder="Nguyễn Văn A"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  Số điện thoại <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={shippingForm.recipientPhone}
+                  onChange={(e) => setShippingForm(f => ({ ...f, recipientPhone: e.target.value }))}
+                  placeholder="09xxxxxxxx"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  Địa chỉ giao hàng <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={shippingForm.shippingAddress}
+                  onChange={(e) => setShippingForm(f => ({ ...f, shippingAddress: e.target.value }))}
+                  placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  Ghi chú (tùy chọn)
+                </label>
+                <textarea
+                  value={shippingForm.note}
+                  onChange={(e) => setShippingForm(f => ({ ...f, note: e.target.value }))}
+                  placeholder="Yêu cầu riêng, giờ nhận hàng..."
+                  rows={2}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="submit"
+                  disabled={shippingLoading}
+                  className="w-full rounded-lg bg-gray-900 py-2.5 text-sm font-bold text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                >
+                  {shippingLoading ? 'Đang lưu...' : 'Xác nhận'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );
