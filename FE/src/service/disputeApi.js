@@ -30,11 +30,7 @@ const disputeApi = {
     // Buyer opens a dispute on an order
     // body: { description, evidenceUrls? }
     openDispute(orderId, data) {
-        return axiosClient.post(`/Dispute/${orderId}`, data, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        });
+        return axiosClient.post(`/Dispute/${orderId}`, data);
     },
 
     // Get chat history for a dispute channel
@@ -51,6 +47,18 @@ const disputeApi = {
     // body: { response: string }
     sellerResponse(orderId, data) {
         return axiosClient.put(`/Dispute/${orderId}/seller-response`, data);
+    },
+
+    // Upload an image into a dispute chat channel
+    // image: File, caption?: string
+    uploadChatImage(disputeId, channel, image, caption) {
+        const formData = new FormData();
+        formData.append('image', image);
+        if (caption) formData.append('caption', caption);
+        return axiosClient.post(
+            `/Dispute/${disputeId}/chat/${channel}/upload-image`,
+            formData
+        );
     }
 };
 

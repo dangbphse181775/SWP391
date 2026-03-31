@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
 import reviewApi from "@/service/reviewApi";
+import shippingApi from "@/service/shippingApi";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 
 const formatVnd = (value) => {
@@ -86,6 +87,8 @@ export default function SelledHistory() {
   const [closingReviewId, setClosingReviewId] = useState(null);
   const [fetchingReview, setFetchingReview] = useState(false);
   const [existingReview, setExistingReview] = useState(null);
+
+  const [shippingInfo, setShippingInfo] = useState({});
 
   const handleToggleReview = async (orderId) => {
     if (reviewingOrderId === orderId) {
@@ -171,7 +174,39 @@ export default function SelledHistory() {
     fetchOrders();
   }, [fetchOrders]);
 
-  useRefreshOnFocus(fetchOrders);
+  useRefreshOnFocus(fetchOrders, { enabled: !shippingConfirmId });
+
+  // Fetch shipping info via dedicated API
+  useEffect(() => {
+    let isMounted = true;
+    const fetchShipping = async () => {
+      const relevantOrders = orders.filter(o => {
+        const s = String(o?.status || '').toLowerCase();
+        return s === 'shipped' || s === 'processing' || s === 'paid' || s === 'completed';
+      });
+      if (relevantOrders.length === 0) return;
+
+      const newInfo = { ...shippingInfo };
+      let changed = false;
+      for (const order of relevantOrders) {
+        if (!newInfo[order.orderId]) {
+          try {
+            const res = await shippingApi.getByOrderId(order.orderId);
+            const data = res?.data || res;
+            if (data && data.shippingId) {
+              newInfo[order.orderId] = data;
+              changed = true;
+            }
+          } catch (err) {
+            // 404 = no shipping record yet — silently ignore
+          }
+        }
+      }
+      if (changed && isMounted) setShippingInfo(newInfo);
+    };
+    fetchShipping();
+    return () => { isMounted = false; };
+  }, [orders]);
 
   const handleConfirmShipped = async (orderId) => {
     if (!shippingImageFile) {
@@ -400,6 +435,21 @@ export default function SelledHistory() {
                           </span>
                         </div>
                       </div>
+
+                      {/* Shipping Info Block */}
+                      {shippingInfo[order?.orderId] && (
+                        <div className="border-t border-slate-100 px-6 py-4 bg-blue-50/40">
+                          <p className="text-xs font-bold uppercase tracking-wider text-blue-500 mb-2">Thông tin giao hàng</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
+                            <div><span className="font-semibold">Người nhận:</span> {shippingInfo[order.orderId].recipientName}</div>
+                            <div><span className="font-semibold">SĐT:</span> {shippingInfo[order.orderId].recipientPhone}</div>
+                            <div className="sm:col-span-2"><span className="font-semibold">Địa chỉ:</span> {shippingInfo[order.orderId].shippingAddress}</div>
+                            {shippingInfo[order.orderId].note && (
+                              <div className="sm:col-span-2"><span className="font-semibold">Ghi chú:</span> {shippingInfo[order.orderId].note}</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       <div className="flex justify-end gap-3 pt-2">
                         {String(order?.status || "").toLowerCase() === "disputed" && (

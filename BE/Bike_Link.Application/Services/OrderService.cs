@@ -565,7 +565,8 @@ namespace Bike_Link.Application.Services
             if (order.SellerId != sellerId)
                 throw new Exception("Bạn không có quyền xác nhận đơn hàng này");
 
-            if (order.Status != "processing")
+            var normalizedStatus = order.Status?.ToLower();
+            if (normalizedStatus != "processing" && normalizedStatus != "paid")
                 throw new Exception($"Đơn hàng không ở trạng thái chờ giao (status: {order.Status})");
 
             if (shippingProof == null || shippingProof.Length == 0)

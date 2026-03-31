@@ -13,6 +13,11 @@ axiosClient.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // When sending FormData, remove the default Content-Type so the browser
+  // can set it automatically with the correct multipart/form-data boundary.
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;
 });
 
