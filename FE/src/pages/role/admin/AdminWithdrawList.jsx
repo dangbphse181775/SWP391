@@ -94,6 +94,14 @@ const AdminWithdrawList = () => {
 
   // modal state
   const [modal, setModal] = useState({ open: false, type: null, item: null });
+  // set of wIds whose account number is currently visible
+  const [showAccSet, setShowAccSet] = useState(new Set());
+  const toggleAcc = (wId) =>
+    setShowAccSet((prev) => {
+      const next = new Set(prev);
+      next.has(wId) ? next.delete(wId) : next.add(wId);
+      return next;
+    });
 
 
   const fetchWithdrawals = useCallback(async () => {
@@ -300,11 +308,25 @@ const AdminWithdrawList = () => {
                               <CreditCard className="w-3.5 h-3.5 shrink-0" />
                               <span className="font-mono">
                                 {w.bankAccountNumber
-                                  ? `****${String(w.bankAccountNumber).slice(-4)}`
+                                  ? showAccSet.has(wId)
+                                    ? String(w.bankAccountNumber)
+                                    : `****${String(w.bankAccountNumber).slice(-4)}`
                                   : '—'}
                               </span>
                               {w.bankAccountName && (
                                 <span className="text-gray-400">· {w.bankAccountName}</span>
+                              )}
+                              {w.bankAccountNumber && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleAcc(wId)}
+                                  className="ml-0.5 text-gray-400 hover:text-gray-700 transition-colors"
+                                  aria-label={showAccSet.has(wId) ? 'Ẩn số tài khoản' : 'Hiện số tài khoản'}
+                                >
+                                  <span className="material-symbols-outlined text-[16px] leading-none">
+                                    {showAccSet.has(wId) ? 'visibility_off' : 'visibility'}
+                                  </span>
+                                </button>
                               )}
                             </div>
                             {/* Time */}

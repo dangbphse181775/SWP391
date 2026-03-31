@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import orderApi from "@/service/orderApi";
 import reviewApi from "@/service/reviewApi";
@@ -71,6 +71,9 @@ const getStatusMeta = (statusRaw) => {
 
 export default function SelledHistory() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Detect role prefix from current path: /seller/selledHistory → /seller
+  const rolePrefix = location.pathname.split('/').slice(0, 2).join('/');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
@@ -290,8 +293,8 @@ export default function SelledHistory() {
                 ref={(el) => { tabsRef.current[tab.key] = el; }}
                 onClick={() => setActiveTab(tab.key)}
                 className={`relative px-6 py-3 text-sm font-medium transition-colors duration-200 ${activeTab === tab.key
-                    ? "text-blue-600 font-bold"
-                    : "text-slate-500 hover:text-slate-700"
+                  ? "text-blue-600 font-bold"
+                  : "text-slate-500 hover:text-slate-700"
                   }`}
               >
                 {tab.label} ({tabCounts[tab.key] ?? 0})
@@ -407,8 +410,8 @@ export default function SelledHistory() {
                             <div className="text-right">
                               <p
                                 className={`font-bold ${cancelled
-                                    ? "text-primary line-through opacity-50"
-                                    : "text-primary"
+                                  ? "text-primary line-through opacity-50"
+                                  : "text-primary"
                                   }`}
                               >
                                 {formatVnd(item?.price)}
@@ -455,11 +458,11 @@ export default function SelledHistory() {
                         {String(order?.status || "").toLowerCase() === "disputed" && (
                           <button
                             type="button"
-                            onClick={() => navigate(`/seller/dispute/${order?.orderId}`)}
+                            onClick={() => navigate(`${rolePrefix}/selledHistory/dispute/${order?.orderId}`)}
                             className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition flex items-center gap-2"
                           >
                             <span className="material-symbols-outlined text-[18px]">gavel</span>
-                            Phản hồi khiếu nại
+                            Xem khiếu nại
                           </button>
                         )}
 

@@ -32,7 +32,7 @@ export default function WithdrawPage() {
   const [isLoadingBalance, setIsLoadingBalance] = useState(true);
   const [showFullMemberCode, setShowFullMemberCode] = useState(false);
 
-  const [amount, setAmount] = useState("1000000");
+  const [amount, setAmount] = useState("10.000");
   const [bankName, setBankName] = useState(BANK_OPTIONS[0]);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
@@ -73,10 +73,15 @@ export default function WithdrawPage() {
     return () => { alive = false; };
   }, []);
 
+  // Helpers for formatted amount input
+  const formatAmountDisplay = (raw) =>
+    raw.replace(/\D/g, "").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+  const parsedAmount = Number(amount.replace(/\./g, "") || 0);
+
   // --- Validation ---
   const validate = () => {
     const errors = {};
-    const num = Number(amount || 0);
+    const num = parsedAmount;
     if (!num || num <= 0) errors.amount = "Vui lòng nhập số tiền hợp lệ.";
     else if (num < MIN_WITHDRAW_AMOUNT)
       errors.amount = `Tối thiểu ${MIN_WITHDRAW_AMOUNT.toLocaleString("vi-VN")}đ.`;
@@ -94,13 +99,13 @@ export default function WithdrawPage() {
     try {
       setIsSubmitting(true);
       await withdrawAPI.withdraw({
-        amount: Number(amount),
+        amount: parsedAmount,
         bankName,
         accountNumber: accountNumber.trim(),
         accountHolder: accountHolder.trim().toUpperCase(),
       });
       toast.success("Yêu cầu rút tiền đã được gửi! Tiền sẽ về trong 5–15 phút.");
-      setAmount(""); setAccountNumber(""); setAccountHolder("");
+      setAmount("10.000"); setAccountNumber(""); setAccountHolder("");
       setBankName(BANK_OPTIONS[0]); setFieldErrors({});
       // Refresh balance
       walletAPI.getBalance().then((res) => {
@@ -236,12 +241,13 @@ export default function WithdrawPage() {
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">₫</span>
                     <input
                       id="amount"
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       min={MIN_WITHDRAW_AMOUNT}
                       placeholder="0"
                       value={amount}
                       onChange={(e) => {
-                        setAmount(e.target.value.replace(/\D/g, ""));
+                        setAmount(formatAmountDisplay(e.target.value));
                         if (fieldErrors.amount) setFieldErrors((p) => ({ ...p, amount: "" }));
                       }}
                       className={`w-full border rounded-lg pl-8 pr-4 py-3 focus:ring-1 focus:ring-black focus:border-black text-lg font-bold transition-all ${

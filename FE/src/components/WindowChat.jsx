@@ -276,7 +276,6 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
 
   const isMe = (senderId) => {
     const isMatch = String(senderId) === String(user?.userId);
-    console.log(`[isMe Check] senderId: ${senderId} (type: ${typeof senderId}), user.userId: ${user?.userId} (type: ${typeof user?.userId}), match: ${isMatch}`);
     return isMatch;
   };
 
@@ -497,9 +496,8 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={!isConnected || isUploading}
-                className={`p-1 rounded-full transition-colors ${
-                  stagedImage ? "text-blue-500 bg-blue-50" : "text-slate-400 hover:text-slate-600"
-                } disabled:opacity-30`}
+                className={`p-1 rounded-full transition-colors ${stagedImage ? "text-blue-500 bg-blue-50" : "text-slate-400 hover:text-slate-600"
+                  } disabled:opacity-30`}
                 title="Gửi ảnh"
               >
                 <ImageIcon size={14} />

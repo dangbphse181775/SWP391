@@ -197,14 +197,16 @@ const ManagePosts = () => {
                     <div className="flex justify-end gap-2">
                       {vehicle.status?.toLowerCase() !== "sold" && (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Xem chi tiết"
-                            onClick={() => navigate(getPath(`Vehicle_Detail/${vehicle.vehicleId}`))}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
+                          {["active", "booked", "appproved"].includes(vehicle.status?.toLowerCase()) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Xem chi tiết"
+                              onClick={() => navigate(getPath(`Vehicle_Detail/${vehicle.vehicleId}`))}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          )}
 
                           {vehicle.status?.toLowerCase() === "rejected" && (
                             <Button

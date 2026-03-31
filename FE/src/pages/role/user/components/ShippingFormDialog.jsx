@@ -1,94 +1,85 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from "@/components/ui/dialog";
-
 export default function ShippingFormDialog({ open, shippingForm, onFormChange, onSubmit, loading }) {
-    return (
-        <Dialog open={open}>
-            <DialogContent
-                showCloseButton={false}
-                className="max-w-lg max-h-[90vh] overflow-y-auto bg-white"
-                onInteractOutside={(e) => e.preventDefault()}
-                onEscapeKeyDown={(e) => e.preventDefault()}
-            >
-                <DialogHeader>
-                    <DialogTitle>Thông tin giao hàng</DialogTitle>
-                    <DialogDescription>
-                        Vui lòng điền đầy đủ thông tin người nhận. Đây là bước bắt buộc để hoàn tất đơn hàng.
-                    </DialogDescription>
-                </DialogHeader>
+    if (!open) return null;
 
-                <form onSubmit={onSubmit} className="space-y-4">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="recipientName">
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+                {/* Header */}
+                <div className="bg-gray-900 px-6 py-4">
+                    <h3 className="text-lg font-bold text-white">Địa chỉ giao hàng</h3>
+                    <p className="text-gray-300 text-sm mt-0.5">
+                        Vui lòng nhập thông tin để người bán giao hàng cho bạn
+                    </p>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={onSubmit} className="px-6 py-5 flex flex-col gap-4">
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">
                             Tên người nhận <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                            id="recipientName"
+                        </label>
+                        <input
                             type="text"
                             required
                             value={shippingForm.recipientName}
                             onChange={(e) => onFormChange("recipientName", e.target.value)}
                             placeholder="Nguyễn Văn A"
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                         />
                     </div>
 
-                    <div className="space-y-1.5">
-                        <Label htmlFor="recipientPhone">
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">
                             Số điện thoại <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                            id="recipientPhone"
+                        </label>
+                        <input
                             type="tel"
                             required
                             value={shippingForm.recipientPhone}
                             onChange={(e) => onFormChange("recipientPhone", e.target.value)}
-                            placeholder="0901234567"
+                            placeholder="09xxxxxxxx"
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                         />
                     </div>
 
-                    <div className="space-y-1.5">
-                        <Label htmlFor="shippingAddress">
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">
                             Địa chỉ giao hàng <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                            id="shippingAddress"
+                        </label>
+                        <input
                             type="text"
                             required
                             value={shippingForm.shippingAddress}
                             onChange={(e) => onFormChange("shippingAddress", e.target.value)}
-                            placeholder="123 Đường ABC, Quận X, TP.HCM"
+                            placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                         />
                     </div>
 
-                    <div className="space-y-1.5">
-                        <Label htmlFor="note">Ghi chú</Label>
-                        <Textarea
-                            id="note"
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">
+                            Ghi chú <span className="text-slate-400 font-normal">(tùy chọn)</span>
+                        </label>
+                        <textarea
                             value={shippingForm.note}
                             onChange={(e) => onFormChange("note", e.target.value)}
-                            placeholder="Giao giờ hành chính, gọi trước khi giao..."
-                            rows={3}
-                            className="resize-none"
+                            placeholder="Yêu cầu riêng, giờ nhận hàng..."
+                            rows={2}
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
                         />
                     </div>
 
-                    <DialogFooter className="pt-2">
-                        <Button type="submit" disabled={loading} className="w-full bg-black hover:bg-black/80 text-white">
+                    <div className="pt-1">
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full rounded-lg bg-gray-900 py-2.5 text-sm font-bold text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                        >
                             {loading ? "Đang lưu..." : "Xác nhận giao hàng"}
-                        </Button>
-                    </DialogFooter>
+                        </button>
+                    </div>
                 </form>
-            </DialogContent>
-        </Dialog>
+            </div>
+        </div>
     );
 }

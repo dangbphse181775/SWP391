@@ -27,8 +27,8 @@ import SelledHistory from '@/pages/common/SelledHistory';
 import DisputeList from '@/pages/role/admin/DisputeList';
 import DisputeDetail from '@/pages/role/admin/DisputeDetail';
 import ManagePosts from '@/pages/role/user/ManagePosts';
-import SellerDisputeResponse from '@/pages/common/SellerDisputeResponse';
 import WithdrawPage from '@/pages/common/WithdrawPage';
+import SellerDisputeView from '@/pages/common/SellerDisputeView';
 import AdminWithdrawList from '@/pages/role/admin/AdminWithdrawList';
 const VehicleDetailRoute = () => {
   const { id } = useParams();
@@ -106,14 +106,19 @@ function App() {
                 <OrderHistory />
               </RoleBasedRoute>
             } />
-            <Route path="/buyer/dispute/:orderId" element={
-              <RoleBasedRoute>
-                <SellerDisputeResponse />
-              </RoleBasedRoute>
-            } />
             <Route path="/buyer/selledHistory" element={
               <RoleBasedRoute>
                 <SelledHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/selledHistory/dispute/:orderId" element={
+              <RoleBasedRoute>
+                <SellerDisputeView />
+              </RoleBasedRoute>
+            } />
+            <Route path="/buyer/dispute/:orderId" element={
+              <RoleBasedRoute>
+                <SellerDisputeView />
               </RoleBasedRoute>
             } />
             <Route path="/buyer/managePosts" element={
@@ -179,9 +184,9 @@ function App() {
                 <SelledHistory />
               </RoleBasedRoute>
             } />
-            <Route path="/seller/dispute/:orderId" element={
+            <Route path="/seller/selledHistory/dispute/:orderId" element={
               <RoleBasedRoute>
-                <SellerDisputeResponse />
+                <SellerDisputeView />
               </RoleBasedRoute>
             } />
             <Route path="/seller/managePosts" element={
