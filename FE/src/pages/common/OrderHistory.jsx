@@ -334,7 +334,7 @@ export default function OrderHistory() {
     fetchOrders();
   }, [fetchOrders]);
 
-  useRefreshOnFocus(fetchOrders);
+  useRefreshOnFocus(fetchOrders, { enabled: !disputingOrderId });
 
   useEffect(() => {
     let isMounted = true;

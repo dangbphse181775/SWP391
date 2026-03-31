@@ -22,11 +22,7 @@ const orderApi = {
   },
 
   confirmShipped: async (orderId, data) => {
-    const response = await axiosClient.post(`/Order/confirm-shipped/${orderId}`, data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await axiosClient.post(`/Order/confirm-shipped/${orderId}`, data);
     return response;
   },
 

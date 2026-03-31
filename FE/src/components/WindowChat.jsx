@@ -3,6 +3,7 @@ import * as signalR from "@microsoft/signalr";
 import disputeApi from "@/service/disputeApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAccessToken } from "@/service/auth";
+import { Image as ImageIcon, X } from "lucide-react";
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "");
 
@@ -15,10 +16,14 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
   const connectionRef = useRef(null);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [unread, setUnread] = useState(0);
   const [showEmoji, setShowEmoji] = useState(false);
   const emojiRef = useRef(null);
   const initedRef = useRef(false);
+  const [stagedImage, setStagedImage] = useState(null);   // { file, previewUrl }
+  const [isUploading, setIsUploading] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState(null); // image URL to show full-screen
 
   // Emoji sticker data grouped by category
   const EMOJI_CATEGORIES = [
@@ -46,6 +51,13 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close lightbox on Escape
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") setLightboxUrl(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   // Auto-scroll to bottom when new messages arrive
@@ -153,22 +165,83 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
     };
   }, [disputeId, channel]);
 
+  // Pick image from file input
+  const handleImagePick = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const previewUrl = URL.createObjectURL(file);
+    setStagedImage({ file, previewUrl });
+    // Reset file input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  // Clear staged image and revoke object URL
+  const clearStagedImage = () => {
+    if (stagedImage?.previewUrl) URL.revokeObjectURL(stagedImage.previewUrl);
+    setStagedImage(null);
+  };
+
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || !connectionRef.current || !isConnected) return;
+    const hasImage = !!stagedImage;
+    const hasText = !!text;
+    if ((!hasText && !hasImage) || !connectionRef.current || !isConnected) return;
 
+    if (hasImage) {
+      // ── Optimistic image send ──
+      const { file, previewUrl } = stagedImage;
+      const captionText = hasText ? text : undefined;
+      const tempId = `temp-${Date.now()}`;
+
+      // 1. Add placeholder message immediately (local blob URL + spinner flag)
+      setMessages(prev => [...prev, {
+        disputeChatId: tempId,
+        senderId: user?.userId,
+        senderName: user?.fullName || user?.userName || "Bạn",
+        senderAvatar: user?.avatar || null,
+        imageUrl: previewUrl,
+        message: captionText || null,
+        sentAt: new Date().toISOString(),
+        _uploading: true,
+      }]);
+
+      // 2. Clear staged image + input immediately for snappy UX
+      setStagedImage(null);          // don't revoke yet — blob still used in temp msg
+      if (hasText) setInput("");
+      setIsUploading(true);
+
+      try {
+        await disputeApi.uploadChatImage(disputeId, channel, file, captionText);
+
+        // 3. Re-fetch real history (replaces temp message with Cloudinary URL)
+        const res = await disputeApi.getChatHistory(disputeId, channel);
+        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        setMessages(list);
+
+        if (typeof onMessageSent === 'function') onMessageSent();
+      } catch (err) {
+        console.error("Image send failed:", err);
+        // Remove temp placeholder on error
+        setMessages(prev => prev.filter(m => m.disputeChatId !== tempId));
+      } finally {
+        URL.revokeObjectURL(previewUrl);
+        setIsUploading(false);
+        inputRef.current?.focus();
+      }
+      return;
+    }
+
+    // ── Text-only via SignalR ──
     try {
-      await connectionRef.current.invoke(
-        "SendMessage",
-        disputeId,
-        channel,
-        text
-      );
+      setIsUploading(true);
+      await connectionRef.current.invoke("SendMessage", disputeId, channel, text);
       setInput("");
       inputRef.current?.focus();
       if (typeof onMessageSent === 'function') onMessageSent();
     } catch (err) {
       console.error("Send failed:", err);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -273,7 +346,22 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
                   {me ? (
                     <div className="flex flex-col items-end gap-0.5 ml-auto max-w-[80%]">
                       {msg.imageUrl && (
-                        <img src={msg.imageUrl} alt="" className="max-w-full rounded-lg" />
+                        <div className="relative max-w-full">
+                          <img
+                            src={msg.imageUrl}
+                            alt=""
+                            onClick={!msg._uploading ? () => setLightboxUrl(msg.imageUrl) : undefined}
+                            className={`max-w-full rounded-lg ${msg._uploading ? 'opacity-60' : 'cursor-zoom-in hover:brightness-95 transition-all active:scale-95'}`}
+                          />
+                          {msg._uploading && (
+                            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/25 backdrop-blur-[1px]">
+                              <svg className="h-7 w-7 animate-spin text-white drop-shadow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-30" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                                <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
                       )}
                       {msg.message && (
                         isSingleEmoji(msg.message) ? (
@@ -303,7 +391,22 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
                       <div className="flex flex-col gap-0.5">
                         <span className="text-[9px] text-slate-400">{msg.senderName}</span>
                         {msg.imageUrl && (
-                          <img src={msg.imageUrl} alt="" className="max-w-full rounded-lg" />
+                          <div className="relative max-w-full">
+                            <img
+                              src={msg.imageUrl}
+                              alt=""
+                              onClick={!msg._uploading ? () => setLightboxUrl(msg.imageUrl) : undefined}
+                              className={`max-w-full rounded-lg ${msg._uploading ? 'opacity-60' : 'cursor-zoom-in hover:brightness-95 transition-all active:scale-95'}`}
+                            />
+                            {msg._uploading && (
+                              <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/25 backdrop-blur-[1px]">
+                                <svg className="h-7 w-7 animate-spin text-white drop-shadow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-30" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                                  <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
                         )}
                         {msg.message && (
                           isSingleEmoji(msg.message) ? (
@@ -348,9 +451,38 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
             </div>
           )}
 
+          {/* Image preview strip */}
+          {stagedImage && (
+            <div className="px-2 pt-2 bg-white border-t border-slate-100 shrink-0">
+              <div className="relative inline-block">
+                <img
+                  src={stagedImage.previewUrl}
+                  alt="preview"
+                  className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                />
+                <button
+                  onClick={clearStagedImage}
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-slate-700 text-white rounded-full flex items-center justify-center hover:bg-red-500 transition-colors"
+                  title="Xoá ảnh"
+                >
+                  <X size={9} />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Input */}
           <div className="px-2 py-2 bg-white border-t border-slate-100 shrink-0">
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImagePick}
+            />
             <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
+              {/* Emoji button */}
               <button
                 onClick={() => setShowEmoji((prev) => !prev)}
                 className={`p-1 rounded-full transition-colors ${showEmoji ? "text-slate-900 bg-slate-200" : "text-slate-400 hover:text-slate-600"
@@ -361,27 +493,69 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z" clipRule="evenodd" />
                 </svg>
               </button>
+              {/* Image upload button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={!isConnected || isUploading}
+                className={`p-1 rounded-full transition-colors ${
+                  stagedImage ? "text-blue-500 bg-blue-50" : "text-slate-400 hover:text-slate-600"
+                } disabled:opacity-30`}
+                title="Gửi ảnh"
+              >
+                <ImageIcon size={14} />
+              </button>
               <input
                 ref={inputRef}
                 className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none text-xs text-slate-900 placeholder:text-slate-400"
-                placeholder="Nhập tin nhắn..."
+                placeholder={stagedImage ? "Thêm chú thích... (tuỳ chọn)" : "Nhập tin nhắn..."}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                disabled={!isConnected}
+                disabled={!isConnected || isUploading}
               />
               <button
                 onClick={handleSend}
-                disabled={!input.trim() || !isConnected}
+                disabled={(!input.trim() && !stagedImage) || !isConnected || isUploading}
                 className="text-slate-900 hover:opacity-70 transition-opacity disabled:opacity-30 p-1"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                </svg>
+                {isUploading ? (
+                  <svg className="h-3.5 w-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                  </svg>
+                )}
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ─── Lightbox ─── */}
+      {lightboxUrl && (
+        <div
+          className="chat-lightbox-overlay"
+          onClick={() => setLightboxUrl(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            onClick={() => setLightboxUrl(null)}
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center backdrop-blur-sm transition-colors z-10"
+            title="Đóng (Esc)"
+          >
+            <X size={18} />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            className="chat-lightbox-img"
+          />
         </div>
       )}
 
@@ -410,6 +584,34 @@ export default function WindowChat({ disputeId, channel, onClose, onMessageSent 
         .chat-scroll::-webkit-scrollbar { width: 3px; }
         .chat-scroll::-webkit-scrollbar-track { background: transparent; }
         .chat-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        .chat-lightbox-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0,0,0,0.85);
+          backdrop-filter: blur(6px);
+          animation: lb-fade-in 0.18s ease;
+        }
+        .chat-lightbox-img {
+          max-width: min(90vw, 900px);
+          max-height: 88vh;
+          border-radius: 12px;
+          object-fit: contain;
+          box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+          animation: lb-scale-in 0.2s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes lb-fade-in {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes lb-scale-in {
+          from { transform: scale(0.82); opacity: 0; }
+          to   { transform: scale(1);    opacity: 1; }
+        }
       `}</style>
     </div>
   );

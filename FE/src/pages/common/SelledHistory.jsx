@@ -171,7 +171,7 @@ export default function SelledHistory() {
     fetchOrders();
   }, [fetchOrders]);
 
-  useRefreshOnFocus(fetchOrders);
+  useRefreshOnFocus(fetchOrders, { enabled: !shippingConfirmId });
 
   const handleConfirmShipped = async (orderId) => {
     if (!shippingImageFile) {
