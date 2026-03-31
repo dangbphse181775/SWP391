@@ -30,6 +30,71 @@ namespace Bike_Link.Application.Services
             _cloudinary = cloudinary;
         }
 
+        // ===================== UPLOAD ẢNH CHAT =====================
+
+        public async Task<DisputeChatDto> UploadChatImageAsync(
+            int disputeId, int senderId, string role,
+            string channel, Microsoft.AspNetCore.Http.IFormFile image, string? caption)
+        {
+            // 1. Validate channel
+            if (channel != "buyer" && channel != "seller")
+                throw new Exception("Channel phải là 'buyer' hoặc 'seller'");
+
+            // 2. Validate dispute tồn tại
+            var dispute = await _disputeRepo.GetDisputeByIdAsync(disputeId);
+            if (dispute == null)
+                throw new Exception("Không tìm thấy khiếu nại");
+
+            // 3. Validate quyền truy cập channel
+            bool isStaff = role.Equals("Admin", StringComparison.OrdinalIgnoreCase)
+                        || role.Equals("Inspector", StringComparison.OrdinalIgnoreCase);
+
+            if (!isStaff)
+            {
+                if (channel == "buyer" && dispute.Order.BuyerId != senderId)
+                    throw new Exception("Bạn không có quyền gửi ảnh vào kênh này");
+                if (channel == "seller" && dispute.Order.SellerId != senderId)
+                    throw new Exception("Bạn không có quyền gửi ảnh vào kênh này");
+            }
+
+            // 4. Upload ảnh lên Cloudinary
+            using var stream = image.OpenReadStream();
+            var upload = await _cloudinary.UploadAsync(new ImageUploadParams
+            {
+                File = new FileDescription(image.FileName, stream),
+                Folder = "disputes/chat"
+            });
+
+            if (upload.Error != null)
+                throw new Exception($"Upload ảnh thất bại: {upload.Error.Message}");
+
+            var imageUrl = upload.SecureUrl.ToString();
+
+            // 5. Lưu tin nhắn chat vào DB
+            var chat = new DisputeChat
+            {
+                DisputeId = disputeId,
+                SenderId = senderId,
+                Channel = channel,
+                Message = caption ?? "",
+                ImageUrl = imageUrl,
+                SentAt = DateTime.UtcNow
+            };
+
+            await _disputeRepo.AddChatMessageAsync(chat);
+
+            // 6. Trả về DTO
+            return new DisputeChatDto
+            {
+                DisputeChatId = chat.DisputeChatId,
+                SenderId = senderId,
+                Channel = channel,
+                Message = caption ?? "",
+                ImageUrl = imageUrl,
+                SentAt = chat.SentAt
+            };
+        }
+
         // ===================== BUYER MỞ KHIẾU NẠI =====================
 
         public async Task<DisputeDetailDto> OpenDisputeAsync(

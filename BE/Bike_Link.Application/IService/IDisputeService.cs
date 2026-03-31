@@ -1,9 +1,17 @@
 using Bike_Link.Application.DTO;
+using Microsoft.AspNetCore.Http;
 
 namespace Bike_Link.Application.IService
 {
     public interface IDisputeService
     {
+        /// <summary>
+        /// Upload ảnh chat lên Cloudinary và lưu tin nhắn vào DB
+        /// </summary>
+        Task<DisputeChatDto> UploadChatImageAsync(
+            int disputeId, int senderId, string role,
+            string channel, IFormFile image, string? caption);
+
         /// <summary>
         /// Buyer mở khiếu nại cho order đang ở trạng thái "shipped"
         /// </summary>

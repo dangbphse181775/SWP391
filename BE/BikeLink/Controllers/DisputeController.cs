@@ -197,5 +197,37 @@ namespace BikeLink.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Upload ảnh vào chat dispute qua Cloudinary
+        /// </summary>
+        [HttpPost("{disputeId}/chat/{channel}/upload-image")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadChatImage(
+            int disputeId,
+            string channel,
+            IFormFile image,
+            [FromForm] string? caption)
+        {
+            try
+            {
+                int userId = User.GetUserId();
+                string role = User.GetRole();
+
+                var result = await _disputeService.UploadChatImageAsync(
+                    disputeId, userId, role, channel, image, caption);
+
+                return Ok(new
+                {
+                    success = true,
+                    data = result,
+                    message = "Upload ảnh thành công"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
     }
 }
